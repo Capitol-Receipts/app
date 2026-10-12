@@ -130,15 +130,33 @@ async function appointee(id) {
   if (!r) return null;
   const p = { ...(r.light || {}), ...(r.detail || {}) };
   const offices = (p.off || []).filter(o => o && o[0]);
-  const ttl = L.tcase(p.ttl || (offices[0] || [])[0] || 'Federal appointee');
+  // some ethics records list the document (not the job) in the title field
+  const DOCT = /^(Certificate of Divestiture|Conflict of Interest Waiver|Waiver)$/i;
+  const docTitle = DOCT.test(String(p.ttl || '').trim()) ? String(p.ttl).trim() : null;
+  const agency0 = (((offices[0] || [])[3]) || '').trim();
+  const ttl = docTitle ? (agency0 && !/candidate/i.test(agency0) ? `Official, ${agency0}` : 'Federal official') : L.tcase(p.ttl || (offices[0] || [])[0] || 'Federal appointee');
   const votes = p.sv || [];
   const bio = firstSentences(p.desc && p.desc.length > 60 ? p.desc : (p.wx || p.desc || ''), 420);
   const v0 = votes[0];
-  const lead = `${r.name}${ttl ? `, ${ttl}` : ''}.${v0 ? ` The Senate voted ${v0.y}–${v0.n != null ? v0.n : (v0.nn || 0)} on the nomination on ${date(v0.d)} (${v0.res || ''}).` : ''} ${bio && !bio.startsWith(r.name) ? bio : ''}`.trim();
-  const t = `${r.name}: ${ttl}`;
+  const agencyRaw = ((offices[0] || [])[3] || '').trim(), candidate = /candidate/i.test(agencyRaw);
+  const agency = candidate ? '' : agencyRaw;
+  const docs = (Array.isArray(p.oge) ? p.oge : []).map(x => { const label = String(x[1] || '').replace(/<[^>]+>/g, '').trim(); const href = x[3] || (String(x[1] || '').match(/href='([^']+)'/) || [])[1] || ''; return { d: x[0], label, href }; }).filter(x => x.label);
+  const [peers, samePost] = await Promise.all([
+    agencyRaw ? q(`appointees?select=id,name,light->>ttl,light->>ly&light->off->0->>3=eq.${encodeURIComponent(agencyRaw)}&id=neq.${encodeURIComponent(id)}&order=ord.desc&limit=16`) : [],
+    agencyRaw && p.ttl && !docTitle ? q(`appointees?select=id,name,light->>fy,light->>ly&light->>ttl=eq.${encodeURIComponent(p.ttl)}&light->off->0->>3=eq.${encodeURIComponent(agencyRaw)}&id=neq.${encodeURIComponent(id)}&order=ord.desc&limit=12`) : []]);
+  const latest = docs.map(x => x.d).filter(Boolean).sort().pop();
+  const docNote = docTitle ? (/divestiture/i.test(docTitle) ? ' received a certificate of divestiture from the Office of Government Ethics, which lets an official sell holdings that would create a conflict of interest and defer the capital gains tax' : ' received a conflict-of-interest waiver, which lets an official work on matters where they have a financial interest') : '';
+  const lead = docTitle ? `${r.name}, an official at the ${(agency || 'federal government').replace(/^the /i, '')},${docNote}.${docs.length ? ` ${num(docs.length)} filing${docs.length === 1 ? '' : 's'} with the Office of Government Ethics${latest ? `, most recently ${date(latest)}` : ''}.` : ''}` : `${r.name}${ttl ? `, ${ttl}` : ''}${agency ? ` at the ${agency.replace(/^the /i, '')}` : ''}${candidate ? ' (financial disclosures filed as a presidential candidate)' : ''}.${docs.length ? ` ${num(docs.length)} financial disclosure and ethics filing${docs.length === 1 ? '' : 's'} with the Office of Government Ethics${latest ? `, most recently ${date(latest)}` : ''}.` : ''}`;
+  const leadMore = `${v0 ? ` The Senate voted ${v0.y}–${v0.n != null ? v0.n : (v0.nn || 0)} on the nomination on ${date(v0.d)} (${v0.res || ''}).` : ''} ${bio && !bio.startsWith(r.name) ? bio : ''}`.trim();
+  const fullLead = (lead + ' ' + leadMore).replace(/\s+/g, ' ').trim();
+  const t = docTitle ? `${r.name}, ${agency || 'Federal Official'}: Ethics Filings` : `${r.name}: ${ttl}${agency && (ttl + agency).length < 52 ? ', ' + agency : ''}`;
   const body = `<h1>${esc(r.name)}</h1><p class="sr-sub">${esc(ttl)}${p.fy ? ` · ${p.fy}${p.ly && p.ly !== p.fy ? '–' + p.ly : ''}` : ''}</p>
-<p class="sr-lead">${esc(clamp(lead, 600))}</p>
-${sec('Positions', offices.length ? rows(offices.map(o => [esc(o[0]), esc([o[1], o[2]].filter(Boolean).join('–'))])) : '')}
+<p class="sr-lead">${esc(clamp(fullLead, 600))}</p>
+${facts([['Agency', agency || null], ['Ethics filings', docs.length ? num(docs.length) : null], ['Latest filing', latest ? date(latest) : null], ['Senate votes', votes.length ? num(votes.length) : null]])}
+${sec('Positions', offices.filter(o => !DOCT.test(String(o[0]).trim())).length ? rows(offices.filter(o => !DOCT.test(String(o[0]).trim())).map(o => [esc(L.tcase(o[0])) + (o[3] && !/candidate/i.test(o[3]) ? ` <small>${esc(o[3])}</small>` : ''), esc([o[1], o[2]].filter(Boolean).join('–'))])) : '')}
+${sec('Financial disclosure and ethics filings', docs.length ? rows(docs.map(x => [x.href ? a(x.href, x.label) : esc(x.label), esc(date(x.d))])) + '<p><small>Filed with the U.S. Office of Government Ethics. Form 278 reports list assets, income and debts; ethics agreements list what the official promised to sell or step away from.</small></p>' : '')}
+${sec(candidate ? 'Other presidential candidates' : `Others who held this post${agency ? ' at the ' + agency.replace(/^the /i, '') : ''}`, samePost.length ? cols(samePost.map(x => `${a(P('appointee', x.id, x.name), x.name)}${x.fy ? ` <small>${x.fy}${x.ly && x.ly !== x.fy ? '–' + x.ly : ''}</small>` : ''}`)) : '')}
+${sec(agency ? `More officials at the ${agency.replace(/^the /i, '')}` : '', peers.filter(x => !samePost.some(y => y.id === x.id)).length ? cols(peers.filter(x => !samePost.some(y => y.id === x.id)).map(x => `${a(P('appointee', x.id, x.name), x.name)}${x.ttl ? ` <small>${esc(clamp(L.tcase(x.ttl), 50))}</small>` : ''}`)) : '')}
 ${sec('Senate confirmation votes', votes.length ? rows(votes.map(v => [`${esc(v.pos || ttl)}<br><small>${esc(ord(v.c))} Congress · ${esc(v.res || '')}</small>`, `${v.y}–${v.n != null ? v.n : (v.nn || 0)} · ${esc(date(v.d))}`])) : '')}
 ${sec('Education', (p.edu || []).length ? rows(p.edu.map(e => Array.isArray(e) ? [esc(e[0]), esc([e[1], e[2]].filter(Boolean).join(', '))] : [esc(e), ''])) : '')}
 ${sec('Career', p.car ? (Array.isArray(p.car) ? rows(p.car.map(c => Array.isArray(c) ? [esc(c[0]), esc(c.slice(1).filter(Boolean).join(', '))] : [esc(c), ''])) : `<p>${esc(p.car)}</p>`) : '')}
@@ -146,7 +164,7 @@ ${sec('Biography', bio && p.wt ? `<p>${esc(bio)}</p><p><small>From ${a('https://
 ${sec('More', cols([a('/appointees', 'All appointees and nominees'), a(`${SITE}/appointees`, 'About appointee tracking')]))}
 ${note('From Senate roll call votes, Wikidata, Wikipedia and Office of Government Ethics records.')}`;
   return {
-    noindex: !r.indexable, title: title(t), desc: clamp(lead, 158), path: P('appointee', id, r.name), route: 'ha:' + id, ogType: 'profile',
+    noindex: !r.indexable, title: title(t), desc: clamp(fullLead, 158), path: P('appointee', id, r.name), route: 'ha:' + id, ogType: 'profile',
     crumbs: [['Appointees', L.abs('/appointees')], [r.name, null]],
     ld: [{ '@context': 'https://schema.org', '@type': 'Person', name: r.name, jobTitle: ttl, url: L.abs(P('appointee', id, r.name)), description: bio || undefined }],
     body,

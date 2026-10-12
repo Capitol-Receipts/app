@@ -8,12 +8,14 @@ const { billKeyFromCode, billLabel, distName } = H;
 const BURL = { hr: 'house-bill', s: 'senate-bill', hjres: 'house-joint-resolution', sjres: 'senate-joint-resolution' };
 
 /* ---------------- bill ---------------- */
-function stepsHtml(ty, ms, intro, la) {
-  ms = ms || {};
+// the 1947–2002 bills data uses Jan 1 when only the year is known
+const fuzzyDate = d => /-01-01$/.test(String(d)) ? String(d).slice(0, 4) : date(d);
+function stepsHtml(ty, ms, intro, la, law) {
+  ms = Object.assign({}, ms || {}); if (law && !ms.L) ms.L = '?';
   const sf = ty[0] === 's';
   const steps = [['Introduced', intro], [sf ? 'Passed the Senate' : 'Passed the House', sf ? ms.S : ms.H], [sf ? 'Passed the House' : 'Passed the Senate', sf ? ms.H : ms.S],
-    ['Sent to the President', ms.P], [ms.V && !ms.L ? 'Vetoed' : 'Became law', ms.L || ms.V]];
-  return rows(steps.map(([k, v]) => [esc(k), v ? (v === '?' ? 'Yes' : esc(date(v))) : '—'])) + (la && la[1] ? `<p>Latest action: ${esc(la[1])} (${esc(date(la[0]))})</p>` : '');
+    ['Sent to the President', ms.P || (ms.L ? '?' : '')], [ms.V && !ms.L ? 'Vetoed' : 'Became law', ms.L || ms.V]];
+  return rows(steps.map(([k, v]) => [esc(k), v ? (v === '?' ? 'Yes' : esc(fuzzyDate(v))) : '—'])) + (la && la[1] ? `<p>Latest action: ${esc(la[1])} (${esc(date(la[0]))})</p>` : '');
 }
 function billStatus(ms, law) {
   ms = ms || {};
@@ -28,7 +30,11 @@ async function bill(key) {
   const [ttl, short, spId, spn, intro, cos, cosp, pa, com, sum, ms, law, la, votes] = b;
   const c = r.congress, ty = r.bill_type, label = billLabel(key), name = short || ttl || label;
   const status = billStatus(ms, law);
-  const [n, meta, comms] = await Promise.all([names([spId]), c === 119 ? META(['lobbied_bills', 'lobby']) : {}, COMMITTEES()]);
+  const [n, meta, comms, rollVotes, spBills, topicBills, ctx] = await Promise.all([names([spId]), c === 119 ? META(['lobbied_bills', 'lobby']) : {}, COMMITTEES(),
+    q(`vote_index?select=key,chamber,voted_on,title&bill_key=eq.${encodeURIComponent(key)}&order=voted_on,key`),
+    spId ? q(`bills?select=key,title&congress=eq.${c}&light->>2=eq.${encodeURIComponent(spId)}&key=neq.${encodeURIComponent(key)}&order=became_law.nullslast,number&limit=10`) : [],
+    pa ? q(`bills?select=key,title&congress=eq.${c}&light->>7=eq.${encodeURIComponent(pa)}&key=neq.${encodeURIComponent(key)}&indexable=is.true&order=became_law.nullslast,number&limit=10`) : [],
+    L.context(c, intro)]);
   const lob = c === 119 && meta.lobbied_bills ? meta.lobbied_bills[ty.toUpperCase() + r.number] : null;
   const clients = lob && lob.top && lob.top.length ? await q(`lobby_clients?select=id,name&name=${inList(lob.top)}`) : [];
   const cid = Object.fromEntries(clients.map(x => [x.name, x.id]));
@@ -36,17 +42,20 @@ async function bill(key) {
     const hit = comms.rows.find(x => x.data.ch === ch && x.name.toLowerCase().replace(/^(house|senate) committee on /, '').replace(/^(house|senate) /, '') === s.replace(/^(house|senate) committee on /, '').replace(/^committee on /, ''));
     return hit; };
   const cs = ['D', 'R', 'I'].map(x => [x, (cosp || {})[x] || 0]).filter(x => x[1]);
-  const lead = `${label} in the ${ord(c)} Congress (${congYears(c)})${short && ttl && short !== ttl ? `, the ${short},` : ''} ${status === 'Introduced' ? 'was introduced' : status.toLowerCase().startsWith('became') ? 'became law' : 'has ' + status.toLowerCase().replace('passed', 'passed')}${intro ? ` ${status === 'Introduced' ? 'on' : '— introduced'} ${date(intro)}` : ''}${spn ? `, sponsored by ${n[spId] ? n[spId].name : spn}` : ''}${cos ? ` with ${num(cos)} co-sponsors` : ''}.`;
+  const lead = `${label} in the ${ord(c)} Congress (${congYears(c)})${short && ttl && short !== ttl ? `, the ${short},` : ''} ${status === 'Introduced' ? 'was introduced' : status.toLowerCase().startsWith('became') ? 'became law' : 'has ' + status.toLowerCase().replace('passed', 'passed')}${intro ? ` ${status === 'Introduced' ? '' : '— introduced '}${/-01-01$/.test(intro) ? 'in ' + intro.slice(0, 4) : 'on ' + date(intro)}` : ''}${spn ? `, sponsored by ${n[spId] ? n[spId].name : spn}` : ''}${cos ? ` with ${num(cos)} co-sponsors` : ''}.`;
   const t = `${label} (${ord(c)} Congress): ${name}`;
   const desc = clamp(`${lead} ${sum ? firstSentences(sum, 200) : ''}`, 158);
   const body = `<p class="sr-sub">${esc(label)} · ${ord(c)} Congress · ${congYears(c)}</p><h1>${esc(name)}</h1>
-<p class="sr-lead">${esc(lead)}</p>
-${facts([['Status', status], ['Introduced', intro ? date(intro) : null], ['Co-sponsors', cos != null ? num(cos) : null], ['Policy area', pa || null], ['Public law', law || null], ['Groups that lobbied', lob ? num(lob.n) : null]])}
+<p class="sr-lead">${esc(lead)}${rollVotes.length ? ` Congress held ${num(rollVotes.length)} roll call vote${rollVotes.length === 1 ? '' : 's'} on it.` : ''}</p>${ctx ? `<p>${esc(ctx)}</p>` : ''}
+${facts([['Status', status], ['Introduced', intro ? fuzzyDate(intro) : null], ['Co-sponsors', cos != null ? num(cos) : null], ['Policy area', pa || null], ['Public law', law && /\d/.test(law) ? law : null], ['Groups that lobbied', lob ? num(lob.n) : null]])}
 ${sec('What it does', sum ? `<p>${esc(sum)}</p><p><small>Summary by the nonpartisan Congressional Research Service.</small></p>` : '')}
 ${sec('Official title', short && ttl && short !== ttl ? `<p>${esc(ttl)}</p>` : '')}
 ${sec('Sponsor', spId || spn ? `<p>${spId && n[spId] ? personLink(n, spId) : esc(spn)}${cs.length ? `. Co-sponsors: ${cs.map(([p, k]) => `${k} ${PN[p]}${k > 1 ? 's' : ''}`).join(', ')}.` : ''}</p>` : '')}
-${sec('Where it stands', stepsHtml(ty, ms, intro, la))}
+${sec('Where it stands', stepsHtml(ty, ms, intro, la, law))}
 ${sec('How Congress voted', (votes || []).length ? rows(votes.map(v => [`${esc(v[5] || 'Vote')}<br><small>${v[0] === 'H' ? 'House' : 'Senate'} · ${esc(date(v[1]))}${v[4] ? ' · ' + esc(v[4]) : ''}</small>`, `${v[2]}–${v[3]}`])) : '')}
+${sec('Every roll call vote on this bill', rollVotes.length ? rows(rollVotes.map(v => [a(P('vote', v.key, v.title), clamp(unshout(v.title), 110)), `${v.chamber === 'S' ? 'Senate' : 'House'} · ${esc(date(v.voted_on))}`])) : '')}
+${sec(`More bills from ${spId && n[spId] ? n[spId].name : (spn || 'the sponsor')} in the ${ord(c)} Congress`, spBills.length ? rows(spBills.map(x => [a(P('bill', x.key, x.title), `${billLabel(x.key)}: ${clamp(x.title, 100)}`), ''])) : '')}
+${sec(`Other ${pa || ''} bills in the ${ord(c)} Congress`, topicBills.length ? rows(topicBills.map(x => [a(P('bill', x.key, x.title), `${billLabel(x.key)}: ${clamp(x.title, 100)}`), ''])) : '')}
 ${sec('Who lobbied on it', lob ? `<p>${num(lob.n)} organizations named this bill in lobbying reports (${esc((meta.lobby || {}).periods || '')}). Biggest spenders among them:</p>${cols(lob.top.map(x => cid[x] ? a(P('lobbying', cid[x], x), x) : esc(x)))}` : '')}
 ${sec('Committees', (com || []).length ? cols(com.map(x => { const h = commId(x); return h ? a(P('committee', h.id, h.name), x) : esc(x); })) : '')}
 ${sec('More', cols([a(`https://www.congress.gov/bill/${ord(c)}-congress/${BURL[ty] || ty}/${r.number}`, 'Full text and every action on Congress.gov'), a('/bills', 'Browse all bills')]))}
@@ -72,6 +81,15 @@ function cvRow(id) {
   CVC.set(id, { at: Date.now(), p }); if (CVC.size > 12) CVC.delete(CVC.keys().next().value);
   return p;
 }
+// old vote records are often ALL CAPS: show them in sentence case, keeping bill numbers and acronyms
+const ACRO = new Set('USA US TVA FHA NATO UN GI VA RFC OPA NLRB AEC FBI CIA NASA HUD EPA IRS SEC FCC ICC FTC AFL CIO WPA NRA REA SBA OEO HEW DC NY USSR UK OAS SEATO NSF FAA AMTRAK OMB GAO HMO ERA ABM SALT MX AIDS NAFTA GATT WTO IMF'.split(' '));
+const unshout = t => { t = String(t || ''); if (/[a-z]/.test(t) || !/[A-Z]{4}/.test(t)) return t;
+  const keep = new Set((t.match(/\b[A-Z]{2,6}\b/g) || []).filter(w => ACRO.has(w) || !/[AEIOUY]/.test(w)));
+  let out = t.toLowerCase().replace(/(^|[.!?]\s+)([a-z])/g, (m, p, c) => p + c.toUpperCase());
+  out = out.replace(/\b[a-z]{2,6}\b/gi, w => keep.has(w.toUpperCase()) ? w.toUpperCase() : w);
+  out = out.replace(/\b(h\.?\s?r|s|h\.?\s?j\.?\s?res|s\.?\s?j\.?\s?res|h\.?\s?res|s\.?\s?res|h\.?\s?con\.?\s?res|s\.?\s?con\.?\s?res)\.?\s?(\d+)/gi, m => m.toUpperCase());
+  return out.replace(/\b(ii|iii|iv|vi|vii|viii|ix)\b/gi, m => m.toUpperCase()).replace(/\bu\.\s?s\./gi, 'U.S.')
+    .replace(/\b(united states|congress|senate|house of representatives|president)\b/gi, w => w.replace(/\b[a-z]/g, c => c.toUpperCase())); };
 const VW = { Y: 'Yes', N: 'No', P: 'Present', '.': 'Did not vote' };
 async function vote(key) {
   let m = String(key).match(/^([HS])(\d+)$/); if (m) key = `119-${m[1]}-${m[2]}`; // short IDs from the current Congress
@@ -89,21 +107,35 @@ async function vote(key) {
     casts[v].push(mm);
     const pp = parties[mm[2]] = parties[mm[2]] || { Y: 0, N: 0, P: 0, '.': 0 }; pp[v]++;
   });
-  const what = descr || qn || 'Roll call vote';
-  const split = Object.entries(parties).filter(([, v]) => v.Y + v.N).sort((x, z) => (z[1].Y + z[1].N) - (x[1].Y + x[1].N)).map(([p, v]) => `${PN[p] || p}s ${v.Y}–${v.N}`).join(', ');
-  const lead = `On ${date(dt)}, the ${chamber} voted ${y}–${n} on “${qn}”${code ? ` (${code.replace(/^([A-Z]+)(\d+)$/, '$1 $2')})` : ''}. Result: ${res || (y > n ? 'passed' : 'failed')}.${split ? ` By party: ${split}.` : ''}`;
+  const what = unshout(descr || qn || 'Roll call vote');
+  // how each party voted as a bloc, and who broke from their own party's majority
+  const side = {}; Object.entries(parties).forEach(([p, v]) => { if (['D', 'R', 'I'].includes(p) && v.Y + v.N >= 5) side[p] = v.Y >= v.N ? 'Y' : 'N'; });
+  const crossed = [];
+  (d.m || []).forEach((mm, j) => { const v = ((d.v || [])[j] || '')[i]; if ((v === 'Y' || v === 'N') && side[mm[2]] && v !== side[mm[2]]) crossed.push([mm, v]); });
+  const cohesion = p => { const v = parties[p]; return v && v.Y + v.N ? Math.max(v.Y, v.N) / (v.Y + v.N) : null; };
+  let kind = '';
+  if (side.D && side.R) {
+    if (side.D !== side.R && cohesion('D') >= 0.9 && cohesion('R') >= 0.9) kind = 'a party-line vote: most Democrats and most Republicans voted on opposite sides';
+    else if (side.D === side.R) kind = `a bipartisan vote: majorities of both parties voted ${side.D === 'Y' ? 'yes' : 'no'}`;
+    else kind = 'a split vote: the parties took opposite sides, with some members crossing over';
+  }
+  const ctx = await L.context(c, dt);
+  const split = Object.entries(parties).filter(([, v]) => v.Y + v.N).sort((x, z) => (z[1].Y + z[1].N) - (x[1].Y + x[1].N)).map(([p, v]) => `${PN[p] ? PN[p] + 's' : 'Others'} ${v.Y}–${v.N}`).join(', ');
+  const lead0 = `On ${date(dt)}, the ${chamber} voted ${y}–${n}${qn ? ` on “${unshout(qn)}”` : ''}${code ? ` (${code.replace(/^([A-Z]+)(\d+)$/, '$1 $2')})` : ''}. Result: ${res || (y > n ? 'passed' : 'failed')}.${split ? ` By party: ${split}.` : ''}`;
+  const lead = lead0 + (kind ? ` It was ${kind}.` : '') + (crossed.length ? ` ${num(crossed.length)} member${crossed.length === 1 ? '' : 's'} voted against their own party.` : '');
   const ml = mm => `${a(P(by[mm[0]] ? 'member' : 'past-member', mm[0], mm[1]), mm[1])} <small>${esc(mm[2] || '')}-${esc(mm[3] || '')}</small>`;
   const prev = d.rc[i - 1], next = d.rc[i + 1];
   const body = `<p class="sr-sub">${chamber} roll call ${roll} · ${ord(c)} Congress · ${esc(date(dt))}</p><h1>${esc(clamp(what, 180))}</h1>
-<p class="sr-lead">${esc(lead)}</p>
+<p class="sr-lead">${esc(lead)}</p>${ctx ? `<p>${esc(ctx)}</p>` : ''}
 ${facts([['Result', res || null], ['Yes', num(y)], ['No', num(n)], ['Did not vote', casts['.'].length ? num(casts['.'].length) : null], ['Date', date(dt)]])}
-${sec('By party', rows(Object.entries(parties).filter(([, v]) => v.Y + v.N + v.P).map(([p, v]) => [esc(PN[p] || p) + 's', `${v.Y} yes · ${v.N} no${v['.'] ? ` · ${v['.']} didn’t vote` : ''}`])))}
+${sec('By party', rows(Object.entries(parties).filter(([, v]) => v.Y + v.N + v.P).map(([p, v]) => [esc(PN[p] ? PN[p] + 's' : 'Others'), `${v.Y} yes · ${v.N} no${v['.'] ? ` · ${v['.']} didn’t vote` : ''}`])))}
+${sec('Who broke with their party', crossed.length ? cols(crossed.slice(0, 80).map(([mm, v]) => `${ml(mm)} <small>voted ${v === 'Y' ? 'yes' : 'no'}</small>`)) + (crossed.length > 80 ? `<p>And ${num(crossed.length - 80)} more.</p>` : '') : (side.D && side.R ? `<p>Every member who voted sided with their party's majority.</p>` : ''))}
 ${sec('The bill', bill ? `<p>${a(P('bill', bill.key, bill.title), `${billLabel(bill.key)}: ${bill.title}`)}</p>` : '')}
 ${sec(`How each ${who} voted: Yes`, cols(casts.Y.map(ml)))}${sec(`How each ${who} voted: No`, cols(casts.N.map(ml)))}
 ${sec('Voted present', cols(casts.P.map(ml)))}${sec('Did not vote', cols(casts['.'].map(ml)))}
 ${sec('Other votes', cols([prev ? a(P('vote', `${c}-${ch}-${prev[0]}`, prev[7] || prev[3]), `Previous: ${clamp(prev[7] || prev[3], 80)}`) : '', next ? a(P('vote', `${c}-${ch}-${next[0]}`, next[7] || next[3]), `Next: ${clamp(next[7] || next[3], 80)}`) : '', a('/votes', 'All votes in Congress')].filter(Boolean)))}
 ${note('From Voteview roll call records.')}`;
-  return { noindex: c < 93, title: title(`${clamp(what, 46)}: ${chamber} Vote, ${date(dt)}`), desc: clamp(lead + ` See how every ${who} voted.`, 158), path: P('vote', key, what), route: 'vote:' + key, ogType: 'article',
+  return { noindex: c < 93 && String(descr || qn || '').length < 25, title: title(`${clamp(what, 46)}: ${chamber} Vote, ${date(dt)}`), desc: clamp(lead + ` See how every ${who} voted.`, 158), path: P('vote', key, what), route: 'vote:' + key, ogType: 'article',
     crumbs: [['Votes', L.abs('/votes')], [`${chamber} vote ${roll} (${c}th Congress)`.replace(/(\d+)th Congress/, (x, k) => ord(+k) + ' Congress'), null]],
     ld: [{ '@context': 'https://schema.org', '@type': 'Event', name: `${chamber} vote: ${clamp(what, 100)}`, startDate: dt, eventStatus: 'https://schema.org/EventScheduled',
       location: { '@type': 'Place', name: `U.S. ${chamber}`, address: 'Washington, DC' }, description: lead }],
@@ -340,4 +372,4 @@ ${sec('More', cols([a(P('state', st, ST[st]), `All of ${ST[st]}'s members of Con
     ld: [{ '@context': 'https://schema.org', '@type': 'AdministrativeArea', name: `${name} (${code})`, containedInPlace: { '@type': 'State', name: ST[st] } }], body };
 }
 
-module.exports = { bill, vote, pac, lobbying, lobbyingFirm, company, committee, caucus, race, outsideGroup, ethics, state, district, raceName, billStatus };
+module.exports = { unshout, bill, vote, pac, lobbying, lobbyingFirm, company, committee, caucus, race, outsideGroup, ethics, state, district, raceName, billStatus };

@@ -69,7 +69,7 @@ const HUBS = {
     const r = await paged('vote_index', 'key,chamber,voted_on,title,congress', 'congress.desc,chamber.desc,roll.desc', page);
     return hub({ path: '/votes', page, pages: r.pages, h1: 'Every vote in Congress', sub: `${num(r.total)} recorded House and Senate votes since 1789, newest first`,
       title: 'Every Vote in Congress since 1789: How Each Member Voted', desc: 'Every recorded House and Senate roll call vote since 1789: what was voted on, the result, the party split and how each member voted.',
-      body: rows(r.rows.map(v => [a(P('vote', v.key, v.title), clamp(v.title, 120)), `${v.chamber === 'S' ? 'Senate' : 'House'} · ${esc(date(v.voted_on))}`])) });
+      body: rows(r.rows.map(v => [a(P('vote', v.key, v.title), clamp(R.unshout(v.title), 120)), `${v.chamber === 'S' ? 'Senate' : 'House'} · ${esc(date(v.voted_on))}`])) });
   },
   async pacs(page) {
     const r = await paged('pacs', 'id,name,light->>fn,category,total', 'total.desc.nullslast', page);
