@@ -103,32 +103,60 @@ async function setZip(v){
   if(msg)msg.textContent='';
   if(!r){if(msg)msg.textContent='We couldn’t find that ZIP code. Check it, or pick your state below.';return}
   S.home=r.st;S.dist=r.d;S.zip=v;S.zipApprox=!!r.approx;store.set('home',S.home);store.set('dist',S.dist);store.set('zip',S.zip);
-  if(S.tab==='home'||S.tab==='following'){render()}
+  if(['home','following','search'].includes(S.tab)){render()}
 }
 document.addEventListener('click',e=>{if(e.target.closest('[data-zipgo]')){const v=($('#zip')?.value||'').replace(/\D/g,'');if(v.length===5)setZip(v);else{const msg=$('#zipmsg');if(msg)msg.textContent='Enter all 5 digits of your ZIP code.'}}});
-function home(){
+/* ---------- ZIP lookup (lives on the Search page and My Reps) ---------- */
+function zipSection(){
   const mine=myReps();
+  if(!mine.length)return `<section class="sec">${repPicker(false)}</section>`;
+  return `<section class="sec"><div class="sh"><h2>Your representatives</h2><button data-zipclear>Change</button></div><div class="repwhere">${repWhere()}</div><div class="reps">${mine.map(m=>`<button class="rep" data-p="${m.id}">${face(m,64)}<span class="rn">${esc(m.last)}</span><span class="rs">${m.chamber==='Senate'?'Senator':'House · '+(distOf(m)?'District '+distOf(m):'At-large')}</span></button>`).join('')}</div></section>`;
+}
+document.addEventListener('click',e=>{if(!e.target.closest('[data-zipclear]'))return;e.stopImmediatePropagation();S.home='';S.dist=null;S.zip='';store.set('home','');store.set('dist',null);store.set('zip','');render();setTimeout(()=>$('#zip')?.focus(),30)},true);
+
+/* ---------- home: an overview dashboard ---------- */
+function dashStats(){
+  const voting=MEM.filter(m=>!m.delegate);
+  const sum=f=>MEM.reduce((a,m)=>a+(f(m)||0),0);
+  const traders=MEM.filter(m=>m.tradeN).length;
+  const sen=voting.filter(m=>m.chamber==='Senate').length,hou=voting.filter(m=>m.chamber==='House').length;
+  const laws=typeof H!=='undefined'&&H?Object.entries(H.bills).filter(([k,b])=>k.startsWith('119-')&&b[10]&&b[10].L).length:null;
+  const GG=typeof G!=='undefined'?G:null;
+  const spend=GG?Object.values(GG.clients).reduce((a,c)=>a+(c.spend||0),0):null;
+  const tiles=[
+    ['f:Congress','Members of Congress',ord(voting.length),`${sen} senators · ${hou} House`],
+    ['rank:raised','Raised for 2026',M(sum(m=>m.money?.rec)),'by current members'],
+    ['rank:trades','Stock trades',ord(sum(m=>m.tradeN)),`by ${traders} members since Jan 2025`],
+    ['rank:comm','Trades tied to committees',ord(sum(m=>m.commTrades)),'in industries they oversee'],
+    ['lobbying:groups','Spent on lobbying',spend==null?'—':M(spend),GG?`by ${ord(Object.keys(GG.clients).length)} groups since Jul 2025`:'Loading…'],
+    ['rank:rev','Ex-staff now lobbyists',ord(sum(m=>m.revN)),'people who worked for members'],
+    ['bills:new','New laws',laws==null?'—':ord(laws),'this Congress (2025–26)'],
+    ['ncat:All','Appointees confirmed',ord(NOM.length),'by the Senate since Jan 2025'],
+  ];
+  return `<section class="sec dash"><div class="sh"><h2>Congress at a glance</h2><span class="asof2">Updated ${fmtISO(DATA.asOf.votes)}</span></div>
+   <div class="dstats">${tiles.map(([go,k,v,sub])=>`<button class="dstat" data-go="${go}"><span class="dk">${k}</span><b class="dv">${v}</b><span class="ds">${sub}</span></button>`).join('')}</div></section>`;
+}
+function home(){
   const st=homeStories();
-  const bills=Object.entries(DATA.bills).sort((a,b)=>b[1].n-a[1].n).slice(0,3);
-  const feed=FEEDTOP.slice(0,5);
+  const bills=Object.entries(DATA.bills).sort((a,b)=>b[1].n-a[1].n).slice(0,5);
+  const feed=FEEDTOP.slice(0,6);
   return `<div class="wrap home">
    <div class="homehero bg-capfull"><header class="brandbar"><div class="logo"><span>Capitol</span>Receipts</div><span class="asof">Updated ${fmtISO(DATA.asOf.votes)}</span></header>
    <h1 class="hello">Who's in Congress, who pays them, and how they vote.</h1><button class="langbtn notr" data-lang="${S.lang==='es'?'en':'es'}">${S.lang==='es'?'English':'Español'}</button></div>
-   <button class="fakesearch" data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search any lawmaker or appointee</button>
-   ${mine.length?`<section class="sec"><div class="sh"><h2>Your representatives</h2><button data-tab="following">Change</button></div><div class="repwhere">${repWhere()}</div><div class="reps">${mine.map(m=>`<button class="rep" data-p="${m.id}">${face(m,64)}<span class="rn">${esc(m.last)}</span><span class="rs">${m.chamber==='Senate'?'Senator':'House · '+(distOf(m)?'District '+distOf(m):'At-large')}</span></button>`).join('')}</div></section>`
-    :`<section class="sec">${repPicker(false)}</section>`}
+   <button class="fakesearch" data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search any lawmaker, bill or group</button>
+   ${dashStats()}
    ${typeof weekDigest==='function'?weekDigest():''}
+   <section class="sec"><div class="sh"><h2>Just in</h2><button data-feed>See all</button></div><div class="group">${feed.map(feedRow).join('')}</div></section>
+   <section class="sec"><div class="sh"><h2>The parties</h2><button data-compare>Compare</button></div><div class="ptiles">${['D','R','I'].map(p=>{const s=partyStats(p);return `<button class="ptile p-${p}" data-party-page="${p}"><span class="pbadge sm">${p}</span><b>${s.n}</b><span>${PARTYNAME[p]}</span><em>avg ${M(s.raised)} raised</em></button>`}).join('')}</div></section>
+   <section class="sec"><div class="sh"><h2>Rankings</h2><button data-tab="search">All</button></div>
+    <div class="rgrid">${[['trades','stocks','Stock traders'],['comm','stocks','Trades tied to committees'],['missed','votes','Missed votes'],['breaks','votes','Party rebels'],['raised','money','Top fundraisers'],['small','money','Small-donor backed'],['pac','money','PAC-funded'],['rev','influence','Ex-staff lobbying']].map(([k,c,l])=>`<button class="rk c-${c}" data-rank="${k}">${CAT[c].icon}<span>${l}</span></button>`).join('')}</div></section>
    <section class="sec"><div class="sh"><h2>Stories from the data</h2></div>
     <div class="carousel">${st.map(s=>`<button class="hcard c-${s.cat}" ${s.m?`data-p="${s.m.id}"`:`data-n="${s.n.id}"`}>
       <div class="sk">${CAT[s.cat].icon}<span>${s.kick}</span></div>
       <div class="sbig ${s.small?'sm':''}">${esc(String(s.big))}</div><p>${esc(s.text)}</p>
       <div class="who">${s.m?face(s.m,40):nomFace(s.n,40)}<span><b>${esc(s.m?s.m.name:s.n.name)}</b><br><span>${esc(s.m?partyLine(s.m):s.n.pos)}</span></span></div></button>`).join('')}</div></section>
+   <section class="sec"><div class="sh"><h2>Most-lobbied bills</h2><button data-go="bills:lobbied">See all</button></div><div class="group">${bills.map(([b,x])=>{const r=Object.values(DATA.rc).find(r=>billKey(r.b)===b&&r.s);return `<button class="row plain" data-bill="${b}" style="grid-template-columns:1fr auto auto"><span style="min-width:0"><span class="t clamp">${esc(r?.s||billName(b))}</span><span class="s">${billName(b)}</span></span><span class="val">${ord(x.n)}<small> groups</small></span>${chev}</button>`}).join('')}</div></section>
    ${archiveCarousel()}
-   <section class="sec"><div class="sh"><h2>The parties</h2><button data-compare>Compare</button></div><div class="ptiles">${['D','R','I'].map(p=>{const s=partyStats(p);return `<button class="ptile p-${p}" data-party-page="${p}"><span class="pbadge sm">${p}</span><b>${s.n}</b><span>${PARTYNAME[p]}</span><em>avg ${M(s.raised)} raised</em></button>`}).join('')}</div></section>
-   <section class="sec"><div class="sh"><h2>Rankings</h2><button data-tab="search">All</button></div>
-    <div class="rgrid">${[['trades','stocks','Stock traders'],['comm','stocks','Trades tied to committees'],['missed','votes','Missed votes'],['breaks','votes','Party rebels'],['raised','money','Top fundraisers'],['small','money','Small-donor backed'],['pac','money','PAC-funded'],['rev','influence','Ex-staff lobbying']].map(([k,c,l])=>`<button class="rk c-${c}" data-rank="${k}">${CAT[c].icon}<span>${l}</span></button>`).join('')}</div></section>
-   <section class="sec"><div class="sh"><h2>Most-lobbied bills</h2></div><div class="group">${bills.map(([b,x])=>{const r=Object.values(DATA.rc).find(r=>billKey(r.b)===b&&r.s);return `<button class="row plain" data-bill="${b}" style="grid-template-columns:1fr auto auto"><span style="min-width:0"><span class="t clamp">${esc(r?.s||billName(b))}</span><span class="s">${billName(b)}</span></span><span class="val">${ord(x.n)}<small> groups</small></span>${chev}</button>`}).join('')}</div></section>
-   <section class="sec"><div class="sh"><h2>Just in</h2><button data-feed>See all</button></div><div class="group">${feed.map(feedRow).join('')}</div></section>
   </div>`;
 }
 const feedRow=f=>{const m=byId[f.id],n=nomById[f.id];return `<button class="row feedrow" ${f.kind==='nom'?`data-n="${f.id}"`:`data-p="${f.id}"`}>${m?face(m,40):n?nomFace(n,40):''}<span style="min-width:0"><span class="t">${f.txt}</span><br><span class="s">${fmtISO(f.d)}</span></span>${chev}</button>`};

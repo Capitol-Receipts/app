@@ -83,9 +83,9 @@ render=function(){hideGloss();_render5();try{placePlain()}catch(e){console.warn(
 const _openSheet2=openSheet;
 openSheet=function(t,h){hideGloss();_openSheet2(t,h);try{if(S.lang!=='es')glossify($('#panel'))}catch(e){console.warn(e)}};
 
-/* ================= "In plain English" summaries at the top of profiles ================= */
+/* ================= "The short version" summaries at the top of profiles ================= */
 const PADJ={D:'Democratic',R:'Republican',I:'independent'};
-const plainCard=txt=>txt?`<section class="pe-card"><div class="pe-h">In plain English</div><p>${txt}</p></section>`:'';
+const plainCard=txt=>txt?`<section class="pe-card"><div class="pe-h">The short version</div><p>${txt}</p></section>`:'';
 function plainMember(m){
   try{
     const P=POOL[m.chamber],peers=m.chamber==='Senate'?'senators':'House members',c=(typeof HC!=='undefined'&&HC[m.id])||null,L=esc(m.last),out=[];

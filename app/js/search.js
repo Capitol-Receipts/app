@@ -22,6 +22,7 @@ function discover(){
   const st=S.home?MEM.filter(m=>m.state===S.home).slice(0,8):[];
   const tries=['Pelosi','Texas','H.R. 1','Pfizer','Agriculture','Cuellar','Lincoln','Realtors'];
   return `<div class="lbanner bg-old" style="margin-top:14px"><h1>236 years of public records</h1><span>Every member since 1789, every bill since 1947, and who pays to lobby them.</span></div>
+   ${zipSection()}
    ${RECENT.length?`<section class="sec"><div class="sh"><h2>Recent</h2><button data-rclear>Clear</button></div><div class="tries">${RECENT.map(r=>`<button data-try="${esc(r)}">${SI.clock}${esc(r)}</button>`).join('')}</div></section>`:''}
    <section class="sec"><div class="sh"><h2>Browse</h2></div><div class="bgrid">
     ${tile('data-f="Senate"','senate','Senators',`${sen} in office`,'t-blue')}
@@ -34,7 +35,6 @@ function discover(){
     ${tile('data-f="History"','clock','History',H?`${ord(PASTS.length+APPS.length)} people`:'Since 1789','t-ink')}
    </div></section>
    <section class="sec"><div class="sh"><h2>By party</h2><button data-compare>Compare</button></div><div class="ptiles">${['D','R','I'].map(p=>{const s=partyStats(p);return `<button class="ptile p-${p}" data-party-page="${p}"><span class="pbadge sm">${p}</span><b>${s.n}</b><span>${PARTYNAME[p]}</span></button>`}).join('')}</div></section>
-   ${st.length?`<section class="sec"><div class="sh"><h2>${ST[S.home]}</h2></div><div class="reps">${st.map(m=>`<button class="rep" data-p="${m.id}">${face(m,60)}<span class="rn">${esc(m.last)}</span><span class="rs">${m.chamber==='Senate'?'Senator':'District '+(m.district||'AL')}</span></button>`).join('')}</div></section>`:''}
    <section class="sec"><div class="sh"><h2>Leaderboards</h2></div><div class="rgrid">${[['trades','stocks','Stock traders'],['comm','stocks','Trades tied to committees'],['missed','votes','Missed votes'],['breaks','votes','Party rebels'],['raised','money','Top fundraisers'],['small','money','Small-donor backed'],['pac','money','PAC-funded'],['rev','influence','Ex-staff lobbying']].map(([k,c,l])=>`<button class="rk c-${c}" data-rank="${k}">${CAT[c].icon}<span>${l}</span></button>`).join('')}</div></section>
    <section class="sec"><div class="sh"><h2>Try searching</h2></div><div class="tries">${tries.map(t=>`<button data-try="${t}">${SI.search}${t}</button>`).join('')}</div></section>`;
 }
