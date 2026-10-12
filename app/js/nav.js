@@ -33,7 +33,7 @@ function drawerHtml(){
     <button class="ditem big" data-go="home">${NAVI.home}<span>Home</span></button>
     <button class="ditem big" data-go="following">${NAVI.star}<span>My reps & following</span>${mine.length?`<em>${ST[S.home]}</em>`:''}</button>
    </div>
-   ${cur?pageIndex():''}
+   
    ${navGroup('congress',NAVI.cap,'Congress today',[['f:Congress','Everyone in Congress','539'],['f:Senate','Senators'],['f:House','House members'],['party:D','Democrats'],['party:R','Republicans'],['party:I','Independents'],['compare','Compare the parties']])}
    ${navGroup('rank',NAVI.chart,'Rankings',[['rank:trades','Most stock trades'],['rank:comm','Trades tied to their committees'],['rank:missed','Most votes missed'],['rank:breaks','Breaks with party most'],['rank:raised','Biggest fundraisers'],['rank:small','Most small-donor money'],['rank:pac','Most PAC money'],['rank:rev','Most ex-staff lobbying']])}
    ${navGroup('bills',NAVI.doc,'Bills & laws',[['bills:lobbied','Most-lobbied bills'],['bills:new','New laws this Congress'],['bills:laws','Every law since 1947'],['bills:veto','Vetoed bills'],['bills:search','Find a bill']])}
