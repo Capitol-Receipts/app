@@ -15,7 +15,7 @@ function railMenu(){
 }
 /* Only content sections go into columns; headers, controls and wide carousels stay full width,
    so a page reads in order: [full] [two columns] [full] [two columns] ... */
-const COL_OK=e=>(e.matches('section.sec,div.sec,section.pe-card'))&&!e.querySelector('.carousel,.chipsrow,.seg,.sortbar')&&!e.matches('.rsec,.dash');
+const COL_OK=e=>(e.matches('section.sec,div.sec,section.pe-card'))&&!e.querySelector('.carousel,.chipsrow,.seg,.sortbar')&&!e.matches('.rsec,.dash,.wide');
 function twoColumns(){
   document.body.classList.remove('two');
   const w=document.querySelector('#app > .wrap');if(!w)return;
