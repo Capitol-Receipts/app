@@ -1,0 +1,63 @@
+/* ================= Tablet and desktop layout ================= */
+.tabbar .raillogo,.railfoot{display:none}
+
+/* tablets: wider single column, centered pop-ups */
+@media (min-width:760px){
+  .wrap{max-width:720px;padding-left:24px;padding-right:24px}
+  .pnav .in,.phero .in,.tabbar .in{max-width:720px}
+  .homehero,.shead{margin-left:-24px;margin-right:-24px;padding-left:24px;padding-right:24px}
+  .scopes{margin-left:-24px;margin-right:-24px;padding-left:24px;padding-right:24px}
+  .sheet{align-items:center;padding:24px}
+  .panel{max-width:640px;max-height:86vh;border-radius:22px;padding-bottom:28px;box-shadow:0 30px 80px rgba(0,0,0,.3)}
+  .hcard{flex-basis:46%}
+}
+
+/* desktop: side navigation instead of the bottom bar */
+@media (min-width:1024px){
+  :root{--rail:244px}
+  body{padding-left:var(--rail)}
+  .tabbar{top:0;right:auto;bottom:0;width:var(--rail);border-top:0;border-right:1px solid var(--hair);padding:0;display:flex;flex-direction:column;background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}
+  .tabbar .raillogo{display:block;margin:22px 22px 18px;border:0;border-radius:0;background:none;padding:0;cursor:pointer;text-align:left;font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;color:var(--ink)}
+  .tabbar .raillogo:hover{background:none}
+  .raillogo span{background:#c8323a;color:#fff;padding:1px 7px 2px;border-radius:5px;margin-right:3px}
+  .tabbar .in{height:auto;max-width:none;margin:0;display:flex;flex-direction:column;gap:4px;padding:0 12px}
+  .tabbar button{flex-direction:row;justify-content:flex-start;gap:14px;font-size:16px;font-weight:600;padding:12px 14px;border-radius:12px;color:var(--ink2);text-align:left}
+  .tabbar button:hover{background:var(--seg)}
+  .tabbar button[aria-current="page"]{background:var(--seg);color:var(--ink)}
+  .tabbar svg{width:22px;height:22px;flex:0 0 auto}
+  .railfoot{display:block;margin-top:auto;padding:18px 24px 22px;font-size:13px;line-height:1.5;color:var(--soft)}
+  .railfoot a{color:var(--soft)}
+
+  .wrap{max-width:820px;padding:0 32px 64px}
+  .pnav{left:var(--rail)}
+  .pnav .in,.phero .in{max-width:820px}
+  .phero .in{padding-left:32px;padding-right:32px}
+  .homehero{margin:20px 0 0;border-radius:28px;padding:22px 30px 36px}
+  .homehero .hello{font-size:44px;margin-top:64px;max-width:18ch}
+  .shead{margin-left:-32px;margin-right:-32px;padding-left:32px;padding-right:32px}
+  .scopes{margin:12px 0 0;padding:0;flex-wrap:wrap;overflow:visible}
+  .lhero,.lbanner{min-height:190px;padding:26px}
+  .lhero h1,.lbanner h1{font-size:40px}
+  .hamb,.wrap [data-menu],.pnav [data-menu]{display:none}
+  .dcol .carousel,.dcol .rjump{margin-left:0;margin-right:0;padding-left:0;padding-right:0}
+  #gloss{left:var(--rail);bottom:24px}
+  .drawer .dpanel{width:340px}
+  /* pointer feedback */
+  .row:hover,.group>button:hover,.group>a:hover{background:var(--seg)}
+  .fakesearch:hover,.hcard:hover{filter:brightness(.98)}
+  :focus-visible{outline:3px solid #2557a8;outline-offset:2px}
+}
+
+/* wide screens: two balanced columns of sections */
+@media (min-width:1180px){
+  .wrap.two{max-width:1180px}
+  body.two .pnav .in,body.two .phero .in{max-width:1180px}
+  .dcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 28px;align-items:start}
+  .dcol{min-width:0}
+  .dcol>.pe-card:first-child{margin-top:28px}
+  .hcard{flex-basis:44%}
+}
+@media (min-width:1500px){
+  .wrap.two{max-width:1280px}
+  body.two .pnav .in,body.two .phero .in{max-width:1280px}
+}

@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Schibsted+Grotesk:wght@500;600;700;800&display=swap">
 <link rel="stylesheet" href="/app/css/style.css">
 <link rel="stylesheet" href="/app/css/friendly.css">
+<link rel="stylesheet" href="/app/css/desktop.css">
 <link rel="stylesheet" href="/app/css/hdr.css" media="print" onload="this.media='all'">
 <style>
   .boot{min-height:70vh;display:grid;place-items:center;text-align:center;padding:24px;font-family:"Schibsted Grotesk",system-ui,sans-serif;color:var(--soft,#5b6069)}
@@ -43,7 +44,7 @@ SB.all=async(path,size=1000)=>{let out=[],from=0;for(;;){const rows=await SB.req
 SB.rpc=(fn,args)=>SB.req('rpc/'+fn,{method:'POST',body:JSON.stringify(args||{})});
 SB.meta=async keys=>Object.fromEntries((await SB.get('app_meta?select=key,value&key=in.('+keys.join(',')+')')).map(r=>[r.key,r.value]));
 
-const APP_SCRIPTS=['core','party','hist','ui','nav','pages','search','leaders','linkify','pacs','friendly','glossary_es','es_dict','i18n','db'];
+const APP_SCRIPTS=['core','party','hist','ui','nav','pages','search','leaders','linkify','pacs','friendly','glossary_es','es_dict','i18n','db','desktop'];
 async function boot(){
   const msg=document.getElementById('bootmsg');
   try{
