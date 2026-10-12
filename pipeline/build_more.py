@@ -128,7 +128,14 @@ if os.path.exists(p('ptr_ocr.json')) and os.path.exists(p('ptr_parsed.json')):
         bg = find(r['last'], r.get('first'), sd[:2], 'rep', d)
         if not bg: continue
         url = f"https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/{r['year']}/{doc}.pdf"
-        X[bg].setdefault('paper', []).extend([[d_, o, a, url] for d_, o, a in rows])
+        for d_, o, a in rows:
+            m = re.match(r'^[\W_]*(sp|jt|dc|oc|op)[\W_]+', a, re.I)
+            if m and not o: o = {'sp': 'Spouse', 'jt': 'Joint', 'dc': 'Child'}.get(m.group(1).lower(), '')
+            a = re.sub(r'^[\W_]*(?:(?:sp|jt|dc|oc|op)\b[\W_]*)?', '', a, flags=re.I)
+            a = re.sub(r'(\s+[xX]\b.*|[\s=%:;|\]\[}{_]+[A-Z0-9]?)$', '', a).strip(' .,-_[]|')
+            a = re.sub(r'\s+CMN$', '', a)
+            if len(re.findall(r'[A-Za-z]{3,}', a)) < 1 or len(a) < 4 or re.fullmatch(r'(?i)class\s?a|corp', a): continue
+            X[bg].setdefault('paper', []).append([d_, o, a, url])
 
 with gzip.open(os.path.join(OUT, 'member_extras.jsonl.gz'), 'wt', encoding='utf-8') as fh:
     for bg, x in X.items():
@@ -157,18 +164,25 @@ for f, (name, lean) in CAUC.items():
     fp = p('wiki', f + '.txt')
     if not os.path.exists(fp): continue
     t = open(fp, encoding='utf-8').read()
-    m = re.search(r'\n==+\s*(Current members(hip)?[^=]*|Membership|Current membership[^=]*)\s*==+\n', t)
-    if not m: continue
-    body = t[m.end():]
-    stop = re.search(r'\n==\s*[^=\n]+==\s*\n', body)
-    while stop and re.match(r'\n==\s*(Current|House|Senate|Members|Membership|Executive|Associate|Leadership)', body[stop.start():stop.start() + 40], re.I):
-        nxt = re.search(r'\n==\s*[^=\n]+==\s*\n', body[stop.end():])
-        stop = None if not nxt else type('m', (), {'start': (lambda s=stop.end() + nxt.start(): s)})()
-    body = body[:stop.start()] if stop else body
-    body = re.split(r'\n===?\s*(Former|Past)[^=\n]*===?\s*\n', body)[0]
+    # pick the member-list sections: headings saying "current" win; otherwise membership / house / senate member lists
+    heads = [(h.start(), h.end(), len(h.group(1)), h.group(2).strip()) for h in re.finditer(r'\n(=={1,3})\s*([^=\n]+?)\s*=={1,3}\s*\n', t)]
+    def section(i):
+        st, en, lvl, _ = heads[i]
+        nxt = next((h[0] for h in heads[i + 1:] if h[2] <= lvl), len(t))
+        return t[en:nxt]
+    bad = re.compile(r'former|past|prominent|non-|history|chair|leader|see also|reference|note|election|caucus members who', re.I)
+    cur = [i for i, h in enumerate(heads) if re.search(r'current', h[3], re.I) and not bad.search(h[3])]
+    pick = cur or [i for i, h in enumerate(heads) if re.search(r'^(membership|members|house members|senate members|representatives|senators)$', h[3], re.I)]
+    body = ''
+    for i in pick:
+        sec = section(i)
+        # drop any former-member subsections inside
+        sec = re.split(r'\n===+\s*[^=\n]*(former|past|prominent)[^=\n]*===+\s*\n', sec, flags=re.I)[0]
+        body += sec
+    if not body: continue
     ids = []
-    for lm in re.finditer(r'\[\[([^\]|#]+)(?:\|([^\]]+))?\]\]', body):
-        bg = link_member(lm.group(1), lm.group(2))
+    for lm in re.finditer(r'\[\[([^\]|#]+)(?:\|([^\]]+))?\]\]|\{\{\s*sortname\s*\|([^|}]+)\|([^|}]+)', body, re.I):
+        bg = link_member(lm.group(1), lm.group(2)) if lm.group(1) else link_member(None, lm.group(3).strip() + ' ' + lm.group(4).strip())
         if bg and bg not in ids: ids.append(bg)
     if len(ids) >= 8: caucuses.append({'id': f.lower().replace('_', '-'), 'name': name, 'lean': lean, 'members': ids})
 # voting cohesion from this Congress's roll calls

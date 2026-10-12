@@ -40,7 +40,7 @@ function companyPage(id){
     c.pacT?`Its PAC has given ${M(c.pacT)} to members of Congress since 1980, ${lean}.`:'',
     traders?`${traders} current member${traders>1?'s':''} of Congress reported ${ord(c.trN)} trade${c.trN>1?'s':''} in its stock since January 2025${c.trTied?`, ${c.trTied} by members whose committees oversee its industry`:''}.`:'',
     gov?`It received ${M(gov.amt)} in federal contracts and grants in the last two fiscal years.`:''
-  ].filter(Boolean).join(' ');
+  ].filter(Boolean).map(x=>`<span>${x}</span>`).join(' ');
   const trRows=c.tr.slice(0,S.rlimit||12).map(([bg,n,lo,hi,last,tied])=>{const m=byId[bg];if(!m)return '';return `<button class="row" data-p="${bg}" style="grid-template-columns:auto 1fr auto auto">${face(m,40)}<span style="min-width:0"><span class="t">${esc(m.name)}</span><br><span class="s">${esc(partyLine(m))}${tied?' · <b class="dn">its committee oversees this industry</b>':''}</span></span><span class="val">${n} trade${n>1?'s':''}<small> ${M(lo)}–${M(hi)}</small></span>${chev}</button>`}).join('');
   const pacRows=(c.pacTop||[]).map(([bg,amt])=>typeof personRowPac==='function'?personRowPac(bg,M(amt)):'').join('');
   return `${pageHead(c.n)}

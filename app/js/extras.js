@@ -33,7 +33,7 @@ function extrasSections(m){
   }
   if(x.ld203&&x.ld203.t){
     const l=x.ld203;
-    out.push(`<section class="sec" data-x="ld203"><div class="sh"><h2>Donations from lobbyists</h2></div><div class="group pad"><div class="bigline"><b>${M(l.t)}</b><span>from ${l.n} gifts by registered lobbyists and lobbying firms, 2025–26</span></div>${hbars(l.by.slice(0,6),M)}</div><div class="cap">From lobbyists' own semiannual contribution reports (LD-203).</div></section>`);
+    out.push(`<section class="sec" data-x="ld203"><div class="sh"><h2>Donations from lobbyists</h2></div><div class="group pad"><div class="bigline"><b>${M(l.t)}</b><span>from ${l.n} gifts by registered lobbyists and the firms, companies and groups that employ them, 2025–26</span></div>${hbars(l.by.slice(0,6),M)}</div><div class="cap">From the semiannual contribution reports lobbyists and lobbying organizations must file (LD-203), including gifts from their PACs. Grouped by the lobbying organization.</div></section>`);
   }
   if(x.donors&&Object.keys(x.donors).length){
     const cy=Object.keys(x.donors).sort().reverse();

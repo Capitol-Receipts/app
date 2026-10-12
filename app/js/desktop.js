@@ -43,7 +43,7 @@ function twoColumns(){
   w.querySelectorAll('.group').forEach(g=>{if(g.closest('.dcol'))return;const rows=[...g.children].filter(r=>r.classList.contains('row')&&!r.classList.contains('kv'));if(rows.length>=8&&rows.length===g.children.length)g.classList.add('biglist')});
 }
 const _renderDesk=render;
-render=function(){_renderDesk();try{railMenu();twoColumns()}catch(e){console.warn(e)}};
+render=function(){_renderDesk();try{railMenu();if(S.lang==='es')translateAll();twoColumns()}catch(e){console.warn(e)}};
 WIDE.addEventListener('change',()=>render());
 RAIL.addEventListener('change',()=>render());
 render();

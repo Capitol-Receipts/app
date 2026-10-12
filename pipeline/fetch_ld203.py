@@ -41,6 +41,7 @@ for y in YEARS:
     cur_year = y == max(YEARS)
     tasks += [(y, n, cur_year and n > pages - 40) for n in range(1, pages + 1)]   # re-read the newest pages of the current year
 print('pages', len(tasks), flush=True)
+if os.environ.get('LD203_OFFLINE'): tasks = []
 with cf.ThreadPoolExecutor(12) as ex:
     res = list(ex.map(lambda a: page(*a), tasks))
 print('fetched', res.count('ok'), 'cached', res.count('cached'), 'failed', res.count('fail'), flush=True)
@@ -62,7 +63,7 @@ def match(text):
     return hits.pop() if len(hits) == 1 else None
 
 out = collections.defaultdict(lambda: {'t': 0, 'n': 0, 'by': collections.Counter(), 'items': []})
-seen = set()
+seen = set(); dup = set()
 for fn in sorted(os.listdir(RAW)):
     for f in json.load(open(os.path.join(RAW, fn))):
         if f['id'] in seen: continue
@@ -70,9 +71,14 @@ for fn in sorted(os.listdir(RAW)):
         for date, typ, payee, honoree, amt in f['items']:
             try: amt = float(amt or 0)
             except ValueError: continue
-            if amt <= 0 or typ not in ('feca', None): continue
+            # direct campaign gifts are capped by law at a few thousand dollars; larger lines are events, party or
+            # joint committees, so they're left out rather than credited to one member
+            if amt <= 0 or amt > 10000 or typ not in ('feca', None): continue
             bg = match(honoree or '') or match(payee or '')
             if not bg: continue
+            key = (bg, f['who'], date, round(amt))   # the same gift often appears again in amended reports
+            if key in dup: continue
+            dup.add(key)
             o = out[bg]; o['t'] += amt; o['n'] += 1; o['by'][f['reg'] or f['who']] += amt
             o['items'].append([date, f['who'], f['reg'], round(amt)])
 res = {bg: {'t': round(o['t']), 'n': o['n'], 'by': [[k, round(v)] for k, v in o['by'].most_common(10)], 'items': sorted(o['items'], reverse=True)[:25]} for bg, o in out.items()}

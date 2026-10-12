@@ -71,6 +71,12 @@ if WEEKLY:
     except SystemExit as e: log('ethics refresh skipped:', e)
     try: step('lobbying filings', ['fetch_lda.py', os.path.join(D, 'lda')])
     except SystemExit as e: log('lobbying refresh skipped:', e)
+    # full lobbying history (1999 on) for the top 3,000 groups; resumable, so a slow week just continues next week
+    try:
+        r = subprocess.run([sys.executable, 'fetch_lob_hist.py', '3000'], cwd=W, capture_output=True, text=True, timeout=2400)
+        log('lobbying history:', 'ok' if r.returncode == 0 else 'FAILED', (r.stdout + r.stderr).strip().splitlines()[-1:])
+    except subprocess.TimeoutExpired:
+        log('lobbying history: partway, continues next week')
 
 # ---------- 3. rebuild ----------
 step('core', ['build.py', D, os.path.join(W, 'data.json')])
@@ -86,6 +92,34 @@ r = subprocess.run([sys.executable, 'build_elections.py', el, el], cwd=W, env=en
 r = subprocess.run([sys.executable, 'build_votes.py', D, '119'], cwd=W, env=dict(env, VOTE_PREFIX='HS119'), capture_output=True, text=True); log('votes:', 'ok' if r.returncode == 0 else 'FAILED', (r.stdout + r.stderr).strip().splitlines()[-1:])
 if WEEKLY:
     r = subprocess.run([sys.executable, 'build_companies.py', W, W], cwd=W, env=dict(env, CONTRACT_LIMIT='700'), capture_output=True, text=True); log('companies:', 'ok' if r.returncode == 0 else 'FAILED', (r.stdout + r.stderr).strip().splitlines()[-1:])
+
+# ---------- 3b. member extras, caucuses, judges ----------
+# Static inputs (trips, office spending, earmarks, past donors, scanned trades) ship in pipeline/more_inputs.tar.gz;
+# re-extract when that bundle changes. Weekly: fresh judges list, caucus member lists and lobbyists' donation reports.
+MI = os.path.join(W, 'more'); os.makedirs(MI, exist_ok=True)
+bundle = os.path.join(P, 'more_inputs.tar.gz')
+if os.path.exists(bundle):
+    bh = hashlib.sha256(open(bundle, 'rb').read()).hexdigest()
+    mark = os.path.join(MI, '.bundle')
+    if not os.path.exists(mark) or open(mark).read() != bh:
+        import tarfile
+        with tarfile.open(bundle) as tf: tf.extractall(MI, filter='data')
+        open(mark, 'w').write(bh); log('more inputs: unpacked')
+for f in ('legislators-current.yaml', 'HS119_votes.csv', 'HS119_members.csv'):
+    if os.path.exists(os.path.join(D, f)): shutil.copy(os.path.join(D, f), os.path.join(MI, f))
+if WEEKLY:
+    fetch('https://www.fjc.gov/sites/default/files/history/judges.csv', os.path.join(MI, 'judges.csv'), 100000)
+    os.makedirs(os.path.join(MI, 'wiki'), exist_ok=True)
+    for f in os.listdir(os.path.join(MI, 'wiki')):
+        if f.endswith('.txt'):
+            fetch(f'https://en.wikipedia.org/w/index.php?title={f[:-4]}&action=raw', os.path.join(MI, 'wiki', f), 2000)
+    try:
+        r = subprocess.run([sys.executable, 'fetch_ld203.py', MI], cwd=W, capture_output=True, text=True, timeout=3600)
+        log('lobbyist donations:', 'ok' if r.returncode == 0 else 'FAILED', (r.stdout + r.stderr).strip().splitlines()[-1:])
+    except subprocess.TimeoutExpired:
+        log('lobbyist donations: still downloading, will continue next week')
+r = subprocess.run([sys.executable, 'build_more.py', MI, EXP], cwd=W, capture_output=True, text=True)
+log('extras/caucuses/judges:', 'ok' if r.returncode == 0 else 'FAILED', (r.stdout + r.stderr).strip().splitlines()[-3:])
 
 # ---------- 4. which tables changed ----------
 HF = os.path.join(W, 'export_hashes.json')

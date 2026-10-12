@@ -57,7 +57,7 @@ function translateRoot(root){
 function translateAll(){
   document.documentElement.lang=S.lang==='es'?'es':'en';
   if(S.lang!=='es')return;
-  ['#app','#panel','#tabbar','#drawer'].forEach(s=>{const el=$(s);if(el)translateRoot(el)});
+  ['#app','#panel','#tabbar','#drawer','aside.railmenu'].forEach(s=>{const el=$(s);if(el)translateRoot(el)});
 }
 function setLang(l){S.lang=l;store.set('lang',l);const d=$('#drawer');const wasOpen=d&&!d.hidden;render();if(wasOpen){const pn=d.querySelector('.dpanel');pn.innerHTML=drawerHtml()}}
 window.addEventListener('click',e=>{const b=e.target.closest('[data-lang]');if(!b)return;e.preventDefault();e.stopPropagation();setLang(b.dataset.lang)},true);
