@@ -32,18 +32,29 @@ function candDot(c){return `<span class="cdot" style="background:${PCOL[c.p]||PC
 function candFace(c,size=44){
   const m=c.bg&&byId[c.bg];
   if(m)return face(m,size);
-  const ini=c.n.split(/\s+/).filter(Boolean).map(w=>w[0]).filter(ch=>/[A-Z]/i.test(ch)).slice(0,2).join('').toUpperCase();
-  return `<span class="face ini" style="width:${size}px;height:${size}px;background:${PCOL[c.p]||PCOL.I};color:#fff;display:inline-grid;place-items:center;border-radius:50%;font-weight:800;font-size:${Math.round(size*.36)}px;flex:0 0 auto">${esc(ini)}</span>`;
+  const pr=['D','R'].includes(c.p)?c.p:'I';
+  const ini=c.n.split(/\s+/).filter(w=>/^[A-Z]/i.test(w)&&!/^(Jr\.?|Sr\.?|II|III|IV)$/.test(w)).map(w=>w[0]).filter((_,i,a)=>i===0||i===a.length-1).join('').toUpperCase();
+  const fb=`<span class="face fb ring-${pr}" style="width:${size}px;height:${size}px;font-size:${Math.round(size*.36)}px">${esc(ini)}</span>`;
+  if(!c.img)return fb;
+  return `<span class="cface" style="width:${size}px;height:${size}px">${fb}<img class="face ring-${pr}" style="width:${size}px;height:${size}px" src="${esc(c.img)}" alt="" decoding="async" onerror="this.remove()"></span>`;
 }
-function moneyBar(r){
-  const mx=Math.max(1,...r.c.map(c=>c.r||0));
-  return r.c.filter(c=>c.p==='D'||c.p==='R'||(c.r||0)>0).slice(0,4).map(c=>`<div class="mbar"><span class="mn">${candDot(c)}${esc(c.n)}${c.inc?' <em>incumbent</em>':''}</span><span class="mt"><span style="width:${((c.r||0)/mx*100).toFixed(1)}%;background:${PCOL[c.p]||PCOL.I}"></span></span><b>${c.r!=null?M(c.r):'—'}</b></div>`).join('');
-}
+const lastName=n=>n.split(' ').filter(w=>!/^(Jr\.?|Sr\.?|II|III|IV)$/.test(w)).slice(-1)[0]||n;
+const leadPair=r=>{const m=r.c.filter(c=>c.p==='D'||c.p==='R');return (m.length?m:r.c).slice(0,2)};
 function raceRow(r,sub){
-  const lead=r.c.filter(c=>c.p==='D'||c.p==='R').slice(0,2);
-  const names=(lead.length?lead:r.c.slice(0,2)).map(c=>`<span class="rn1">${candDot(c)}${esc(c.n.split(' ').filter(w=>!/^(Jr\.?|Sr\.?|II|III|IV)$/.test(w)).slice(-1)[0])}</span>`).join('<span class="vs">vs</span>');
-  return `<button class="row plain racerow" data-race="${r.id}" style="grid-template-columns:auto 1fr auto auto"><span class="rtag ${r.o==='S'?'sen':''}">${esc(raceShort(r))}</span><span style="min-width:0"><span class="t rnames">${names||'Candidates not set'}</span><br><span class="s">${esc(sub||[pviText(r.pvi),r.ot?M(r.ot)+' outside spending':''].filter(Boolean).join(' · '))}</span></span><span class="val">${M(r.rt||0)}</span>${chev}</button>`;
+  const lead=leadPair(r);
+  const faces=lead.map(c=>candFace(c,40)).join('');
+  const names=lead.map(c=>esc(lastName(c.n))).join(' <span class="rvs">vs</span> ');
+  const line=sub||[raceName(r),pviText(r.pvi)].filter(Boolean).join(' · ');
+  return `<button class="row plain racerow" data-race="${r.id}"><span class="rfaces n${lead.length}">${faces}</span><span style="min-width:0"><span class="t">${names||'Candidates not set'}</span><span class="s">${esc(line)}</span></span><span class="rval"><b>${M(r.ot||0)}</b><small>outside money</small></span>${chev}</button>`;
 }
+function featCard(r){
+  const lead=leadPair(r);
+  const side=c=>`<span class="fside">${candFace(c,58)}<b>${esc(lastName(c.n))}</b><em class="p-${['D','R'].includes(c.p)?c.p:'I'}">${c.p==='D'?'Dem.':c.p==='R'?'Rep.':esc(c.pl||'Ind.')}${c.inc?' · inc.':''}</em></span>`;
+  return `<button class="fcard" data-race="${r.id}"><span class="fk">${esc(raceName(r))}</span>
+    <span class="fm">${lead.map(side).join(lead.length===2?'<span class="fvs">vs</span>':'')}</span>
+    <span class="ff"><span>${esc(pviText(r.pvi))}</span><b>${M(r.ot||0)} <small>outside</small></b></span></button>`;
+}
+const toWatch=n=>EL.races?EL.races.filter(r=>competitive(r)&&leadPair(r).length===2).sort((a,b)=>(b.ot||0)-(a.ot||0)).slice(0,n):[];
 function myRaces(){
   if(!EL.races||!S.home)return [];
   const d=S.dist&&S.dist.length?S.dist:null;
@@ -72,22 +83,23 @@ function electionsScreen(){
   else list=[...R].sort((a,b)=>(b.ot||0)-(a.ot||0));
   const shown=list.slice(0,S.limit||60);
   return head+`
-   <section class="sec dash"><div class="dstats">
-    <div class="dstat"><span class="dk">Races on the ballot</span><b class="dv">${R.length}</b><span class="ds">${sen.length} Senate · ${hou.length} House</span></div>
-    <div class="dstat"><span class="dk">Candidates</span><b class="dv">${ord(R.reduce((a,r)=>a+r.c.length,0))}</b><span class="ds">on general-election ballots</span></div>
-    <div class="dstat"><span class="dk">Raised by candidates</span><b class="dv">${M(tot)}</b><span class="ds">through ${EL.asOf?fmtISO(EL.asOf):'latest filings'}</span></div>
-    <div class="dstat"><span class="dk">Outside spending</span><b class="dv">${M(out)}</b><span class="ds">by super PACs and other groups</span></div>
+   <section class="sec dash wide"><div class="dstats">
+    <div class="dstat c-votes"><span class="dic">${CAT.votes.icon}</span><span class="dk">Races on the ballot</span><b class="dv">${R.length}</b><span class="ds">${sen.length} Senate · ${hou.length} House</span></div>
+    <div class="dstat c-confirm"><span class="dic">${CAT.confirm.icon}</span><span class="dk">Candidates</span><b class="dv">${ord(R.reduce((a,r)=>a+r.c.length,0))}</b><span class="ds">on general-election ballots</span></div>
+    <div class="dstat c-money"><span class="dic">${CAT.money.icon}</span><span class="dk">Raised by candidates</span><b class="dv">${M(tot)}</b><span class="ds">through ${EL.asOf?fmtISO(EL.asOf):'latest filings'}</span></div>
+    <div class="dstat c-influence"><span class="dic">${CAT.influence.icon}</span><span class="dk">Outside spending</span><b class="dv">${M(out)}</b><span class="ds">by super PACs and other groups</span></div>
    </div></section>
+   ${!q?`<section class="sec wide"><div class="sh"><h2>Races to watch</h2><button data-emode="close">All competitive</button></div><div class="fgrid">${toWatch(8).map(featCard).join('')}</div></section>`:''}
    ${mine.length?`<section class="sec"><div class="sh"><h2>Your races</h2><span class="cap" style="padding:0">${esc(repWhere())}</span></div><div class="group">${mine.map(r=>raceRow(r)).join('')}</div></section>`:signedIn()?`<section class="sec"><div class="calm">Add your ZIP code on the Search page to see your races here.</div></section>`:`<section class="sec"><div class="signin-card"><b>See your races</b><span>Sign in and add your ZIP code to keep your Senate and House races at the top.</span><div><button class="abtn sm" data-auth="up">Create free account</button><button class="link" data-auth="in">Sign in</button></div></div></section>`}
    <section class="sec"><div class="sfield"><input id="eq" class="search" type="search" placeholder="Search a state, district or candidate" value="${esc(S.eq||'')}" aria-label="Search races"></div>
     <div class="seg" style="margin-top:10px">${[['top','Most outside money'],['close','Competitive'],['senate','Senate'],['money','Most expensive'],['state','By state']].map(([k,l])=>`<button data-emode="${k}" aria-pressed="${mode===k}">${l}</button>`).join('')}</div>
     ${mode==='state'&&!q?`<select class="select" id="est" aria-label="State" style="margin-top:10px">${stOpts.map(([k,v])=>`<option value="${k}" ${k===(S.est||S.home||'AL')?'selected':''}>${v}</option>`).join('')}</select>`:''}
    </section>
-   <section class="sec"><div class="sh"><h2>${q?'Matching races':mode==='close'?'Competitive races':mode==='senate'?'Senate races':mode==='money'?'Most expensive races':mode==='state'?esc(ST[S.est||S.home||'AL']):'Where outside groups are spending most'}</h2><span class="cap" style="padding:0">${list.length}</span></div>
-    <div class="group">${shown.map(r=>raceRow(r)).join('')||'<div class="empty">No races match.</div>'}</div>
+   <section class="sec wide"><div class="sh"><h2>${q?'Matching races':mode==='close'?'Competitive races':mode==='senate'?'Senate races':mode==='money'?'Most expensive races':mode==='state'?esc(ST[S.est||S.home||'AL']):'Where outside groups are spending most'}</h2><span class="cap" style="padding:0">${list.length}</span></div>
+    <div class="group biglist">${shown.map(r=>raceRow(r)).join('')||'<div class="empty">No races match.</div>'}</div>
     ${list.length>shown.length?`<button class="more" data-emore>Show more</button>`:''}
     <div class="cap">"Competitive" means the district leans 5 points or less toward one party, or outside groups have spent $2M+. Money figures are what each campaign reported to the Federal Election Commission; outside spending is reported by the groups themselves.</div></section>
-   <section class="sec"><div class="sh"><h2>Biggest outside spenders</h2><button data-go="ogroups">See all</button></div><div id="ogtop" class="group"><div class="empty">Loading…</div></div></section>
+   <section class="sec wide"><div class="sh"><h2>Biggest outside spenders</h2><button data-go="ogroups">See all</button></div><div id="ogtop" class="group"><div class="empty">Loading…</div></div></section>
   </div>`;
 }
 /* ---------- race page ---------- */
@@ -99,15 +111,27 @@ function racePage(id){
   const after=daysToElection()<0;
   const major=r.c.filter(c=>c.p==='D'||c.p==='R');
   const others=r.c.filter(c=>!(c.p==='D'||c.p==='R'));
+  const lead=major.length?major.slice(0,2):r.c.slice(0,2);
+  const rest=r.c.filter(c=>!lead.includes(c));
+  const thru=c=>c.thru?fmtISO(c.thru.slice(6)+'-'+c.thru.slice(0,2)+'-'+c.thru.slice(3,5)):'';
+  const side=c=>{
+    const m=c.bg&&byId[c.bg];
+    return `<div class="mside" style="--pc:${PCOL[c.p]||PCOL.I}">
+      ${m?`<button class="mphoto" data-p="${m.id}" aria-label="${esc(c.n)}">${candFace(c,96)}</button>`:`<div class="mphoto">${candFace(c,96)}</div>`}
+      <div class="mname">${esc(c.n)}</div>
+      <div class="mparty">${esc(c.pl||PWORD[c.p]||'')}${c.inc?' · Incumbent':''}</div>
+      <div class="mraised"><b>${c.r?M(c.r):'—'}</b><span>raised</span></div>
+    </div>`;
+  };
   const card=c=>{
     const m=c.bg&&byId[c.bg];
     const smallPct=c.r?Math.round((c.small||0)/c.r*100):null;
-    return `<div class="ccard" style="--pc:${PCOL[c.p]||PCOL.I}">
-      <div class="cch">${candFace(c,52)}<div style="min-width:0"><div class="ccn">${esc(c.n)}</div><div class="ccp">${esc(c.pl||PWORD[c.p]||'')}${c.inc?' · Incumbent':''}</div></div>${m?`<button class="link" data-p="${m.id}">Profile ›</button>`:''}</div>
+    const facts=[smallPct!=null&&c.r?`${smallPct}% from small donors (under $200)`:'',c.pac?`${M(c.pac)} from PACs`:'',c.self>1000?`${M(c.self)} of their own money`:'',c.debt>1000?`${M(c.debt)} in debt`:''].filter(Boolean);
+    return `<div class="ccard">
+      <div class="cch">${candFace(c,40)}<div style="min-width:0"><div class="ccn">${esc(c.n)}</div><div class="ccp">${esc(c.pl||PWORD[c.p]||'')}${c.inc?' · Incumbent':''}</div></div>${m?`<button class="link" data-p="${m.id}">Profile ›</button>`:''}</div>
       ${c.fec&&(c.r||c.thru)?`<div class="ccm"><div><span>Raised</span><b>${M(c.r)}</b></div><div><span>Spent</span><b>${M(c.s)}</b></div><div><span>Cash left</span><b>${M(c.cash)}</b></div></div>
-      <div class="ccs">${smallPct!=null&&c.r?`${smallPct}% from small donors (under $200)`:''}${c.pac?` · ${M(c.pac)} from PACs`:''}${c.self>1000?` · ${M(c.self)} of their own money`:''}${c.debt>1000?` · ${M(c.debt)} in debt`:''}</div>
-      ${(c.for||c.vs)?`<div class="ccx"><span class="up">${M(c.for||0)} spent to help</span><span class="dn">${M(c.vs||0)} spent to attack</span></div>`:''}
-      <div class="ccf">Through ${c.thru?fmtISO(c.thru.slice(6)+'-'+c.thru.slice(0,2)+'-'+c.thru.slice(3,5)):'latest filing'} · <a href="https://www.fec.gov/data/candidate/${c.fec}/?cycle=2026" target="_blank" rel="noopener">FEC filings</a></div>`
+      ${facts.length?`<div class="ccs">${facts.join(' · ')}</div>`:''}
+      <div class="ccf">Through ${thru(c)||'latest filing'} · <a href="https://www.fec.gov/data/candidate/${c.fec}/?cycle=2026" target="_blank" rel="noopener">FEC filings</a></div>`
       :`<div class="ccs">No campaign finance reports filed with the FEC yet.</div>`}</div>`;
   };
   const recordRow=m=>{
@@ -120,20 +144,33 @@ function racePage(id){
       <div class="row kv"><span class="k">In Congress since</span><span class="v">${m.since||'—'}</span></div>
       <button class="row plain" data-p="${m.id}" style="grid-template-columns:1fr auto"><span>Full record for ${esc(m.name)}</span>${chev}</button></div>`;
   };
-  const outRows=(r.out||[]).map(([n,sid,so,cn,a])=>`<button class="row plain" data-og="${sid}" style="grid-template-columns:1fr auto auto"><span style="min-width:0"><span class="t">${esc(n)}</span><br><span class="s">${so==='S'?'To help':'To attack'} ${esc(cn)}</span></span><span class="val ${so==='S'?'up':'dn'}">${M(a)}</span>${chev}</button>`).join('');
+  // outside money, summed per candidate: help vs attack
+  const per=lead.filter(c=>(c.for||0)+(c.vs||0)>0);
+  const omax=Math.max(1,...per.map(c=>Math.max(c.for||0,c.vs||0)));
+  const perHtml=per.map(c=>`<div class="omc"><div class="omh">${candFace(c,28)}<b>${esc(c.n)}</b></div>
+     <div class="mbar"><span class="mn">Helping</span><span class="mt"><span style="width:${((c.for||0)/omax*100).toFixed(1)}%;background:var(--up,#1f7a3a)"></span></span><b>${M(c.for||0)}</b></div>
+     <div class="mbar"><span class="mn">Attacking</span><span class="mt"><span style="width:${((c.vs||0)/omax*100).toFixed(1)}%;background:var(--dn,#b42318)"></span></span><b>${M(c.vs||0)}</b></div></div>`).join('');
+  const outAll=(r.out||[]);
+  const showAll=S.ogall===id;
+  const outRows=outAll.slice(0,showAll?99:5).map(([n,sid,so,cn,a])=>`<button class="row plain" data-og="${sid}" style="grid-template-columns:1fr auto auto"><span style="min-width:0"><span class="t">${esc(ogName(n))}</span><br><span class="s">${so==='S'?'To help':'To attack'} ${esc(cn)}</span></span><span class="val ${so==='S'?'up':'dn'}">${M(a)}</span>${chev}</button>`).join('');
+  const sub=[r.o==='S'?'U.S. Senate':'U.S. House',pviText(r.pvi)].filter(Boolean).join(' · ');
   return `${pageHead(raceShort(r))}
-  <section class="phero p-N bg-capitol"><div class="in" style="padding-top:calc(var(--navh) + 18px)"><span class="billno">${r.o==='S'?'U.S. Senate':'U.S. House'} · Nov 3, 2026</span><h1>${esc(raceName(r))}</h1><div class="psub">${esc([pviText(r.pvi),r.status].filter(Boolean).join(' · '))}</div></div></section>
-  <div class="wrap">
-   <div class="glance">${glance('Candidates',r.c.length,`${major.length} major-party`,false)}${glance('Raised',M(r.rt||0),'by all candidates',false)}${glance('Outside spending',M(r.ot||0),'for and against',(r.ot||0)>=5e6)}</div>
-   <section class="sec wide"><div class="calm" style="text-align:left">${after?'Results will appear here once states report them.':`Polls close on Nov 3. Results will appear here once states report them.`}</div></section>
-   <section class="sec wide"><div class="sh"><h2>Who's running</h2></div><div class="ccards">${major.map(card).join('')}</div>
-    ${others.length?`<div class="group" style="margin-top:10px">${others.map(c=>`<div class="row kv"><span class="k">${candDot(c)} ${esc(c.n)}</span><span class="v">${esc(c.pl||PWORD[c.p])}${c.r?' · raised '+M(c.r):''}</span></div>`).join('')}</div>`:''}</section>
-   ${r.rt?`<section class="sec"><div class="sh"><h2>Money raised</h2></div><div class="group pad">${moneyBar(r)}</div></section>`:''}
+  <div class="wrap racewrap" style="padding-top:calc(var(--navh) + 14px)">
+   <header class="rhead"><span class="rkick">${after?'Nov 3, 2026':`Election Day · Nov 3, 2026 · ${daysToElection()} days`}</span><h1>${esc(raceName(r))}</h1><p>${esc(sub)}</p></header>
+   <section class="matchup n${lead.length}">${lead.map(side).join(lead.length===2?'<span class="mvs">vs</span>':'')}</section>
+   ${rest.length?`<div class="alsoran">Also on the ballot: ${rest.map(c=>`<span>${candDot(c)}${esc(c.n)}${c.pl?` <em>${esc(c.pl)}</em>`:''}</span>`).join('')}</div>`:''}
+   <div class="rstrip"><div><b>${M(r.rt||0)}</b><span>raised by all candidates</span></div><div><b>${M(r.ot||0)}</b><span>outside spending</span></div><div><b>${after?'Counting':'Nov 3'}</b><span>${after?'results as states report':'polls close; results here after'}</span></div></div>
+   <section class="sec wide"><div class="sh"><h2>The candidates' money</h2></div><div class="ccards">${lead.map(card).join('')}</div></section>
+   ${outAll.length?`<section class="sec wide"><div class="sh"><h2>Outside spending</h2><span class="cap" style="padding:0">${M(r.ot||0)}</span></div>
+     ${perHtml?`<div class="omgrid">${perHtml}</div>`:''}
+     <div class="group" style="margin-top:12px">${outRows}</div>
+     ${outAll.length>5&&!showAll?`<button class="more" data-ogall="${id}">Show all ${outAll.length} groups</button>`:''}
+     <div class="cap">Super PACs and other groups must report money they spend on ads and mail to help or attack a candidate. They can't coordinate with campaigns.</div></section>`:''}
    ${inc.length?`<section class="sec"><div class="sh"><h2>The incumbent's record</h2></div>${inc.map(recordRow).join('')}</section>`:''}
-   <section class="sec"><div class="sh"><h2>Outside spending</h2><span class="cap" style="padding:0">${M(r.ot||0)}</span></div>${outRows?`<div class="group">${outRows}</div><div class="cap">Super PACs and other groups must report money they spend on ads and mail to help or attack a candidate. They can't coordinate with campaigns.</div>`:'<div class="empty">No outside spending reported in this race yet.</div>'}</section>
-   <div class="note">From Federal Election Commission filings and state election offices' candidate lists. ${r.o==='H'?'Some states redrew their districts for 2026, so a district may cover different areas than before.':''}</div>
+   <div class="note">From Federal Election Commission filings and state election offices' candidate lists. ${r.o==='H'?'Some states redrew their districts for 2026, so a district may cover different areas than before. ':''}Candidate photos from Wikipedia and congressional portraits.</div>
   </div>`;
 }
+window.addEventListener('click',e=>{const b=e.target.closest('[data-ogall]');if(!b)return;S.ogall=b.dataset.ogall;render()});
 /* ---------- outside spending groups ---------- */
 let OGLIST=null;
 function loadGroupList(){
@@ -206,10 +243,11 @@ home=function(){
   loadRaces();
   const days=daysToElection();
   const mine=signedIn()?myRaces():[];
-  const block=`<section class="sec elhome"><div class="sh"><h2>2026 elections</h2><button data-go="elections">All races</button></div>
-    <button class="elcard" data-go="elections"><b>${days>0?`${days} days to go`:'Election Day'}</b><span>All 435 House seats and 35 Senate seats are on the ballot Nov 3. See who's running and who's paying for it.</span></button>
+  const block=`<section class="sec elhome wide"><div class="sh"><h2>2026 elections</h2><button data-go="elections">All races</button></div>
+    <div class="elhomegrid"><button class="elcard" data-go="elections"><span class="elk">Election Day · Nov 3</span><b>${days>0?days:'Today'}</b><span class="eld">${days>0?'days to go':''}</span><span>All 435 House seats and 35 Senate seats are on the ballot. See who's running and who's paying for it.</span></button>
+    ${EL.races?toWatch(3).map(featCard).join(''):''}</div>
     ${mine.length?`<div class="group" style="margin-top:10px">${mine.map(r=>raceRow(r,'Your race')).join('')}</div>`:''}</section>`;
-  return _homeEl().replace(/(<section class="sec dash">)/,block+'$1');
+  return _homeEl().replace(/(<section class="sec dash wide">)/,m=>block+m);
 };
 /* member profiles link to their race */
 const _renderEl2=render;

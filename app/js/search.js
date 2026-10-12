@@ -74,6 +74,27 @@ function topCard(r){
   else if(r.lob[0]&&scoreName(r.lob[0].n,q)>=70){const c=r.lob[0];t=`<button class="topcard t-amber" data-lob="${c.id}"><span class="tcb"><span class="tck">Lobbying group</span><b>${hl(c.n,q)}</b><span class="tcs">${M(c.spend)} on lobbying${c.nlob?` · ${c.nlob} lobbyists`:''}</span></span></button>`}
   return t?`<section class="sec">${t}</section>`:'';
 }
+/* Democrats vs Republicans across whatever the search returned */
+function partyCompare(ms,title){
+  const P={D:ms.filter(m=>m.party==='D'),R:ms.filter(m=>m.party==='R')};
+  if(P.D.length+P.R.length<3||!P.D.length||!P.R.length)return '';
+  const avg=(a,f)=>{const v=a.map(f).filter(x=>x!=null&&!isNaN(x));return v.length?v.reduce((x,y)=>x+y,0)/v.length:null};
+  const tot=(a,f)=>a.reduce((x,m)=>x+(f(m)||0),0);
+  const rows=[
+    ['Members',a=>a.length,n=>ord(n)],
+    ['Avg. raised for 2026',a=>avg(a,m=>m.money?.rec),M],
+    ['Stock trades',a=>tot(a,m=>m.tradeN),n=>ord(n)],
+    ['Trades tied to committees',a=>tot(a,m=>m.commTrades),n=>ord(n)],
+    ['Avg. votes missed',a=>avg(a,m=>m.elig>=50?m.missed:null),n=>pct(n,1)],
+    ['Votes with own party',a=>avg(a,m=>m.unityN>=50?m.unity:null),n=>pct(n,0)],
+    ['Ex-staff now lobbyists',a=>tot(a,m=>m.revN),n=>ord(n)],
+  ];
+  const body=rows.map(([l,f,fmt])=>{const d=f(P.D),r=f(P.R);if(d==null&&r==null)return '';const mx=Math.max(d||0,r||0)||1;
+    return `<div class="pcr"><span class="pcv d">${d==null?'—':fmt(d)}</span><span class="pcb d"><i style="width:${((d||0)/mx*100).toFixed(1)}%"></i></span><span class="pcl">${l}</span><span class="pcb r"><i style="width:${((r||0)/mx*100).toFixed(1)}%"></i></span><span class="pcv r">${r==null?'—':fmt(r)}</span></div>`}).join('');
+  const others=ms.length-P.D.length-P.R.length;
+  return `<section class="sec pcmp wide"><div class="sh"><h2>${esc(title||'Democrats vs Republicans')}</h2>${others?`<span class="cap" style="padding:0">+${others} independent${others>1?'s':''}</span>`:''}</div>
+    <div class="pcard"><div class="pch"><span class="p-D">Democrats</span><span class="p-R">Republicans</span></div>${body}</div></section>`;
+}
 function universal(){
   const r=resultsFor(S.q),q=r.q;
   const total=r.mem.length+r.noms.length+r.past.length+r.apps.length+r.bills.length+r.lob.length+r.firms.length+r.coms.length+r.eth.length;
@@ -81,6 +102,7 @@ function universal(){
   const chips=[['mem','People',r.mem.length],['bills','Bills',r.bills.length],['lob','Lobbying',r.lob.length+r.firms.length],['coms','Committees',r.coms.length],['noms','Appointees',r.noms.length+r.apps.length],['past','History',r.past.length],['eth','Ethics',r.eth.length]].filter(x=>x[2]);
   return `<div class="rjump">${chips.map(([k,l,n])=>`<button data-rjump="r-${k}">${l} <em>${n>99?'99+':n}</em></button>`).join('')}</div>
    ${(()=>{const t=topCard(r);r.topIsMem=t.includes('data-p="'+(r.mem[0]?.[0].id)+'"');return t})()}
+   ${partyCompare(r.mem.map(x=>x[0]),r.stateHit?`${r.stateHit[1]}: Democrats vs Republicans`:'Democrats vs Republicans in these results')}
    <div id="r-mem"></div>${resultSection(r.stateHit?`Representing ${esc(r.stateHit[1])}`:'Members of Congress',r.mem.map(x=>x[0]).slice(r.topIsMem&&!r.stateHit?1:0),m=>memRow(m),r.stateHit?12:5,'data-sall="Congress"')}
    <div id="r-bills"></div>${resultSection('Bills & laws',r.bills,k=>billRow(k),5,'data-go="bills:laws"')}
    <div id="r-lob"></div>${resultSection('Lobbying groups',r.lob,c=>`<button class="row plain" data-lob="${c.id}" style="grid-template-columns:1fr auto auto"><span style="min-width:0"><span class="t">${hl(c.n,q)}</span><br><span class="s">${c.iss.slice(0,2).map(([k])=>issueName(k)).join(' · ')}</span></span><span class="val" style="font-size:15px">${M(c.spend)}</span>${chev}</button>`,4,'data-go="lobbying:groups"')}

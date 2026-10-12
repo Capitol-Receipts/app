@@ -212,6 +212,7 @@ function explore(){
   const list=sortList(MEM.filter(flt).filter(m=>S.party==='All'||m.party===S.party).filter(m=>!q||m.search.includes(q)),MSORT[S.msort],S.mdir);
   const vf=MSORT[S.msort][2];
   const nomHits=q?NOM.filter(n=>n.search.includes(q)).slice(0,5):[];
+  if(typeof partyCompare==='function'&&S.party==='All')h+=partyCompare(list,S.filter==='Senate'?'Senate: Democrats vs Republicans':S.filter==='House'?'House: Democrats vs Republicans':q?'Democrats vs Republicans in these results':'Congress: Democrats vs Republicans');
   h+=`<div class="sec" id="listtop"><div class="sh"><h2>${q?'Members of Congress':S.filter==='All'||S.filter==='Congress'?'All of Congress':S.filter==='Senate'?'Senators':'House members'}</h2><span class="cap" style="padding:0">${list.length}</span></div>
    ${sortBar(MSORT,S.msort,S.mdir,'m')}
    <div class="group" style="margin-top:10px">${list.slice(0,S.limit).map(m=>memRow(m,vf?vf(m):null)).join('')||'<div class="empty">No one matches that search.</div>'}</div>

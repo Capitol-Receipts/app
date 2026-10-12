@@ -115,6 +115,20 @@ function zipSection(){
 document.addEventListener('click',e=>{if(!e.target.closest('[data-zipclear]'))return;e.stopImmediatePropagation();S.home='';S.dist=null;S.zip='';store.set('home','');store.set('dist',null);store.set('zip','');render();setTimeout(()=>$('#zip')?.focus(),30)},true);
 
 /* ---------- home: an overview dashboard ---------- */
+/* who controls each chamber: seat bars with the majority line */
+function balanceOfPower(){
+  const v=MEM.filter(m=>!m.delegate);
+  const row=(ch,label,total,need)=>{
+    const ms=v.filter(m=>m.chamber===ch);const c={D:0,I:0,R:0};ms.forEach(m=>c[m.party]=(c[m.party]||0)+1);
+    const vac=Math.max(0,total-ms.length);
+    const lead=c.R>=c.D?'R':'D';
+    const seg=(p,n)=>n?`<span class="bseg p-${p}" style="flex:${n}">${n>=(total/20)?n:''}</span>`:'';
+    return `<button class="bop" data-go="f:${ch}"><div class="boph"><b>${label}</b><span><em class="p-${lead}">${lead==='R'?'Republicans':'Democrats'} control</em> · ${need} for a majority</span></div>
+      <div class="bopbar">${seg('D',c.D)}${seg('I',c.I)}${vac?`<span class="bseg vac" style="flex:${vac}"></span>`:''}${seg('R',c.R)}<i class="bmaj" style="left:50%"></i></div>
+      <div class="bopk"><span><i class="p-D"></i>${c.D} Democrats</span>${c.I?`<span><i class="p-I"></i>${c.I} Independent${c.I>1?'s':''}</span>`:''}${vac?`<span><i class="vac"></i>${vac} vacant</span>`:''}<span><i class="p-R"></i>${c.R} Republicans</span></div></button>`;
+  };
+  return `<div class="bops">${row('Senate','Senate',100,51)}${row('House','House',435,218)}</div>`;
+}
 function dashStats(){
   const voting=MEM.filter(m=>!m.delegate);
   const sum=f=>MEM.reduce((a,m)=>a+(f(m)||0),0);
@@ -124,17 +138,18 @@ function dashStats(){
   const GG=typeof G!=='undefined'?G:null;
   const spend=GG?Object.values(GG.clients).reduce((a,c)=>a+(c.spend||0),0):null;
   const tiles=[
-    ['f:Congress','Members of Congress',ord(voting.length),`${sen} senators · ${hou} House`],
-    ['rank:raised','Raised for 2026',M(sum(m=>m.money?.rec)),'by current members'],
-    ['rank:trades','Stock trades',ord(sum(m=>m.tradeN)),`by ${traders} members since Jan 2025`],
-    ['rank:comm','Trades tied to committees',ord(sum(m=>m.commTrades)),'in industries they oversee'],
-    ['lobbying:groups','Spent on lobbying',spend==null?'—':M(spend),GG?`by ${ord(Object.keys(GG.clients).length)} groups since Jul 2025`:'Loading…'],
-    ['rank:rev','Ex-staff now lobbyists',ord(sum(m=>m.revN)),'people who worked for members'],
-    ['bills:new','New laws',laws==null?'—':ord(laws),'this Congress (2025–26)'],
-    ['ncat:All','Appointees confirmed',ord(NOM.length),'by the Senate since Jan 2025'],
+    ['f:Congress','votes','Members of Congress',ord(voting.length),`${sen} senators · ${hou} House`],
+    ['rank:raised','money','Raised for 2026',M(sum(m=>m.money?.rec)),'by current members'],
+    ['rank:trades','stocks','Stock trades',ord(sum(m=>m.tradeN)),`by ${traders} members since Jan 2025`],
+    ['rank:comm','stocks','Trades tied to committees',ord(sum(m=>m.commTrades)),'in industries they oversee'],
+    ['lobbying:groups','influence','Spent on lobbying',spend==null?'—':M(spend),GG?`by ${ord(Object.keys(GG.clients).length)} groups since Jul 2025`:'Loading…'],
+    ['rank:rev','influence','Ex-staff now lobbyists',ord(sum(m=>m.revN)),'people who worked for members'],
+    ['bills:new','ethics','New laws',laws==null?'—':ord(laws),'this Congress (2025–26)'],
+    ['ncat:All','confirm','Appointees confirmed',ord(NOM.length),'by the Senate since Jan 2025'],
   ];
-  return `<section class="sec dash"><div class="sh"><h2>Congress at a glance</h2><span class="asof2">Updated ${fmtISO(DATA.asOf.votes)}</span></div>
-   <div class="dstats">${tiles.map(([go,k,v,sub])=>`<button class="dstat" data-go="${go}"><span class="dk">${k}</span><b class="dv">${v}</b><span class="ds">${sub}</span></button>`).join('')}</div></section>`;
+  return `<section class="sec dash wide"><div class="sh"><h2>Congress at a glance</h2><span class="asof2">Updated ${fmtISO(DATA.asOf.votes)}</span></div>
+   ${balanceOfPower()}
+   <div class="dstats d8">${tiles.map(([go,cat,k,v,sub])=>`<button class="dstat c-${cat}" data-go="${go}"><span class="dic">${CAT[cat].icon}</span><span class="dk">${k}</span><b class="dv">${v}</b><span class="ds">${sub}</span></button>`).join('')}</div></section>`;
 }
 function home(){
   const st=homeStories();

@@ -49,8 +49,10 @@
 
 /* wide screens: pages use the full width, sections sit in two balanced columns */
 @media (min-width:1240px){
-  .wrap{max-width:1180px}
-  .pnav .in,.phero .in{max-width:1180px}
+  .wrap{max-width:none;padding:0 40px 72px}
+  .pnav .in,.phero .in{max-width:none}
+  .phero .in{padding-left:40px;padding-right:40px}
+  .shead{margin-left:-40px;margin-right:-40px;padding-left:40px;padding-right:40px}
   .dcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 28px;align-items:start}
   .dcol{min-width:0}
   .dcol>.pe-card:first-child{margin-top:28px}
@@ -59,7 +61,11 @@
   .group.biglist>.row{border-bottom:1px solid var(--hair)}
   .group.biglist>.row:nth-child(odd){border-right:1px solid var(--hair)}
 }
-@media (min-width:1500px){
-  .wrap{max-width:1280px}
-  .pnav .in,.phero .in{max-width:1280px}
+@media (min-width:1700px){
+  .wrap{padding-left:56px;padding-right:56px}
+  .group.biglist{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .group.biglist>.row:nth-child(odd){border-right:0}
+  .group.biglist>.row:not(:nth-child(3n)){border-right:1px solid var(--hair)}
+  .fgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .dstats.d8{grid-template-columns:repeat(8,minmax(0,1fr))!important}
 }

@@ -7,7 +7,7 @@ Inputs (in WORK dir, fetched by fetch_elections()):
   legislators-current.yaml unitedstates/congress-legislators (to link incumbents to their profiles)
 Output: <out>/races.json  — list of race records, one per seat on the ballot.
 """
-import csv, json, os, re, sys, time, unicodedata, urllib.request, collections, yaml
+import csv, json, os, re, sys, time, unicodedata, urllib.request, urllib.parse, urllib.error, collections, yaml
 
 WORK = sys.argv[1] if len(sys.argv) > 1 else '.'
 OUT = sys.argv[2] if len(sys.argv) > 2 else WORK
@@ -240,7 +240,7 @@ def main():
                 if (race['o'] == 'S' and b['type'] == 'sen') or (race['o'] == 'H' and b['type'] == 'rep'):
                     c['bg'] = b['bg']; fecids = b['fec']
                     c['inc'] = any(b['bg'] == x.get('bg') for x in race['inc'])
-                elif b['type'] == 'rep' and race['o'] == 'S' and c['w']:
+                elif b['type'] == 'rep' and race['o'] == 'S' and c['w'] and len(b['np'] & set(name_parts(c['n']))) >= 2:
                     c['bg'] = b['bg']; fecids = b['fec']   # a House member running for Senate
             r = fec_match(race, c, fecids)
             if r and r['Cand_Id'] in used_fec: r = None
@@ -258,6 +258,33 @@ def main():
         race['ot'] = round(sum(spenders.values()))
         race['rt'] = sum(c.get('r') or 0 for c in race['c'])
         out.append(race)
+    # candidate photos: the lead image of each candidate's Wikipedia article (sitting members use their official photo in the app)
+    PF = os.path.join(OUT, 'cand_photos.json')
+    photos = json.load(open(PF)) if os.path.exists(PF) else {}
+    want = sorted({c['w'] for r in out for c in r['c'] if c.get('w') and not c.get('bg') and c['w'] not in photos})
+    for i, t in enumerate(want[:1500]):
+        url = 'https://en.wikipedia.org/api/rest_v1/page/summary/' + urllib.parse.quote(t.replace(' ', '_'), safe='')
+        img = None
+        for k in range(4):
+            try:
+                d = json.load(urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30))
+                text = ((d.get('description') or '') + ' ' + (d.get('extract') or '')[:400]).lower()
+                if d.get('type') == 'standard' and d.get('thumbnail') and re.search(r'politician|candidate|lawyer|businessm|businessw|activist|veteran|served|member of|nominee|officer|physician|journalist', text):
+                    img = d['thumbnail']['source'].split('?')[0].replace('://thumb.wikimedia.org/', '://upload.wikimedia.org/')
+                break
+            except urllib.error.HTTPError as e:
+                if e.code == 404: break
+                time.sleep(min(60, int(e.headers.get('Retry-After') or 0) or 10 * (k + 1)))
+            except Exception:
+                time.sleep(3 * (k + 1))
+        photos[t] = img
+        time.sleep(1.0)
+        if i % 25 == 24: json.dump(photos, open(PF, 'w')); print('photos looked up', i + 1, 'of', len(want), flush=True)
+    json.dump(photos, open(PF, 'w'))
+    for r in out:
+        for c in r['c']:
+            if c.get('w') and not c.get('bg') and photos.get(c['w']): c['img'] = photos[c['w']].split('?')[0].replace('://thumb.wikimedia.org/', '://upload.wikimedia.org/')
+    print('candidate photos', sum(1 for r in out for c in r['c'] if c.get('img')))
     out.sort(key=lambda r: (r['o'] != 'S', r['st'], r['d'] or 0))
     # outside spending groups: who they spent for and against, by race
     cand_race = {c['fec']: (r['id'], c['n'], c['p']) for r in out for c in r['c'] if c.get('fec')}
