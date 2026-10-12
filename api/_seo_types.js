@@ -2,7 +2,7 @@
 const L = require('./_seo_lib');
 const H = require('./_seo_people');
 const R = require('./_seo_records');
-const { q, all, MEMBERS, COMMITTEES, CAUCUSES, esc, P, a, ST, PN, num, money, date, clamp, title, cols, rows, pager, HOST, cached } = L;
+const { q, all, MEMBERS, COMMITTEES, CAUCUSES, esc, P, a, ST, PN, num, money, date, clamp, title, cols, rows, facts, pager, HOST, cached } = L;
 
 const PAGES = {
   'member': H.member, 'past-member': H.pastMember, 'appointee': H.appointee, 'nominee': H.nominee, 'judge': H.judge,
@@ -33,6 +33,34 @@ const HUBS = {
     return hub({ path: '/members', page: 1, pages: 1, h1: 'Members of Congress', sub: `${num(ms.length)} current senators and representatives`,
       title: 'All Members of Congress: Donors, Stock Trades & Votes', desc: `Every current member of the U.S. House and Senate, by state. See who funds them, what stocks they trade, how they vote and who lobbies them.`, body });
   },
+  async 'this-week'() {
+    const today = new Date(), iso = d => d.toISOString().slice(0, 10);
+    const since = iso(new Date(today - 30 * 864e5)), since14 = iso(new Date(today - 14 * 864e5));
+    const [ms, votes, eth, noms, og] = await Promise.all([
+      q('members?select=id,name,party,state,chamber,trades:data->trades,rec:data->money->rec'),
+      q(`vote_index?select=key,chamber,voted_on,title&congress=eq.119&order=voted_on.desc,roll.desc&limit=12`),
+      q('ethics_matters?select=id,title,d:data->>d&order=ord.asc&limit=5'),
+      q('nominations?select=id,name,position,confirmed_on&confirmed_on=not.is.null&order=confirmed_on.desc&limit=8'),
+      q('outside_groups?select=id,name,total&order=total.desc.nullslast&limit=6')]);
+    const trades = [];
+    ms.forEach(m => (m.trades || []).forEach(t => { if (t[0] >= since) trades.push([m, t]); }));
+    trades.sort((x, y) => (y[1][5] || 0) - (x[1][5] || 0) || String(y[1][0]).localeCompare(x[1][0]));
+    const top = [...ms].sort((x, y) => (+y.rec || 0) - (+x.rec || 0)).slice(0, 10);
+    const recent = votes.filter(v => v.voted_on >= since14);
+    const wk = date(iso(today));
+    const ml = m => `${a(P('member', m.id, m.name), m.name)} <small>${m.party}-${m.state}</small>`;
+    const body = `<p class="sr-lead">What members of Congress traded, raised and voted on, from the latest public filings. Updated daily; this edition is from ${esc(wk)}.</p>
+${facts([['Stock trades in the last 30 days', num(trades.length)], ['Members trading', num(new Set(trades.map(x => x[0].id)).size)], ['Votes in the last 14 days', num(recent.length)]])}
+<section><h2>Biggest stock trades, last 30 days</h2>${trades.length ? rows(trades.slice(0, 25).map(([m, t]) => [`${ml(m)}<br><small>${esc(t[1])} · ${esc(clamp(t[3], 80))} · ${esc(date(t[0]))}</small>`, `${money(t[4])}–${money(t[5])}`])) : '<p>No trades reported in the last 30 days.</p>'}</section>
+<section><h2>${recent.length ? 'Votes this week' : 'Latest votes'}</h2>${recent.length ? '' : '<p>Congress has not voted in the last two weeks. These are the most recent votes.</p>'}${rows((recent.length ? recent : votes.slice(0, 8)).map(v => [a(P('vote', v.key, v.title), clamp(R.unshout(v.title), 110)), `${v.chamber === 'S' ? 'Senate' : 'House'} · ${esc(date(v.voted_on))}`]))}</section>
+<section><h2>Recently confirmed</h2>${rows(noms.map(n => [a(P('nominee', n.id, n.name), n.name) + ` <small>${esc(n.position)}</small>`, esc(date(n.confirmed_on))]))}</section>
+<section><h2>Top fundraisers for 2026</h2>${rows(top.map(m => [ml(m), money(+m.rec)]))}</section>
+<section><h2>Biggest outside spenders in the 2026 races</h2>${rows(og.map(g => [a(P('outside-group', g.id, g.name), g.name), money(g.total)]))}</section>
+<section><h2>Latest House ethics statements</h2>${rows(eth.map(e => [a(P('ethics', e.id, e.title), clamp(e.title, 110)), esc(date(e.d))]))}</section>
+<section><h2>Use this in your reporting</h2><p>Every number links to its public source. Quote it with a link to this page, or embed any member's card from their profile. Questions or corrections: <a href="mailto:corrections@capitolreceipts.com">corrections@capitolreceipts.com</a>.</p></section>`;
+    return hub({ path: '/this-week', page: 1, pages: 1, h1: 'This week in Congress', sub: `Trades, votes and money · ${wk}`,
+      title: `This Week in Congress: Stock Trades, Votes & Money`, desc: `The biggest stock trades by members of Congress in the last 30 days, the latest votes, confirmations, top fundraisers and outside spending. Updated daily.`, body });
+  },
   async states() {
     const { rows: ms } = await MEMBERS();
     const c = {}; ms.forEach(m => c[m.state] = (c[m.state] || 0) + 1);
@@ -48,7 +76,7 @@ const HUBS = {
   },
   async appointees(page) {
     const [r, noms] = await Promise.all([paged('appointees', 'id,name,light->>ttl', 'ord.asc', page), page === 1 ? q('nominations?select=id,name,position,confirmed_on&order=ord') : []]);
-    return hub({ path: '/appointees', page, pages: r.pages, h1: 'Appointees and nominees', sub: 'Cabinet members, agency heads, ambassadors and other Senate-confirmed officials',
+    return hub({ path: '/appointees/all', page, pages: r.pages, h1: 'Appointees and nominees', sub: 'Cabinet members, agency heads, ambassadors and other Senate-confirmed officials',
       title: 'Presidential Appointees & Nominees: Votes and Finances', desc: 'Cabinet members, agency heads and ambassadors: who they are, how the Senate voted on them and what their financial disclosures show.',
       body: (noms.length ? `<section><h2>Current administration nominees</h2>${cols(noms.map(n => `${a(P('nominee', n.id, n.name), n.name)} <small>${esc(n.position)}</small>`))}</section><h2>All appointees</h2>` : '') +
         cols(r.rows.map(p => `${a(P('appointee', p.id, p.name), p.name)}${p.ttl ? ` <small>${esc(clamp(p.ttl, 60))}</small>` : ''}`)) });
@@ -152,16 +180,17 @@ const counts = () => cached('sm-counts', async () => Object.fromEntries(await Pr
 const xmlEsc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 async function sitemapIndex() {
   const c = await counts(), files = ['hubs', 'places'];
+  const site = `<sitemap><loc>${HOST}/sitemaps/site.xml</loc></sitemap>\n`; // marketing pages (a static file on www)
   Object.keys(SOURCES).forEach(k => { const n = Math.ceil((c[k] || 0) / SM); for (let i = 1; i <= n; i++) files.push(n > 1 ? `${k}-${i}` : k); });
   const today = new Date().toISOString().slice(0, 10);
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${files.map(f => `<sitemap><loc>${HOST}/sitemaps/${f}.xml</loc><lastmod>${today}</lastmod></sitemap>`).join('\n')}\n</sitemapindex>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${site}${files.map(f => `<sitemap><loc>${HOST}/sitemaps/${f}.xml</loc><lastmod>${today}</lastmod></sitemap>`).join('\n')}\n</sitemapindex>\n`;
 }
 const urlset = list => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${list.map(([u, lm]) => `<url><loc>${xmlEsc(HOST + u)}</loc>${lm ? `<lastmod>${String(lm).slice(0, 10)}</lastmod>` : ''}</url>`).join('\n')}\n</urlset>\n`;
 async function sitemapFile(name) {
   if (name === 'hubs') {
     const c = await counts();
     const pages = (k, path) => [[path]]; // later pages are link lists marked noindex
-    return urlset([['/'], ['/members'], ['/states'], ...pages('votes', '/votes'), ['/committees'], ['/caucuses'], ['/elections'], ...pages('past-members', '/past-members'), ...pages('appointees', '/appointees'),
+    return urlset([['/'], ['/members'], ['/this-week'], ['/es/members'], ['/es/states'], ['/es/elections'], ['/states'], ...pages('votes', '/votes'), ['/committees'], ['/caucuses'], ['/elections'], ...pages('past-members', '/past-members'), ...pages('appointees', '/appointees/all'),
       ...pages('judges', '/judges'), ...pages('bills', '/bills'), ...pages('pacs', '/pacs'), ...pages('lobbying', '/lobbying'), ...pages('lobbying-firms', '/lobbying-firms'),
       ...pages('companies', '/companies'), ...pages('outside-groups', '/outside-groups'), ...pages('ethics', '/ethics')]);
   }

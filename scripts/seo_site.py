@@ -35,9 +35,9 @@ PAGES = {  # file -> (path, title, description, breadcrumb name)
     'pricing.html': ('/pricing', 'Pricing: Free, or Pro for $0.99 a Month | Capitol Receipts',
                      'Free: every profile, party page and comparison. Pro adds instant alerts and full trade and donor histories for $0.99 a month. Newsroom plans too.', 'Pricing'),
 }
-EXPLORE = [('/members', 'Every member of Congress'), ('/states', 'Find your state'), ('/bills', 'Bills since 1947'), ('/votes', 'Every vote since 1789'),
+EXPLORE = [('/this-week', 'This week in Congress'), ('/members', 'Every member of Congress'), ('/states', 'Find your state'), ('/bills', 'Bills since 1947'), ('/votes', 'Every vote since 1789'),
            ('/pacs', 'PACs and who they fund'), ('/lobbying', 'Who lobbies Congress'), ('/elections', '2026 House and Senate races'), ('/companies', 'Companies members trade'),
-           ('/committees', 'Committees'), ('/appointees', 'Appointees and nominees'), ('/judges', 'Federal judges'), ('/past-members', 'Past members since 1789')]
+           ('/committees', 'Committees'), ('/appointees/all', 'Appointees and nominees'), ('/judges', 'Federal judges'), ('/past-members', 'Past members since 1789'), ('/es/members', 'En español')]
 ORG = {'@context': 'https://schema.org', '@type': 'Organization', '@id': f'{SITE}/#org', 'name': 'Capitol Receipts', 'url': SITE + '/',
        'logo': f'{SITE}/favicon.svg', 'description': 'A nonpartisan app that shows who funds Congress, what members trade, how they vote and who lobbies them, from public records.',
        'email': 'corrections@capitolreceipts.com'}
@@ -59,10 +59,10 @@ def link_targets():
         first, last = (m['first'] or '').strip(), (m['last'] or '').strip()
         if not first or not last: continue
         fp = re.escape(first) if len(first) <= 3 else f"(?:{re.escape(first)}|{re.escape(first[:3])}[a-z]*)"
-        out.append((rf"{fp}(?: [A-Z]\.)? {re.escape(last)}", f"{APP}/member/{m['id']}/{slug(m['name'])}"))
+        out.append((rf"{fp}(?: [A-Z]\.)? {re.escape(last)}", f"/member/{m['id']}/{slug(m['name'])}"))
     for n in get('nominations?select=id,name'):
-        out.append((re.escape(n['name']), f"{APP}/nominee/{n['id']}/{slug(n['name'])}"))
-    out.append((re.escape('One Big Beautiful Bill Act'), f'{APP}/bill/119-hr-1/one-big-beautiful-bill-act'))
+        out.append((re.escape(n['name']), f"/nominee/{n['id']}/{slug(n['name'])}"))
+    out.append((re.escape('One Big Beautiful Bill Act'), '/bill/119-hr-1/one-big-beautiful-bill-act'))
     return [(re.compile(r'(?<![\w-])' + pat + r'(?![\w-])'), u) for pat, u in out]
 
 SKIP = {'a', 'button', 'script', 'style', 'title', 'label', 'option', 'textarea', 'svg', 'h1', 'h2', 'h3', 'head', 'select', 'summary'}
@@ -100,6 +100,9 @@ def faqs(doc):
 
 def main():
     shutil.copy(os.path.join(ROOT, 'scripts', 'assets', 'share.png'), os.path.join(SITE_DIR, 'img', 'share.png'))
+    # IndexNow key (scripts/indexnow.py), served at the site root
+    for f in os.listdir(os.path.join(ROOT, 'scripts', 'assets')):
+        if re.fullmatch(r'[0-9a-f]{32}\.txt', f): shutil.copy(os.path.join(ROOT, 'scripts', 'assets', f), os.path.join(SITE_DIR, f))
     targets = link_targets()
     for fname, (path, title, desc, crumb) in PAGES.items():
         p = os.path.join(SITE_DIR, fname); doc = open(p, encoding='utf-8').read()
@@ -141,7 +144,7 @@ def main():
                     '<h2 class="disp" style="margin:0 0 6px;font-size:40px;color:#14274e">Look it up</h2>'
                     '<p style="margin:0 0 18px;color:#5b6069">Every record in Capitol Receipts has its own page.</p>'
                     '<ul style="list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px 24px">' +
-                    ''.join(f'<li><a href="{APP}{h}" style="font-weight:600;text-decoration:none">{html.escape(t)}&nbsp;›</a></li>' for h, t in EXPLORE) +
+                    ''.join(f'<li><a href="{h}" style="font-weight:600;text-decoration:none">{html.escape(t)}&nbsp;›</a></li>' for h, t in EXPLORE) +
                     '</ul></div></section>\n')
             doc = doc.replace('<footer', band + '<footer', 1)
             if '.rlink{' not in doc:
@@ -159,9 +162,11 @@ def main():
     open(p, 'w', encoding='utf-8').write(doc)
 
     today = datetime.date.today().isoformat()
-    open(os.path.join(SITE_DIR, 'sitemap.xml'), 'w').write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    os.makedirs(os.path.join(SITE_DIR, 'sitemaps'), exist_ok=True)
+    if os.path.exists(os.path.join(SITE_DIR, 'sitemap.xml')): os.remove(os.path.join(SITE_DIR, 'sitemap.xml'))
+    open(os.path.join(SITE_DIR, 'sitemaps', 'site.xml'), 'w').write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
         ''.join(f'  <url><loc>{SITE}{path}</loc><lastmod>{today}</lastmod></url>\n' for path, *_ in PAGES.values()) + '</urlset>\n')
-    open(os.path.join(SITE_DIR, 'robots.txt'), 'w').write(f'User-agent: *\nAllow: /\nSitemap: {SITE}/sitemap.xml\nSitemap: {APP}/sitemap.xml\n')
+    open(os.path.join(SITE_DIR, 'robots.txt'), 'w').write(f'User-agent: *\nAllow: /\nSitemap: {SITE}/sitemap.xml\n')
     print('marketing pages updated:', len(PAGES), '+ 404, sitemap, robots')
 
 if __name__ == '__main__':

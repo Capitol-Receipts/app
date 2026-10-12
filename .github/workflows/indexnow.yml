@@ -1,0 +1,22 @@
+name: Notify search engines (IndexNow)
+
+on:
+  schedule:
+    - cron: '40 13 * * *'   # every day, about 9:40 a.m. Eastern, after the morning data update
+  workflow_dispatch:
+    inputs:
+      full:
+        description: 'Submit every page in the sitemaps (not just the daily ones)'
+        type: boolean
+        default: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python scripts/indexnow.py ${{ github.event.inputs.full == 'true' && 'full' || 'daily' }}

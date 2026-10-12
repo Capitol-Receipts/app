@@ -1,0 +1,9 @@
+{
+  "name": "capitol-receipts-app",
+  "private": true,
+  "description": "Capitol Receipts app: static app files plus the search-page and share-image functions in api/",
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "satori": "^0.12.2"
+  }
+}

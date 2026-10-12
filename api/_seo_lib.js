@@ -1,5 +1,5 @@
 /* Shared helpers for the search-friendly pages: Supabase reads, cached lookups, formatting and URL rules. */
-const HOST = 'https://app.capitolreceipts.com', SITE = 'https://www.capitolreceipts.com';
+const SITE = 'https://www.capitolreceipts.com', HOST = SITE; // all public pages live on www
 const SB = 'https://hxgckcriehvrolwnabpd.supabase.co/rest/v1/';
 const KEY = 'sb_publishable_jiwF5q1sFMuaGXLKg6FKAQ_3rCjcZ1J'; // public, read-only
 

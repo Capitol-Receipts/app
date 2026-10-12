@@ -161,11 +161,11 @@ ${sec('Senate confirmation votes', votes.length ? rows(votes.map(v => [`${esc(v.
 ${sec('Education', (p.edu || []).length ? rows(p.edu.map(e => Array.isArray(e) ? [esc(e[0]), esc([e[1], e[2]].filter(Boolean).join(', '))] : [esc(e), ''])) : '')}
 ${sec('Career', p.car ? (Array.isArray(p.car) ? rows(p.car.map(c => Array.isArray(c) ? [esc(c[0]), esc(c.slice(1).filter(Boolean).join(', '))] : [esc(c), ''])) : `<p>${esc(p.car)}</p>`) : '')}
 ${sec('Biography', bio && p.wt ? `<p>${esc(bio)}</p><p><small>From ${a('https://en.wikipedia.org/wiki/' + encodeURIComponent(String(p.wt).replace(/ /g, '_')), 'Wikipedia')} (CC BY-SA).</small></p>` : '')}
-${sec('More', cols([a('/appointees', 'All appointees and nominees'), a(`${SITE}/appointees`, 'About appointee tracking')]))}
+${sec('More', cols([a('/appointees/all', 'All appointees and nominees'), a(`${SITE}/appointees`, 'About appointee tracking')]))}
 ${note('From Senate roll call votes, Wikidata, Wikipedia and Office of Government Ethics records.')}`;
   return {
     noindex: !r.indexable, title: title(t), desc: clamp(fullLead, 158), path: P('appointee', id, r.name), route: 'ha:' + id, ogType: 'profile',
-    crumbs: [['Appointees', L.abs('/appointees')], [r.name, null]],
+    crumbs: [['Appointees', L.abs('/appointees/all')], [r.name, null]],
     ld: [{ '@context': 'https://schema.org', '@type': 'Person', name: r.name, jobTitle: ttl, url: L.abs(P('appointee', id, r.name)), description: bio || undefined }],
     body,
   };
@@ -187,11 +187,11 @@ async function nominee(id) {
 ${facts([['Senate vote', d.y != null ? `${d.y}–${d.n}` : null], ['Democrats', br.D ? `${br.D[0]}–${br.D[1]}` : null], ['Republicans', br.R ? `${br.R[0]}–${br.R[1]}` : null], ['Nomination', d.pn || null]])}
 ${sec('Income listed on financial disclosures', (oge.pay || []).length ? rows(oge.pay.slice(0, 20).map(p => [esc(p[0]) + (p[1] ? ` <small>· ${esc(p[1])}</small>` : ''), typeof p[2] === 'number' ? money(p[2]) : esc(p[2] || '')])) : '')}
 ${sec('Ethics documents', (oge.docs || []).length ? rows(oge.docs.map(x => [a(x[2], x[1]), esc(date(x[0]))])) : '')}
-${sec('More', cols([a('/appointees', 'All appointees and nominees'), d.pn ? a(`https://www.congress.gov/nomination/${String(d.pn).replace(/\D/g, '').length ? '119th-congress/' + String(d.pn).replace(/\D/g, '') : ''}`, 'Nomination on Congress.gov') : ''].filter(Boolean)))}
+${sec('More', cols([a('/appointees/all', 'All appointees and nominees'), d.pn ? a(`https://www.congress.gov/nomination/${String(d.pn).replace(/\D/g, '').length ? '119th-congress/' + String(d.pn).replace(/\D/g, '') : ''}`, 'Nomination on Congress.gov') : ''].filter(Boolean)))}
 ${note('From Senate roll call votes and Office of Government Ethics financial disclosures.')}`;
   return {
     title: title(t), desc: clamp(lead, 158), path: P('nominee', id, r.name), route: id, ogType: 'profile',
-    crumbs: [['Appointees', L.abs('/appointees')], [r.name, null]],
+    crumbs: [['Appointees', L.abs('/appointees/all')], [r.name, null]],
     ld: [{ '@context': 'https://schema.org', '@type': 'Person', name: r.name, jobTitle: r.position, url: L.abs(P('nominee', id, r.name)) }],
     body,
   };

@@ -60,5 +60,43 @@
       "destination": "/how-it-works",
       "permanent": true
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/sitemap.xml",
+      "destination": "https://app.capitolreceipts.com/api/seo?t=sitemap&via=www"
+    },
+    {
+      "source": "/sitemaps/:f",
+      "destination": "https://app.capitolreceipts.com/api/seo?t=sitemaps&id=:f&via=www"
+    },
+    {
+      "source": "/es/:t(member|state|district|race)/:id/:slug",
+      "destination": "https://app.capitolreceipts.com/api/seo?t=:t&id=:id&slug=:slug&lang=es&via=www"
+    },
+    {
+      "source": "/es/:t(member|state|district|race)/:id",
+      "destination": "https://app.capitolreceipts.com/api/seo?t=:t&id=:id&lang=es&via=www"
+    },
+    {
+      "source": "/es/:t(members|states|elections)",
+      "destination": "https://app.capitolreceipts.com/api/seo?t=:t&lang=es&via=www"
+    },
+    {
+      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district)/:id/:slug",
+      "destination": "https://app.capitolreceipts.com/api/seo?t=:t&id=:id&slug=:slug&via=www"
+    },
+    {
+      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district)/:id",
+      "destination": "https://app.capitolreceipts.com/api/seo?t=:t&id=:id&via=www"
+    },
+    {
+      "source": "/appointees/all",
+      "destination": "https://app.capitolreceipts.com/api/seo?t=appointees&via=www"
+    },
+    {
+      "source": "/:t(members|states|past-members|judges|bills|votes|pacs|lobbying|lobbying-firms|companies|committees|caucuses|elections|outside-groups|ethics|this-week)",
+      "destination": "https://app.capitolreceipts.com/api/seo?t=:t&via=www"
+    }
   ]
 }

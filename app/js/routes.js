@@ -14,7 +14,8 @@ function pathFor(id){
   if(typeof nomById!=='undefined'&&nomById[id])return `/nominee/${encodeURIComponent(id)}`;
   return '/';
 }
-function pageUrl(){return location.origin+pathFor(S.stack.at(-1))}
+/* public address of the current record, for sharing: the search-friendly page on www */
+function pageUrl(){const p=pathFor(S.stack.at(-1));return 'https://www.capitolreceipts.com'+p}
 function routeReady(r){
   if(typeof byId==='undefined'||!byId)return false;
   if(/^(hp|ha|bill|pac):/.test(r))return typeof H!=='undefined'&&!!H;
@@ -24,12 +25,16 @@ function routeReady(r){
   return true;
 }
 (function(){
+  try{if(new URLSearchParams(location.search).get('lang')==='es'&&S.lang!=='es'){S.lang='es';store.set('lang','es')}}catch(e){}
   const _renderRt=render;
   render=function(){
     _renderRt();
     if(window.__HOLD)return;
     try{const p=pathFor(S.stack.at(-1));const cur=location.pathname;
-      if(!(p!=='/'&&cur.startsWith(p+'/'))&&cur!==p)history.replaceState(null,'',p+location.hash)}catch(e){}
+      /* ?app=1 keeps a reload in the app; without it the address shows the public page on www */
+      const want=p==='/'?'/':p;
+      if(!(p!=='/'&&cur.startsWith(p+'/'))&&cur!==want)history.replaceState(null,'',want+(want==='/'?'':'?app=1')+location.hash);
+      else if(want!=='/'&&!/[?&]app=1/.test(location.search))history.replaceState(null,'',location.pathname+'?app=1'+location.hash)}catch(e){}
   };
   if(window.__HOLD&&window.__ROUTE){
     const r=window.__ROUTE,t0=Date.now();

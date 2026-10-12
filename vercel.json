@@ -43,6 +43,11 @@
     "api/seo.js": {
       "includeFiles": "index.html",
       "maxDuration": 30
+    },
+    "api/og.js": {
+      "includeFiles": "api/_fonts/**",
+      "maxDuration": 30,
+      "memory": 1024
     }
   },
   "rewrites": [
@@ -59,6 +64,26 @@
       "destination": "/api/seo?t=sitemaps&id=:f"
     },
     {
+      "source": "/og/:t/:id",
+      "destination": "/api/og?t=:t&id=:id"
+    },
+    {
+      "source": "/embed/member/:id",
+      "destination": "/api/seo?t=embed&id=:id"
+    },
+    {
+      "source": "/es/:t(member|state|district|race)/:id/:slug",
+      "destination": "/api/seo?t=:t&id=:id&slug=:slug&lang=es"
+    },
+    {
+      "source": "/es/:t(member|state|district|race)/:id",
+      "destination": "/api/seo?t=:t&id=:id&lang=es"
+    },
+    {
+      "source": "/es/:t(members|states|elections)",
+      "destination": "/api/seo?t=:t&lang=es"
+    },
+    {
       "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district)/:id/:slug",
       "destination": "/api/seo?t=:t&id=:id&slug=:slug"
     },
@@ -67,7 +92,11 @@
       "destination": "/api/seo?t=:t&id=:id"
     },
     {
-      "source": "/:t(members|states|past-members|appointees|judges|bills|votes|pacs|lobbying|lobbying-firms|companies|committees|caucuses|elections|outside-groups|ethics)",
+      "source": "/appointees/all",
+      "destination": "/api/seo?t=appointees"
+    },
+    {
+      "source": "/:t(members|states|past-members|appointees|judges|bills|votes|pacs|lobbying|lobbying-firms|companies|committees|caucuses|elections|outside-groups|ethics|this-week)",
       "destination": "/api/seo?t=:t"
     }
   ],

@@ -64,7 +64,7 @@ async function authSubmit(){
   if(ACCT.mode!=='reset'&&pw.length<8)return say('Passwords need at least 8 characters.');
   if(!ACCT.client)return say('Sign-in isn’t available right now. Try again in a moment.');
   btn.disabled=true;say('One moment…',true);
-  const back=location.origin+location.pathname;
+  const back=location.origin+'/'; /* email links return to the app home (record addresses redirect to www) */
   try{
     if(ACCT.mode==='up'){
       const {data,error}=await ACCT.client.auth.signUp({email:em,password:pw,options:{emailRedirectTo:back}});

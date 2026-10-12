@@ -144,7 +144,8 @@ open(os.path.join(OUT, 'favicon.svg'), 'w').write(
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#c8323a"/>'
     '<text x="32" y="44" font-family="Arial,Helvetica,sans-serif" font-size="30" font-weight="800" fill="#fff" text-anchor="middle">CR</text></svg>')
 open(os.path.join(OUT, 'robots.txt'), 'w').write(f'User-agent: *\nAllow: /\nSitemap: {SITE}/sitemap.xml\n')
-open(os.path.join(OUT, 'sitemap.xml'), 'w').write(
+if False: open(os.path.join(OUT, 'sitemap.xml'), 'w').write(  # replaced by sitemaps/site.xml (seo_site.py)
+
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     ''.join(f'  <url><loc>{SITE}{p if p != "/" else "/"}</loc></url>\n' for p, _, _ in PAGES.values()) + '</urlset>\n')
 shutil.copy(os.path.join(os.path.dirname(__file__), 'site_forms.js'), os.path.join(OUT, 'js', 'forms.js'))
