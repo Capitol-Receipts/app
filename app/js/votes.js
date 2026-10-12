@@ -112,3 +112,19 @@ window.addEventListener('click',e=>{
   if(el=g('[data-mvotes]')){e.preventDefault();e.stopPropagation();S.mvq='';S.limit=60;go('mvotes:'+el.dataset.mvotes);return}
   if(el=g('[data-vfilt]')){e.preventDefault();e.stopPropagation();S.vfilt=el.dataset.vfilt;render();return}
 },true);
+/* older bills: when there's no official summary, show what the recorded votes were about */
+const _renderV3=render;
+render=function(){
+  _renderV3();
+  try{
+    const cur=S.stack.at(-1)||'';if(!cur.startsWith('bill:'))return;
+    const app=$('#app');if(!app||app.querySelector('[data-voteabout]'))return;
+    const hasSummary=[...app.querySelectorAll('h2')].some(h=>/What it does/.test(h.textContent));
+    if(hasSummary)return;
+    const [c,type,num]=cur.slice(5).split('-');const code=(type+num).toUpperCase();
+    const descs=[];['H','S'].forEach(ch=>{const d=CV[`${c}-${ch}`];if(d&&typeof d==='object')d.rc.forEach(r=>{if(r[2]===code&&r[7]&&!descs.some(x=>x[1]===r[7]))descs.push([ch,r[7],r[1]])})});
+    if(!descs.length)return;
+    const anchor=app.querySelector('.yrv')||app.querySelector('.wrap .sec');
+    if(anchor)anchor.insertAdjacentHTML('beforebegin',`<section class="sec" data-voteabout><div class="sh"><h2>What the votes were about</h2></div><div class="group">${descs.slice(0,4).map(([ch,t,d])=>`<div class="row plain" style="grid-template-columns:1fr;cursor:default"><span><span class="s">${ch==='H'?'House':'Senate'} · ${fmtISO(d)}</span><br><span>${esc(t.charAt(0)+t.slice(1).toLowerCase())}</span></span></div>`).join('')}</div><div class="cap">There's no official summary for this older bill, so these are the descriptions recorded with its votes.</div></section>`);
+  }catch(e){console.warn(e)}
+};

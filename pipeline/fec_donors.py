@@ -5,12 +5,13 @@ from industry import classify
 ind = collections.defaultdict(collections.Counter)
 cache = {}
 D = sys.argv[1]
+CY = __import__('os').environ.get('CYCLE', '26')
 L = yaml.safe_load(open(f'{D}/legislators-current.yaml'))
 cand = {}
 for l in L:
     for f in l['id'].get('fec', []): cand[f] = l['id']['bioguide']
 cm2bg = {}
-z = zipfile.ZipFile(f'{D}/ccl26.zip')
+z = zipfile.ZipFile(f'{D}/ccl{CY}.zip')
 for line in z.read(z.namelist()[0]).decode('latin-1').splitlines():
     f = line.split('|')
     if len(f) > 5 and f[0] in cand and f[5] in ('P', 'A'): cm2bg[f[3]] = cand[f[0]]
@@ -24,7 +25,7 @@ def norm(e):
 emp = collections.defaultdict(collections.Counter); empn = collections.defaultdict(collections.Counter)
 item = collections.Counter(); instate = collections.Counter(); donors = collections.Counter()
 st = {l['id']['bioguide']: l['terms'][-1]['state'] for l in L}
-z = zipfile.ZipFile(f'{D}/indiv26.zip')
+z = zipfile.ZipFile(f'{D}/indiv{CY}.zip')
 name = 'itcont.txt'
 n = 0
 with z.open(name) as fh:
@@ -53,5 +54,5 @@ with z.open(name) as fh:
 print('rows', n, flush=True)
 out = {bg: dict(itemized=round(item[bg]), instateItem=round(instate[bg]), donations=donors[bg],
                 employers=[[e, round(v), empn[bg][e]] for e, v in emp[bg].most_common(12)], industries=[[k, round(v)] for k, v in ind[bg].most_common()]) for bg in item}
-json.dump(out, open(f'{D}/donors26.json', 'w'))
+json.dump(out, open(f'{D}/donors{CY}.json', 'w'))
 print('members', len(out))
