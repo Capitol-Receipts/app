@@ -134,3 +134,4 @@ img,svg,video,canvas,table{max-width:100%}
 /* freshness */
 .asof3{display:block;margin-top:8px;font-size:12px;color:var(--soft)}
 .gl-asof{font-size:12px;color:var(--soft);text-align:center;margin:8px 0 0}
+.tklink{cursor:pointer;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}

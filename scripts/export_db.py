@@ -114,5 +114,23 @@ for k in ('control', 'kv', 'PK', 'meta', 'curApps'):
     meta['hist_' + k] = H[k]
 for k in ('leaders', 'mc', 'issue'):
     meta['pages_' + k] = G[k]
+# stock ticker -> industry (from SEC industry codes), for industry and stock pages
+def sic_industry(code):
+    try: c = int(code)
+    except (TypeError, ValueError): return None
+    R = [((1300, 1399), 'Oil, gas & energy'), ((2900, 2999), 'Oil, gas & energy'), ((4900, 4999), 'Oil, gas & energy'), ((1200, 1299), 'Oil, gas & energy'),
+         ((2830, 2836), 'Drug & medical companies'), ((3841, 3851), 'Drug & medical companies'), ((5120, 5129), 'Drug & medical companies'), ((8000, 8099), 'Hospitals & health care'),
+         ((6300, 6411), 'Insurance'), ((6500, 6553), 'Real estate'), ((6798, 6798), 'Real estate'), ((6000, 6299), 'Finance & investing'), ((6700, 6799), 'Finance & investing'),
+         ((3570, 3579), 'Tech'), ((3600, 3699), 'Tech'), ((7370, 7379), 'Tech'), ((4800, 4899), 'Telecom & media'), ((2700, 2799), 'Telecom & media'), ((7800, 7899), 'Telecom & media'),
+         ((3720, 3729), 'Defense & aerospace'), ((3760, 3769), 'Defense & aerospace'), ((3812, 3812), 'Defense & aerospace'), ((3480, 3489), 'Defense & aerospace'),
+         ((3710, 3716), 'Transportation'), ((4000, 4799), 'Transportation'), ((1500, 1799), 'Construction'), ((100, 999), 'Farming & food'), ((2000, 2099), 'Farming & food'), ((5140, 5149), 'Farming & food')]
+    for (a, b), n in R:
+        if a <= c <= b: return n
+    return 'Other business'
+try:
+    SIC = J('data/sic.json')
+    meta['tick_ind'] = {t: [sic_industry(v[0]), v[2]] for t, v in SIC.items() if v and v[0]}
+except Exception as e:
+    print('no ticker industries:', e)
 write('app_meta', [{'key': k, 'value': v} for k, v in meta.items()])
 print(json.dumps(counts))
