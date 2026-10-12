@@ -70,6 +70,7 @@ if os.path.exists(sod):
         try: amt = float(r['YTD AMOUNT'] or 0)
         except ValueError: continue
         desc = r['DESCRIPTION'].strip()
+        if desc.endswith('TOTALS:') and desc != 'OFFICIAL EXPENSES OF MEMBERS TOTALS:': continue
         off[m.group(1)]['total' if desc == 'OFFICIAL EXPENSES OF MEMBERS TOTALS:' else CAT.get(desc, 'other')] += amt
     for name, c in off.items():
         w = name.split()
