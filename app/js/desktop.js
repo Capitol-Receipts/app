@@ -47,3 +47,7 @@ render=function(){_renderDesk();try{railMenu();if(S.lang==='es')translateAll();t
 WIDE.addEventListener('change',()=>render());
 RAIL.addEventListener('change',()=>render());
 render();
+/* links from alert emails: app.capitolreceipts.com/#p=<member id> opens that profile */
+(function(){const m=location.hash.match(/^#p=([A-Za-z0-9:_-]{3,60})$/);if(!m)return;
+  const t=setInterval(()=>{if(typeof byId!=='undefined'&&byId&&byId[m[1]]){clearInterval(t);S.tab='search';S.stack=[m[1]];render();scrollTo(0,0);history.replaceState(null,'',location.pathname)}},300);
+  setTimeout(()=>clearInterval(t),30000)})();

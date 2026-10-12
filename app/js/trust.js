@@ -67,7 +67,7 @@ function alertSheet(){
   const al=ACCT.alerts||{trades:true,votes:true,money:true,email:false};
   const sw=[['trades','New stock trades by people I follow'],['votes','Missed votes by people I follow'],['money','Big new donations (over $100K)'],['email','Also email me a weekly summary']];
   openSheet('Alerts',`<div class="group">${sw.map(([k,l])=>`<label class="row plain" style="grid-template-columns:1fr auto"><span>${l}</span><input class="sw" type="checkbox" data-alert="${k}" ${al[k]?'checked':''}></label>`).join('')}</div>
-   <div class="cap">Updates appear on your My Reps page and on Home. Weekly emails start once email sending is switched on for Capitol Receipts.</div>`);
+   <div class="cap">Updates appear on your My Reps page. Turn on the weekly email to get a summary every week at the address you signed in with.</div>`);
 }
 /* the alert choices live in the account */
 if(typeof acctSet==='function'){

@@ -56,6 +56,14 @@ jobs:
           TABLES=$(cat work/changed.txt)
           if [ -z "$TABLES" ]; then echo "Nothing changed today."; exit 0; fi
           python scripts/load_supabase.py $TABLES
+      - name: Send weekly alert emails
+        if: success()
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          curl -s -m 280 -X POST https://hxgckcriehvrolwnabpd.supabase.co/functions/v1/send-alerts \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" -d '{}' | tee -a work/last_run.txt || true
       - name: Save pipeline state
         if: success()
         uses: actions/cache/save@v4
