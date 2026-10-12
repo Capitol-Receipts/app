@@ -1,11 +1,19 @@
-/* ================= Desktop: side-rail logo and two balanced columns ================= */
-const WIDE=matchMedia('(min-width:1180px)');
+/* ================= Desktop: full menu in the side rail and two balanced columns ================= */
+const WIDE=matchMedia('(min-width:1240px)');
 const SPAN_SEL='.homehero,.fakesearch,.shead,.scopes,.lhero,.lbanner,.glance,.note,.boot,.pnav,.phero';
-(function railExtras(){
-  const bar=document.querySelector('nav.tabbar');if(!bar||bar.querySelector('.raillogo'))return;
-  bar.insertAdjacentHTML('afterbegin','<button class="raillogo notr" data-tab="home" aria-label="Capitol Receipts home"><span>Capitol</span>Receipts</button>');
-  bar.insertAdjacentHTML('beforeend','<div class="railfoot">Nonpartisan. Built on public records.<br><a href="https://www.capitolreceipts.com/how-it-works" target="_blank" rel="noopener">How it works</a> · <a href="https://www.capitolreceipts.com" target="_blank" rel="noopener">About</a></div>');
-})();
+const RAIL=matchMedia('(min-width:1024px)');
+/* desktop: the full site menu lives in the side rail */
+function railMenu(){
+  let m=document.querySelector('aside.railmenu');
+  if(!RAIL.matches){if(m)m.innerHTML='';return}
+  if(!m){m=document.createElement('aside');m.className='railmenu';m.setAttribute('aria-label','Site menu');document.body.appendChild(m)}
+  const st=m.scrollTop;
+  m.innerHTML=drawerHtml();
+  m.scrollTop=st;
+  const logo=m.querySelector('.dtop .logo');if(logo){logo.setAttribute('data-go','home');logo.setAttribute('role','button');logo.tabIndex=0}
+  const cur=S.stack.length?null:S.tab;
+  m.querySelectorAll('[data-go]').forEach(b=>{if(b.dataset.go===cur&&!b.closest('.dtop'))b.setAttribute('aria-current','page')});
+}
 function twoColumns(){
   document.body.classList.remove('two');
   const w=document.querySelector('#app > .wrap');if(!w)return;
@@ -24,6 +32,7 @@ function twoColumns(){
   items.forEach((el,i)=>{if(ha<=hb){a.appendChild(el);ha+=hs[i]}else{b.appendChild(el);hb+=hs[i]}});
 }
 const _renderDesk=render;
-render=function(){_renderDesk();try{twoColumns()}catch(e){console.warn(e)}};
+render=function(){_renderDesk();try{twoColumns();railMenu()}catch(e){console.warn(e)}};
 WIDE.addEventListener('change',()=>render());
+RAIL.addEventListener('change',()=>render());
 render();

@@ -27,3 +27,8 @@
     });
   });
 })();
+/* Menu button on smaller screens */
+(function(){
+  var b=document.querySelector('.menu-btn');if(!b)return;
+  b.addEventListener('click',function(){var n=b.closest('nav');var o=n.classList.toggle('open');b.setAttribute('aria-expanded',o);b.textContent=o?'Close':'Menu'});
+})();

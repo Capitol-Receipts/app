@@ -57,6 +57,20 @@ for name, (path, fname, desc) in PAGES.items():
     body = body.replace('Email [YOUR EMAIL] with a link', 'Email <a href="mailto:corrections@capitolreceipts.com">corrections@capitolreceipts.com</a> with a link')
     body = body.replace('[YOUR PRICE]', 'Custom')
 
+    # homepage hero: two phones side by side, fully inside the hero
+    body = body.replace('display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 40px; align-items: end"',
+                        'display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 40px; align-items: center"')
+    body = re.sub(r'<div style="display: flex; justify-content: center; align-items: flex-end; gap: 0; height: 600px; position: relative">\s*'
+                  r'<div class="phone" style="transform: rotate\(-6deg\) translate\(40px, 60px\)">(.*?)</div>\s*'
+                  r'<div class="phone" style="transform: rotate\(5deg\) translate\(-30px, 20px\); z-index: 1">(.*?)</div>\s*</div>',
+                  r'<div class="hero-phones"><div class="phone" style="transform: rotate(-3deg)">\1</div><div class="phone" style="transform: rotate(3deg) translateY(-24px)">\2</div></div>',
+                  body, flags=re.S)
+    body = body.replace('<img loading="lazy" decoding="async" src="/img/5741f918', '<img decoding="async" fetchpriority="high" src="/img/5741f918')
+    body = body.replace('<img loading="lazy" decoding="async" src="/img/d0ab17d8', '<img decoding="async" fetchpriority="high" src="/img/d0ab17d8')
+    # compact menu on smaller screens
+    body = body.replace('<div class="hide-sm" style="display: flex; gap: 20px; margin-left: auto">',
+                        '<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-links">Menu</button>\n  <div class="hide-sm site-links" id="site-links" style="display: flex; gap: 20px; margin-left: auto">')
+
     # forms
     body = body.replace('<form style="display: flex; gap: 10px; flex-wrap: wrap">', '<form data-signup="list" style="display: flex; gap: 10px; flex-wrap: wrap">')
     body = body.replace('<form style="display: grid;', '<form data-signup="newsroom" style="display: grid;')
@@ -85,7 +99,26 @@ for name, (path, fname, desc) in PAGES.items():
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 {helmet}
-<style>img{{max-width:100%}}.cr-msg{{flex-basis:100%;margin:4px 0 0;font-weight:700}}</style>
+<style>img{{max-width:100%}}.cr-msg{{flex-basis:100%;margin:4px 0 0;font-weight:700}}
+.hero-phones{{display:flex;justify-content:center;align-items:center;gap:24px;padding:40px 0 72px}}
+.hero-phones .phone{{width:260px;flex:0 1 260px}}
+.menu-btn{{display:none;margin-left:auto;background:transparent;color:#fff;border:2px solid rgba(255,255,255,.5);border-radius:999px;padding:9px 16px;font:700 15px inherit;font-family:inherit;cursor:pointer}}
+header nav>a:last-child{{margin-left:0 !important}}
+@media (max-width:1100px){{
+ header nav .site-links{{display:none !important}}
+ .menu-btn{{display:block}}
+ header nav.open .site-links{{display:flex !important;flex-direction:column;gap:14px;flex-basis:100%;order:9;margin:6px 0 4px !important;padding-top:14px;border-top:1px solid rgba(255,255,255,.18)}}
+}}
+@media (max-width:1280px){{.hero-phones .phone{{width:230px;flex-basis:230px}}}}
+@media (max-width:760px){{
+ header nav{{gap:12px !important}}
+ section span[style*="letter-spacing: .1em"]{{font-size:11px !important;letter-spacing:.06em !important}}
+ .hero-phones{{gap:12px;padding:8px 0 48px}}
+ .hero-phones .phone{{width:46%;flex-basis:46%;padding:6px;border-radius:30px}}
+ .hero-phones .phone img{{border-radius:24px}}
+}}
+@media (max-width:480px){{header nav>a:last-child{{display:none}}}}
+</style>
 </head>
 <body>
 {body}
