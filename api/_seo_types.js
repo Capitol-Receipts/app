@@ -179,7 +179,7 @@ const SOURCES = { // sitemap name -> table, columns, how to build the URL
 const counts = () => cached('sm-counts', async () => Object.fromEntries(await Promise.all(Object.entries(SOURCES).map(async ([k, [t]]) => [k, (await q(`${t}?select=${['bills', 'vote_index'].includes(t) ? 'key' : 'id'}${SOURCES[k][2].includes('indexable') ? '&indexable=is.true' : ''}`, { range: '0-0', count: true })).total]))), 6 * 3600e3);
 const xmlEsc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 async function sitemapIndex() {
-  const c = await counts(), files = ['hubs', 'places'];
+  const c = await counts(), files = ['hubs', 'places', 'es'];
   const site = `<sitemap><loc>${HOST}/sitemaps/site.xml</loc></sitemap>\n`; // marketing pages (a static file on www)
   Object.keys(SOURCES).forEach(k => { const n = Math.ceil((c[k] || 0) / SM); for (let i = 1; i <= n; i++) files.push(n > 1 ? `${k}-${i}` : k); });
   const today = new Date().toISOString().slice(0, 10);
@@ -198,6 +198,13 @@ async function sitemapFile(name) {
     const { rows: ms } = await MEMBERS();
     const states = [...new Set(ms.map(m => m.state))];
     return urlset([...states.map(s => [P('state', s, ST[s])]), ...ms.filter(m => m.chamber === 'House').map(m => [P('district', `${m.state}-${+m.district || 0}`, H.distName(m.state, m.district))])]);
+  }
+  if (name === 'es') { // Spanish pages: members, states, districts and 2026 races
+    const [{ rows: ms }, races] = await Promise.all([MEMBERS(), q('races?select=id,office,state,district,data->sp&order=id')]);
+    const states = [...new Set(ms.map(m => m.state))];
+    return urlset([...ms.map(m => ['/es' + P('member', m.id, m.name)]), ...states.map(s => ['/es' + P('state', s, ST[s])]),
+      ...ms.filter(m => m.chamber === 'House').map(m => ['/es' + P('district', `${m.state}-${+m.district || 0}`, H.distName(m.state, m.district))]),
+      ...races.map(r => ['/es' + P('race', r.id, '2026 ' + R.raceName({ st: r.state, o: r.office, d: r.district, sp: r.sp }))])]);
   }
   const m = name.match(/^([a-z-]+?)(?:-(\d+))?$/); if (!m || !SOURCES[m[1]]) return null;
   const [table, cols, order, url] = SOURCES[m[1]], part = +(m[2] || 1);
