@@ -280,7 +280,7 @@ const TABS2=[
 ];
 function render(){
   const cur=S.stack.at(-1);if($('#sheet').hidden)$('#panel').className='panel';
-  $('#app').innerHTML=cur?(cur==='compare'?comparePage():cur.startsWith('hp:')?pastProfile(HP[cur.slice(3)]||HC[cur.slice(3)]):cur.startsWith('ha:')?appProfile(HA[cur.slice(3)]):cur.startsWith('bill:')?billPage(cur.slice(5)):cur.startsWith('party:')?partyPage(cur.slice(6)):byId[cur]?memberProfile(byId[cur]):nomProfile(nomById[cur])):{home,search:searchScreen,following,more}[S.tab]();
+  $('#app').innerHTML=cur?(cur==='compare'?comparePage():cur.startsWith('hp:')?pastProfile(HP[cur.slice(3)]||HC[cur.slice(3)]):cur.startsWith('ha:')?appProfile(HA[cur.slice(3)]):cur.startsWith('bill:')?billPage(cur.slice(5)):cur.startsWith('party:')?partyPage(cur.slice(6)):byId[cur]?memberProfile(byId[cur]):nomById[cur]?nomProfile(nomById[cur]):`<div class="wrap"><div class="empty" style="padding-top:calc(var(--navh) + 24px)">Loading…</div></div>`):{home,search:searchScreen,following,more}[S.tab]();
   $('#tabbar').innerHTML=TABS2.map(([k,l,svg])=>`<button data-tab="${k}" aria-current="${k===S.tab?'page':'false'}">${svg}${l}</button>`).join('');
   const qi=$('#q');if(qi){qi.addEventListener('input',e=>{S.q=e.target.value;S.limit=60;const pos=qi.selectionStart;render();const n=$('#q');n.focus();n.setSelectionRange(pos,pos)});if(S.focusSearch){qi.focus();S.focusSearch=false}}
   document.querySelectorAll('#home').forEach(hs=>hs.addEventListener('change',e=>{S.home=e.target.value;S.dist=null;S.zip='';store.set('home',S.home);store.set('dist',null);store.set('zip','');render()}));
