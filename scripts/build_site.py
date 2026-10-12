@@ -7,7 +7,7 @@ import os, re, shutil, sys
 SRC, ASSETS = sys.argv[1], sys.argv[2]
 OUT = os.path.join(os.path.dirname(__file__), '..', 'site')
 APP = 'https://app.capitolreceipts.com'
-SITE = 'https://capitolreceipts.com'
+SITE = 'https://www.capitolreceipts.com'
 PAGES = {  # design file -> (url path, output file, description)
     'Main': ('/', 'index.html', 'Who funds every member of Congress, what stocks they trade, how they vote and who lobbies them, explained in plain English. Free and nonpartisan.'),
     'Features': ('/features', 'features.html', 'Everything in the Capitol Receipts app: money, votes, trades, lobbying, appointees and more, in plain English.'),
