@@ -81,7 +81,16 @@ for k, c in G['clients'].items():
     rows.append({'id': k, 'name': c['n'], 'spend': round(c.get('spend') or 0), 'light': l, 'detail': d})
 write('lobby_clients', rows)
 write('lobby_firms', [{'id': k, 'name': f['n'], 'income': round(f.get('inc') or 0), 'data': f} for k, f in G['firms'].items()])
-write('ethics_matters', [{'id': e['id'], 'title': e['t'], 'ord': i, 'data': e} for i, e in enumerate(G['ethics'])])
+# ethics ids: 'e' + the full slug of the statement URL (unique; the app builds links the same way)
+import re
+seen, rows = set(), []
+for i, e in enumerate(G['ethics']):
+    eid = 'e' + re.sub(r'[^a-z0-9]', '', (e.get('url') or '').rstrip('/').split('/')[-1].lower())
+    if eid in seen: eid += '-' + (e.get('d') or str(i)).replace('-', '')
+    while eid in seen: eid += 'x'
+    seen.add(eid); e = dict(e, id=eid)
+    rows.append({'id': eid, 'title': e['t'], 'ord': i, 'data': e})
+write('ethics_matters', rows)
 write('committees', [{'id': k, 'name': c.get('n') or c.get('short') or k, 'data': c} for k, c in G['comm'].items()])
 
 # ---- current snapshot

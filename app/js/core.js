@@ -315,7 +315,7 @@ function mStocks(m){
    <a class="row plain" style="grid-template-columns:1fr auto" href="${link}" target="_blank" rel="noopener"><span>Search all ${m.chamber==='Senate'?'Senate':'House'} disclosures</span>${chev}</a></div></div>`;
 }
 function ethicsItems(list){return list.map(([d,st,txt,url])=>`<div class="item"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span class="kind" style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--soft)">${fmtISO(d)}</span><span class="tag off">${esc(st)}</span></div><p>${esc(txt)}</p><button class="link" data-eth="e${normEth(url)}" style="font-size:14px;text-decoration:underline">Full statement and documents</button></div>`).join('')}
-const normEth=u=>(u||'').replace(/\/$/,'').split('/').pop().toLowerCase().replace(/[^a-z0-9]/g,'').slice(-60);
+const normEth=u=>(u||'').replace(/\/$/,'').split('/').pop().toLowerCase().replace(/[^a-z0-9]/g,'');
 function mInfluence(m){
   const rev=m.revolving||[];
   const lv=lobbiedVotes(m).slice(0,3);
