@@ -18,3 +18,4 @@ Any static server works, for example `python3 -m http.server` in the repo root.
 
 - **www.capitolreceipts.com** — marketing site, plain HTML in `site/` (Vercel project `capitol-receipts-marketing`, root directory `site`). Rebuild it from the design files with `python3 scripts/build_site.py <design folder> <image folder>`. Sign-up forms save to the Supabase `signups` table (insert only).
 - **app.capitolreceipts.com** — the app (Vercel project `capitol-receipts`, repo root). Phones get the bottom tab bar; tablets get a wider column; desktops get a side menu and two columns (`app/css/desktop.css`, `app/js/desktop.js`).
+- When releasing app changes, bump `APP_VER` in `index.html` (and the `?v=` on the CSS links) so visitors get the new files right away.
