@@ -63,7 +63,7 @@ function stocksScreen(){
   const q=(S.sq2||'').trim().toLowerCase();
   const list=Object.entries(by).filter(([k,v])=>!q||k.toLowerCase()===q||(v.name||'').toLowerCase().includes(q)).sort((a,b)=>b[1].mem.size-a[1].mem.size||b[1].n-a[1].n);
   return `${pageHead('Stocks')}<div class="wrap" style="padding-top:calc(var(--navh) + 10px)">
-   <div class="lt"><h1>Stocks Congress trades</h1></div><p class="cap">Every company stock that current members reported buying or selling since January 2025, ranked by how many members traded it.</p>
+   <div class="lbanner bg-dusk pghero"><h1>Stocks Congress trades</h1><span>Every company stock that current members reported buying or selling since January 2025, ranked by how many members traded it.</span></div>
    <div class="sfield"><input id="sq2" class="search" type="search" placeholder="Search a ticker or company" value="${esc(S.sq2||'')}" aria-label="Search stocks"></div>
    <section class="sec"><div class="group">${list.slice(0,S.limit||60).map(([k,v],i)=>`<button class="row" data-stock="${esc(k)}" style="grid-template-columns:auto 1fr auto auto"><span class="rank">${i+1}</span><span style="min-width:0"><span class="t">${esc(k)}</span><br><span class="s">${esc(((PL.tickInd&&PL.tickInd[k]&&PL.tickInd[k][1])||v.name||'').slice(0,60))}</span></span><span class="val">${v.mem.size} member${v.mem.size>1?'s':''}<small> · ${v.n} trades</small></span>${chev}</button>`).join('')}</div>${list.length>(S.limit||60)?`<button class="more" data-cmore>Show more</button>`:''}</section></div>`;
 }
@@ -88,7 +88,7 @@ function stockPage(tk){
 /* ---------- industries ---------- */
 function industriesScreen(){
   return `${pageHead('Industries')}<div class="wrap" style="padding-top:calc(var(--navh) + 10px)">
-   <div class="lt"><h1>Industries</h1></div><p class="cap">Campaign money, stock trades and lobbying by industry, using the same rules for everyone.</p>
+   <div class="lbanner bg-capitol pghero"><h1>Industries</h1><span>Campaign money, stock trades and lobbying by industry, using the same rules for everyone.</span></div>
    <section class="sec"><div class="group">${INDUSTRIES.map(i=>{const tot=MEM.reduce((a,m)=>a+sumInd(m,i),0);return `<button class="row plain" data-ind="${slugI(i)}" style="grid-template-columns:1fr auto auto"><span class="t">${esc(i)}</span><span class="val">${M(tot)}</span>${chev}</button>`}).join('')}</div><div class="cap">Amounts are 2025–26 gifts to current members from people who work in each industry and its PACs.</div></section></div>`;
 }
 function industryPage(slug){

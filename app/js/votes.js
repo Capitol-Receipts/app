@@ -54,7 +54,7 @@ function memberVotesPage(bg){
   const shown=rows.slice(0,S.limit||60);
   const v=d.v[i];const cnt={Y:0,N:0,P:0,'.':0};for(const ch of v)cnt[ch]++;
   return `${pageHead(m.name)}<div class="wrap" style="padding-top:calc(var(--navh) + 10px)">
-   <div class="lt"><h1>${esc(m.name)}'s votes</h1></div><p class="cap">Every recorded ${m.chamber} vote in the 119th Congress (2025–26), newest first.</p>
+   <div class="lbanner bg-house pghero"><h1>${esc(m.name)}'s votes</h1><span>Every recorded ${m.chamber} vote in the 119th Congress (2025–26), newest first.</span></div>
    <div class="glance">${glance('Yes',ord(cnt.Y),'votes',false)}${glance('No',ord(cnt.N),'votes',false)}${glance('Missed',ord(cnt['.']+cnt.P),`of ${ord(v.length)}`,false)}</div>
    <div class="sfield" style="margin-top:14px"><input id="mvq" class="search" type="search" placeholder="Search votes by topic or bill" value="${esc(S.mvq||'')}" aria-label="Search votes"></div>
    <section class="sec"><div class="group">${shown.map(([r,ri])=>`<button class="row plain" data-vote="${voteKey(119,id.slice(-1),r[0])}" style="grid-template-columns:1fr auto auto"><span style="min-width:0"><span class="t clamp">${esc(r[7]||r[3])}</span><span class="s">${fmtISO(r[1])} · ${esc([r[2]&&!/^PN/.test(r[2])?billName(r[2]):'',r[3]].filter(Boolean).join(' · '))}</span></span><span class="cast ${v[ri]==='Y'?'Yes':v[ri]==='N'?'No':''}">${VWORD[v[ri]]}</span>${chev}</button>`).join('')||'<div class="empty">No votes match.</div>'}</div>

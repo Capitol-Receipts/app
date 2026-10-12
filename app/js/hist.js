@@ -367,7 +367,7 @@ function archiveCarousel(){
 }
 function historyScreen(){
   const q=S.q.trim().toLowerCase();
-  let h=searchHeader('Any past member, president or appointee');
+  let h=searchHeader('Any past member, president or appointee')+(typeof scopeHero==='function'?scopeHero():'');
   if(!H)return `<div class="wrap">${h}<div class="calm" style="margin-top:14px">${LOADERR.hist?`Couldn't load the history records (${esc(LOADERR.hist)}). Try reloading.`:'Loading 236 years of records…'}</div></div>`;
   S.hk=S.hk||'members';
   h+=`<div class="chipsrow">${[['members',`Past members · ${ord(PASTS.length)}`],['apps',`Past appointees · ${ord(APPS.length)}`],['exec','Presidents & VPs']].map(([k,l])=>`<button data-hk="${k}" aria-pressed="${k===S.hk}">${l}</button>`).join('')}</div>`;

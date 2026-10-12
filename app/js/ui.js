@@ -262,7 +262,7 @@ function searchScreen(){return explore()}
 function following(){
   const mine=myReps();
   const fol=[...S.following].map(id=>byId[id]).filter(Boolean);
-  return `<div class="wrap"><div class="lt"><h1>My Reps</h1></div>
+  return `<div class="wrap"><div class="lbanner bg-capfull pghero"><h1>My Reps</h1></div>
    <section class="sec">${repPicker(true)}</section>
    ${S.home?`<div class="sec"><div class="sh"><h2>Your representatives</h2></div><div class="repwhere">${repWhere()}</div><div class="group">${mine.map(m=>memRow(m)).join('')}</div>${S.zip&&!S.dist?`<div class="cap">We couldn\u2019t match ZIP ${esc(S.zip)} to one House district, so we\u2019re showing everyone from ${esc(ST[S.home]||S.home)}.</div>`:''}${S.dist&&S.dist.length>1?`<div class="cap">Your ZIP code crosses more than one House district, so we’re showing each of them. Your exact address decides which one is yours.</div>`:''}</div>`:''}
    <div class="sec"><div class="sh"><h2>Following</h2></div><div class="group">${fol.map(m=>memRow(m)).join('')||'<div class="empty">Tap Follow on any profile to keep them here.</div>'}</div></div></div>`;
@@ -334,7 +334,7 @@ document.addEventListener('click',e=>{
   if(g('[data-back]')){S.stack.pop();render();scrollTo(0,0);return}
   if(el=g('[data-topic]')){topicSheet(el.dataset.topic);return}
   if(el=g('[data-pt]')){topicSheet(el.dataset.pt==='stocks'?'stocks':el.dataset.pt);return}
-  if(el=g('[data-f]')){S.filter=el.dataset.f;S.limit=60;render();return}
+  if(el=g('[data-f]')){S.filter=el.dataset.f;S.limit=60;if(S.tab==='home'&&S.filter!=='All'){S.tab='search';S.stack=[]}render();return}
   if(el=g('[data-party]')){S.party=el.dataset.party;S.limit=60;render();return}
   if(el=g('[data-nc]')){S.ncat=el.dataset.nc;S.limit=60;render();return}
   if(el=g('[data-dir]')){const k=el.dataset.dir;if(k==='m'){S.mdir=-(S.mdir??MSORT[S.msort][3])}else{S.ndir=-(S.ndir??NSORT[S.nsort][3])}render();return}

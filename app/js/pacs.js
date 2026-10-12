@@ -43,8 +43,7 @@ function pacsScreen(){
   if(q)list=list.filter(([,p])=>p.n.toLowerCase().includes(q)||(p.fn||'').toLowerCase().includes(q));
   list.sort((a,b)=>mode==='cur'?(b[1].curT||0)-(a[1].curT||0):b[1].tot-a[1].tot);
   list=list.slice(0,S.limit||60);
-  return `${pageHead('PACs')}<div class="wrap" style="padding-top:calc(var(--navh) + 12px)"><div class="lt"><h1>PACs</h1></div>
-   <p class="cap" style="padding:0 2px 12px">Political action committees pool money from companies, unions and interest groups and give it to candidates.</p>
+  return `${pageHead('PACs')}<div class="wrap" style="padding-top:calc(var(--navh) + 12px)"><div class="lbanner bg-capitol pghero"><h1>PACs</h1><span>Political action committees pool money from companies, unions and interest groups and give it to candidates.</span></div>
    <div class="sfield" style="margin-bottom:12px"><input id="pq" placeholder="Search PACs" value="${esc(S.pq||'')}" aria-label="Search PACs"></div>
    <div class="seg" style="margin-bottom:12px"><button data-pmode="cur" aria-pressed="${mode==='cur'}">This cycle</button><button data-pmode="all" aria-pressed="${mode==='all'}">All time</button></div>
    <div class="group">${list.map(([id,p],i)=>`<button class="row" data-pac="${id}" style="grid-template-columns:auto 1fr auto auto"><span class="rank">${i+1}</span><span style="min-width:0"><span class="t">${esc(p.n)}</span><br><span class="s">${esc(p.cat)}</span></span><span class="val">${M(mode==='cur'?(p.curT||0):p.tot)}</span>${chev}</button>`).join('')}</div>

@@ -18,8 +18,7 @@ function correctionsPage(){
   const list=Array.isArray(TR.corr)?TR.corr:null;
   const lr=lastRefresh();
   return `${pageHead('Corrections')}<div class="wrap" style="padding-top:calc(var(--navh) + 10px)">
-   <div class="lt"><h1>Corrections</h1></div>
-   <p class="cap">When we get something wrong, we fix it and list it here. Every number comes from public records; mistakes usually come from how we matched or read a record.</p>
+   <div class="lbanner bg-white pghero"><h1>Corrections</h1><span>When we get something wrong, we fix it and list it here. Every number comes from public records; mistakes usually come from how we matched or read a record.</span></div>
    <section class="sec"><div class="group">
     <div class="row kv"><span class="k">Last data refresh</span><span class="v">${lr?shortDate(lr):'—'}</span></div>
     <button class="row plain" data-report style="grid-template-columns:1fr auto"><span><span class="t">Report a mistake</span><br><span class="s">Tell us what looks wrong and where</span></span>${chev}</button>

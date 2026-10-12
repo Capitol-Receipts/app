@@ -156,7 +156,7 @@ function racePage(id){
   const sub=[r.o==='S'?'U.S. Senate':'U.S. House',pviText(r.pvi)].filter(Boolean).join(' · ');
   return `${pageHead(raceShort(r))}
   <div class="wrap racewrap" style="padding-top:calc(var(--navh) + 14px)">
-   <header class="rhead"><span class="rkick">${after?'Nov 3, 2026':`Election Day · Nov 3, 2026 · ${daysToElection()} days`}</span><h1>${esc(raceName(r))}</h1><p>${esc(sub)}</p></header>
+   <header class="rhead lbanner bg-capitol"><span class="rkick">${after?'Nov 3, 2026':`Election Day · Nov 3, 2026 · ${daysToElection()} days`}</span><h1>${esc(raceName(r))}</h1><p>${esc(sub)}</p></header>
    <section class="matchup n${lead.length}">${lead.map(side).join(lead.length===2?'<span class="mvs">vs</span>':'')}</section>
    ${rest.length?`<div class="alsoran">Also on the ballot: ${rest.map(c=>`<span>${candDot(c)}${esc(c.n)}${c.pl?` <em>${esc(c.pl)}</em>`:''}</span>`).join('')}</div>`:''}
    <div class="rstrip"><div><b>${M(r.rt||0)}</b><span>raised by all candidates</span></div><div><b>${M(r.ot||0)}</b><span>outside spending</span></div><div><b>${after?'Counting':'Nov 3'}</b><span>${after?'results as states report':'polls close; results here after'}</span></div></div>
@@ -181,7 +181,7 @@ function ogroupsScreen(){
   loadGroupList();
   const list=Array.isArray(OGLIST)?OGLIST:null;
   return `${pageHead('Outside spending')}<div class="wrap" style="padding-top:calc(var(--navh) + 10px)">
-   <div class="lt"><h1>Outside spending</h1></div><p class="cap">Super PACs, party committees and advocacy groups that spent money to help or attack 2026 candidates, ranked by how much they reported.</p>
+   <div class="lbanner bg-dusk pghero"><h1>Outside spending</h1><span>Super PACs, party committees and advocacy groups that spent money to help or attack 2026 candidates, ranked by how much they reported.</span></div>
    ${list?`<div class="group">${list.map((g,i)=>`<button class="row" data-og="${g.id}" style="grid-template-columns:auto 1fr auto auto"><span class="rank">${i+1}</span><span class="t" style="min-width:0">${esc(ogName(g.name))}</span><span class="val">${M(g.total)}</span>${chev}</button>`).join('')}</div>`:'<div class="calm">Loading…</div>'}</div>`;
 }
 const ogName=n=>n&&n===n.toUpperCase()?n.toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase()).replace(/\b(Pac|Inc|Llc|Usa|Us|Afl|Cio|Gop)\b/g,s=>s.toUpperCase()):n;
@@ -237,18 +237,16 @@ drawerHtml=function(){
   const item=`<div class="dsec"><button class="ditem big" data-go="elections">${NAVI.flag}<span>2026 elections</span>${days>0?`<em>${days} days</em>`:''}</button></div>`;
   return _drawerHtmlE().replace(/(<div class="dsec">\s*<button class="ditem big" data-go="home">)/,item+'$1');
 };
-/* home: election banner, plus "your races" for signed-in users */
-const _homeEl=home;
-home=function(){
+/* home: election countdown and races to watch, plus "your races" for signed-in users */
+function elHomeBlock(){
   loadRaces();
   const days=daysToElection();
   const mine=signedIn()?myRaces():[];
-  const block=`<section class="sec elhome wide"><div class="sh"><h2>2026 elections</h2><button data-go="elections">All races</button></div>
+  return `<section class="sec elhome wide"><div class="sh"><h2>2026 elections</h2><button data-go="elections">All races</button></div>
     <div class="elhomegrid"><button class="elcard" data-go="elections"><span class="elk">Election Day · Nov 3</span><b>${days>0?days:'Today'}</b><span class="eld">${days>0?'days to go':''}</span><span>All 435 House seats and 35 Senate seats are on the ballot. See who's running and who's paying for it.</span></button>
     ${EL.races?toWatch(3).map(featCard).join(''):''}</div>
     ${mine.length?`<div class="group" style="margin-top:10px">${mine.map(r=>raceRow(r,'Your race')).join('')}</div>`:''}</section>`;
-  return _homeEl().replace(/(<section class="sec dash wide">)/,m=>block+m);
-};
+}
 /* member profiles link to their race */
 const _renderEl2=render;
 render=function(){

@@ -106,19 +106,33 @@ function commPage(id){
 }
 /* ---------- list screens ---------- */
 function listShell(title,inner,searchId,ph,val,bg,sub){
+  bg=bg||({Committees:'bg-house'}[title])||'bg-capitol';
   return `<header class="pnav scrolled" id="nav"><div class="in"><button data-back aria-label="Back">${ICONS.back}</button><span class="mid" style="opacity:1">${esc(title)}</span><span></span></div></header>
    <div class="wrap" style="padding-top:calc(var(--navh) + 8px)"><div class="lt" style="padding-top:4px">${bg?`<div class="lbanner ${bg}"><h1>${esc(title)}</h1>${sub?`<span>${sub}</span>`:''}</div>`:`<h1>${esc(title)}</h1>`}${searchId?`<input class="search" id="${searchId}" type="search" placeholder="${ph}" value="${esc(val||'')}" autocomplete="off" aria-label="${ph}">`:''}</div>${inner}</div>`;
 }
 function lobbyingScreen(){
   if(!G)return loading('lobbying records');
   S.lmode=S.lmode||'groups';const q=normN(S.lq||'');
+  const C=Object.values(G.clients),F=Object.values(G.firms);
+  const total=C.reduce((a,c)=>a+(c.spend||0),0),firmInc=F.reduce((a,f)=>a+(f.inc||0),0);
+  const lobN=C.reduce((a,c)=>a+(c.nlob||0),0);
+  const iss={};C.forEach(c=>(c.iss||[]).forEach(([k,w])=>{iss[k]=(iss[k]||0)+(c.spend||0)*(typeof w==='number'&&w<=1?w:1/(c.iss.length||1))}));
+  const topIss=Object.entries(iss).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const top10=[...C].sort((a,b)=>b.spend-a.spend).slice(0,10),t10=top10.reduce((a,c)=>a+c.spend,0);
+  const dash=`<section class="sec dash wide"><div class="bdgrid">
+    <div class="dstat c-influence"><span class="dic">${CAT.influence.icon}</span><span class="dk">Spent on lobbying</span><b class="dv">${M(total)}</b><span class="ds">by ${ord(C.length)} groups</span></div>
+    <div class="dstat c-money"><span class="dic">${CAT.money.icon}</span><span class="dk">Paid to lobbying firms</span><b class="dv">${M(firmInc)}</b><span class="ds">${ord(F.length)} firms</span></div>
+    <div class="dstat c-votes"><span class="dic">${CAT.votes.icon}</span><span class="dk">Top 10 spenders</span><b class="dv">${pct(t10/(total||1),0)}</b><span class="ds">of all spending (${M(t10)})</span></div>
+    ${lobN?`<div class="dstat c-confirm"><span class="dic">${CAT.confirm.icon}</span><span class="dk">Lobbyists working for them</span><b class="dv">${ord(lobN)}</b><span class="ds">counted per group</span></div>`:''}
+   </div></section>
+   ${topIss.length?`<section class="sec wide"><div class="sh"><h2>What they lobby on</h2><span class="cap" style="padding:0">estimated spending by issue</span></div><div class="group pad isbars">${hbars(topIss.map(([k,v])=>[issueName(k),v]),M)}</div></section>`:''}`;
   const seg=`<div class="seg" role="group" style="margin-top:12px">${[['groups','Groups that pay'],['firms','Firms that get paid']].map(([k,l])=>`<button data-lmode="${k}" aria-pressed="${k===S.lmode}">${l}</button>`).join('')}</div>`;
-  let list,rows;
-  if(S.lmode==='groups'){list=Object.values(G.clients).filter(c=>!q||normN(c.n).includes(q)).sort((a,b)=>b.spend-a.spend);
-    rows=list.slice(0,S.limit).map((c,i)=>`<button class="row plain" data-lob="${c.id}" style="grid-template-columns:auto 1fr auto auto"><span class="rank">${i+1}</span><span style="min-width:0"><span class="t">${esc(c.n)}</span><br><span class="s">${c.iss.slice(0,2).map(([k])=>issueName(k)).join(' · ')}</span></span><span class="val" style="font-size:15px">${M(c.spend)}</span>${chev}</button>`).join('')}
-  else{list=Object.values(G.firms).filter(f=>!q||normN(f.n).includes(q)).sort((a,b)=>b.inc-a.inc);
-    rows=list.slice(0,S.limit).map((f,i)=>`<button class="row plain" data-firm="${f.id}" style="grid-template-columns:auto 1fr auto auto"><span class="rank">${i+1}</span><span style="min-width:0"><span class="t">${esc(f.n)}</span><br><span class="s">${f.ncl} clients</span></span><span class="val" style="font-size:15px">${M(f.inc)}</span>${chev}</button>`).join('')}
-  return listShell('Lobbying',`${seg}<div class="sec"><div class="sh"><h2>${S.lmode==='groups'?'Biggest spenders':'Biggest firms'}</h2><span class="cap" style="padding:0">${ord(list.length)}</span></div><div class="group">${rows||'<div class="empty">No matches.</div>'}</div>${list.length>S.limit?`<button class="more" data-more>Show more</button>`:''}<div class="cap">${S.lmode==='groups'?'Companies and organizations ranked by reported lobbying spending':'Lobbying firms ranked by what clients paid them'}, ${esc(DATA.lobby.periods)}. Groups spending over $750,000, plus every group named elsewhere in the app.</div></div>`,'lq','Search groups and firms',S.lq,'bg-capitol',`${ord(Object.keys(G.clients).length)} groups · ${ord(Object.keys(G.firms).length)} firms`);
+  let list,cards;
+  if(S.lmode==='groups'){list=C.filter(c=>!q||normN(c.n).includes(q)).sort((a,b)=>b.spend-a.spend);const mx=list[0]?list[0].spend:1;
+    cards=list.slice(0,S.limit).map((c,i)=>`<button class="lcard" data-lob="${c.id}"><span class="lrank">${i+1}</span><span class="lmain"><b>${esc(c.n)}</b><span class="lbar"><i style="width:${(c.spend/mx*100).toFixed(1)}%"></i></span><span class="liss">${(c.iss||[]).slice(0,3).map(([k])=>`<em>${esc(issueName(k))}</em>`).join('')}${c.nlob?`<small>${c.nlob} lobbyists</small>`:''}</span></span><span class="lval">${M(c.spend)}</span></button>`).join('')}
+  else{list=F.filter(f=>!q||normN(f.n).includes(q)).sort((a,b)=>b.inc-a.inc);const mx=list[0]?list[0].inc:1;
+    cards=list.slice(0,S.limit).map((f,i)=>`<button class="lcard" data-firm="${f.id}"><span class="lrank">${i+1}</span><span class="lmain"><b>${esc(f.n)}</b><span class="lbar"><i style="width:${(f.inc/mx*100).toFixed(1)}%"></i></span><span class="liss"><small>${f.ncl} clients</small></span></span><span class="lval">${M(f.inc)}</span></button>`).join('')}
+  return listShell('Lobbying',`${dash}${seg}<section class="sec wide"><div class="sh"><h2>${S.lmode==='groups'?'Biggest spenders':'Biggest firms'}</h2><span class="cap" style="padding:0">${ord(list.length)}</span></div><div class="lcards">${cards||'<div class="empty">No matches.</div>'}</div>${list.length>S.limit?`<button class="more" data-more>Show more</button>`:''}<div class="cap">${S.lmode==='groups'?'Companies and organizations ranked by reported lobbying spending.':'Lobbying firms ranked by what clients paid them.'}</div></section>`,'lq',S.lmode==='groups'?'Search a company or group':'Search a lobbying firm',S.lq,'bg-dusk',`Who pays to influence Congress, how much, and on what. From lobbying disclosure reports, ${esc(DATA.lobby?.periods||'since Jul 2025')}.`);
 }
 function committeesScreen(){
   if(!G)return loading('committees');
@@ -130,9 +144,34 @@ function committeesScreen(){
 function ethicsScreen(){
   if(!G)return loading('ethics records');
   const q=(S.eq||'').toLowerCase();
-  const list=G.ethics.filter(e=>!q||(e.t+' '+e.who.map(w=>(byId[w]||HP[w])?.name||(HP[w]||{}).n||'').join(' ')).toLowerCase().includes(q));
-  return listShell('Ethics reviews',`<div class="sec"><div class="group">${list.map(ethRow).join('')||'<div class="empty">No matches.</div>'}</div><div class="cap">Every public statement from the House Committee on Ethics in our records, newest first. The Senate committee rarely publishes them. A review is not a finding of wrongdoing.</div></div>`,'eq','Search by name',S.eq,'bg-court2',`${G.ethics.length} public statements`);
+  const all=G.ethics;
+  const list=all.filter(e=>(!S.est2||e.st===S.est2)&&(!q||(e.t+' '+e.who.map(w=>(byId[w]||HP[w])?.name||(HP[w]||{}).n||'').join(' ')).toLowerCase().includes(q)));
+  const yr=new Date().getFullYear();
+  const recent=all.filter(e=>e.d>=`${yr-1}-01-01`);
+  const named=new Set();recent.forEach(e=>e.who.forEach(w=>named.add(w)));
+  const cur=[...named].map(w=>byId[w]).filter(Boolean);
+  const pc={D:cur.filter(m=>m.party==='D').length,R:cur.filter(m=>m.party==='R').length};
+  const open=all.filter(e=>/review|investigation|Referred/.test(e.st)).length;
+  const byStatus={};all.forEach(e=>byStatus[e.st]=(byStatus[e.st]||0)+1);
+  const stOrder=Object.entries(byStatus).sort((a,b)=>b[1]-a[1]);
+  const mx=stOrder[0]?stOrder[0][1]:1;
+  const tone=st=>ETHC[st]==='No'?'bad':ETHC[st]==='Yes'?'good':ETHC[st]==='off'?'neutral':'open';
+  const card=e=>{const p=e.who[0]&&(byId[e.who[0]]||HP[e.who[0]]);const m=e.who[0]&&byId[e.who[0]];
+    const who=p?(m?m.name:p.n):'';const pl=m?partyLine(m):p&&p.pc?(PARTYNAME[p.pc]||'')+' · former member':'';
+    return `<button class="ecard t-${tone(e.st)}" data-eth="${e.id}"><span class="ectop"><span class="est">${esc(e.st)}</span><span class="ed">${fmtISO(e.d)}</span></span>
+      <span class="eh">${p?(m?face(p,40):hFace(p,40)):`<span class="face fb nomf" style="width:40px;height:40px;font-size:15px">§</span>`}<span style="min-width:0"><b>${esc(who||e.t)}</b>${pl?`<small>${esc(pl)}</small>`:''}</span></span>
+      ${who&&e.t!==who&&!/^Representative /.test(e.t)?`<span class="et">${esc(e.t)}</span>`:''}
+      ${e.body?`<span class="eb">${esc(e.body.slice(0,180))}${e.body.length>180?'…':''}</span>`:''}</button>`};
+  const head=`<section class="sec dash wide"><div class="bdgrid">
+    <div class="dstat c-ethics"><span class="dic">${CAT.ethics.icon}</span><span class="dk">Public statements</span><b class="dv">${ord(all.length)}</b><span class="ds">since ${all.length?all[all.length-1].d.slice(0,4):''}</span></div>
+    <div class="dstat c-votes"><span class="dic">${CAT.votes.icon}</span><span class="dk">Since Jan ${yr-1}</span><b class="dv">${ord(recent.length)}</b><span class="ds">statements, naming ${named.size} people</span></div>
+    <div class="dstat c-influence"><span class="dic">${CAT.influence.icon}</span><span class="dk">Still open</span><b class="dv">${ord(open)}</b><span class="ds">under review or investigation</span></div>
+    ${pc.D+pc.R?`<div class="bsplit"><div class="boph"><b>Current members named since ${yr-1}</b><span>by party</span></div><div class="bopbar">${pc.D?`<span class="bseg p-D" style="flex:${pc.D}">${pc.D}</span>`:''}${pc.R?`<span class="bseg p-R" style="flex:${pc.R}">${pc.R}</span>`:''}</div><div class="bopk"><span><i class="p-D"></i>${pc.D} Democrats</span><span><i class="p-R"></i>${pc.R} Republicans</span></div></div>`:''}
+   </div></section>
+   <section class="sec wide"><div class="sh"><h2>By outcome</h2>${S.est2?`<button data-est2="">Show all</button>`:''}</div><div class="estat">${stOrder.map(([k,n])=>`<button class="estrow t-${tone(k)} ${S.est2===k?'on':''}" data-est2="${esc(k)}"><span>${esc(k)}</span><span class="eb2"><i style="width:${(n/mx*100).toFixed(1)}%"></i></span><b>${n}</b></button>`).join('')}</div></section>`;
+  return listShell('Ethics reviews',`${head}<section class="sec wide"><div class="sh"><h2>${S.est2?esc(S.est2):'Latest statements'}</h2><span class="cap" style="padding:0">${ord(list.length)}</span></div><div class="ecards">${list.slice(0,S.limit||60).map(card).join('')||'<div class="empty">No matches.</div>'}</div>${list.length>(S.limit||60)?`<button class="more" data-more>Show more</button>`:''}<div class="cap">The Senate Ethics Committee rarely publishes statements, so these are House only.</div></section>`,'eq','Search a name or topic',S.eq,'bg-court','Every public statement from the House Committee on Ethics. A review is not a finding of wrongdoing.');
 }
+window.addEventListener('click',e=>{const b=e.target.closest('[data-est2]');if(!b)return;S.est2=b.dataset.est2||null;S.limit=60;render()});
 
 /* ---------- wiring ---------- */
 const _render2=render;

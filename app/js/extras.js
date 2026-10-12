@@ -48,7 +48,7 @@ const norm2=s=>(s||'').toLowerCase().replace(/[^a-z]/g,'');
 /* ---------- caucus pages ---------- */
 function caucusesScreen(){
   const c=loadCaucuses();
-  return `${pageHead('Caucuses')}<div class="wrap" style="padding-top:calc(var(--navh) + 10px)"><div class="lt"><h1>Caucuses</h1></div><p class="cap">Groups of members who organize around shared views. Membership is self-reported by each caucus.</p>
+  return `${pageHead('Caucuses')}<div class="wrap" style="padding-top:calc(var(--navh) + 10px)"><div class="lbanner bg-house pghero"><h1>Caucuses</h1><span>Groups of members who organize around shared views. Membership is self-reported by each caucus.</span></div>
   ${Array.isArray(XT.caucus)?`<div class="group">${XT.caucus.map(cc=>`<button class="row plain" data-caucus="${cc.id}" style="grid-template-columns:1fr auto auto"><span style="min-width:0"><span class="t">${esc(cc.name)}</span><br><span class="s">${cc.members.length} members${cc.cohesion?` · vote together ${Math.round(cc.cohesion*100)}% of the time`:''}</span></span><span></span>${chev}</button>`).join('')}</div>`:'<div class="calm">Loading…</div>'}</div>`;
 }
 function caucusPage(id){
@@ -79,7 +79,7 @@ function judgesScreen(){
   const byPres={};list.forEach(j=>byPres[j.pres]=(byPres[j.pres]||0)+1);
   const topP=Object.entries(byPres).sort((a,b)=>b[1]-a[1]).slice(0,6);
   return `${pageHead('Federal judges')}<div class="wrap" style="padding-top:calc(var(--navh) + 10px)">
-   <div class="lt"><h1>Federal judges</h1></div><p class="cap">Every judge appointed to a federal court for life since 1789: who appointed them, how the Senate voted, and their careers.</p>
+   <div class="lbanner bg-court pghero"><h1>Federal judges</h1><span>Every judge appointed to a federal court for life since 1789: who appointed them, how the Senate voted, and their careers.</span></div>
    <div class="sfield"><input id="jq" class="search" type="search" placeholder="Search a judge, court or president" value="${esc(S.jq||'')}" aria-label="Search judges"></div>
    <div class="seg" style="margin-top:10px">${[['serving','Serving'],['senior','Senior status'],['former','Former'],['all','All']].map(([k,l])=>`<button data-jf="${k}" aria-pressed="${f===k}">${l}</button>`).join('')}</div>
    ${list0?`${topP.length?`<section class="sec"><div class="sh"><h2>Appointed by</h2><span class="cap" style="padding:0">${ord(list.length)} judges</span></div><div class="group pad">${hbars(topP,v=>ord(v))}</div></section>`:''}

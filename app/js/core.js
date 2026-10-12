@@ -175,12 +175,17 @@ function sortBar(specs,cur,dir,kind){
 }
 
 /* ---------- screens ---------- */
+function scopeHero(){
+  const n=MEM.length,sen=MEM.filter(m=>m.chamber==='Senate').length,hou=n-sen;
+  const H2={Congress:['Everyone in Congress',`${n} members · ${sen} senators and ${hou} in the House`,'bg-capitol'],Senate:['The Senate',`${sen} senators, two from each state`,'bg-capfull'],House:['The House',`${hou} members, each representing a district`,'bg-house'],Appointees:['Appointees',`${NOM.length} people the Senate confirmed since January 2025`,'bg-white'],History:['History','Every member since 1789, every president, and their appointees','bg-old']}[S.filter];
+  return H2?`<div class="lbanner ${H2[2]} pghero" style="margin-top:12px"><h1>${H2[0]}</h1><span>${H2[1]}</span></div>`:'';
+}
 function explore(){
   if(S.filter==='History')return historyScreen();
   const q=S.q.trim().toLowerCase();
   const voting=MEM.filter(m=>!m.delegate);
   const top=(arr,f,n=5)=>[...arr].filter(m=>f(m)!=null).sort((a,b)=>f(b)-f(a)).slice(0,n);
-  let h=searchHeader('Name, state, party or job');
+  let h=searchHeader('Name, state, party or job')+scopeHero();
   if(S.filter==='Appointees'){
     const cats=['All','Cabinet','Agency leaders','Judges','Ambassadors','Prosecutors & marshals'];
     const list=sortList(NOM.filter(n=>(S.ncat==='All'||n.cat===S.ncat)&&(!q||n.search.includes(q))),NSORT[S.nsort],S.ndir);
@@ -363,19 +368,19 @@ function following(){
   const states=Object.entries(ST).sort((a,b)=>a[1].localeCompare(b[1]));
   const mine=S.home?MEM.filter(m=>m.state===S.home).sort((a,b)=>(a.chamber===b.chamber?(+a.district||0)-(+b.district||0):a.chamber==='Senate'?-1:1)):[];
   const fol=[...S.following].map(id=>byId[id]).filter(Boolean);
-  return `<div class="wrap"><div class="lt"><h1>My Reps</h1></div>
+  return `<div class="wrap"><div class="lbanner bg-capfull pghero"><h1>My Reps</h1></div>
    <select class="select" id="home" aria-label="Your state"><option value="">Choose your state</option>${states.map(([k,v])=>`<option value="${k}" ${k===S.home?'selected':''}>${v}</option>`).join('')}</select>
    ${S.home?`<div class="sec"><div class="sh"><h2>${ST[S.home]}</h2><span class="cap" style="padding:0">${mine.length}</span></div><div class="group">${mine.map(m=>memRow(m)).join('')}</div></div>`:'<div class="cap">Pick your state to see your two senators and your House members.</div>'}
    <div class="sec"><div class="sh"><h2>Following</h2></div><div class="group">${fol.map(m=>memRow(m)).join('')||'<div class="empty">Tap Follow on any profile to keep them here.</div>'}</div></div></div>`;
 }
 function latest(){
   const days=[...new Set(FEEDTOP.map(f=>f.d))];
-  return `<div class="wrap"><div class="lt"><h1>Latest</h1></div><div class="cap" style="padding-top:4px">New confirmations and stock trade reports, from public filings.</div>
+  return `<div class="wrap"><div class="lbanner bg-dusk pghero"><h1>Latest</h1></div><div class="cap" style="padding-top:4px">New confirmations and stock trade reports, from public filings.</div>
   ${days.map(d=>`<div class="sec" style="margin-top:18px"><div class="sh"><h2 style="font-size:15px;color:var(--soft);font-weight:600">${fmtISO(d)}</h2></div><div class="group">${FEEDTOP.filter(f=>f.d===d).map(f=>`<button class="row feedrow" ${f.kind==='nom'?`data-n="${f.id}"`:`data-p="${f.id}"`}><span class="ic ${f.kind==='trade'?'flagged':''}">${ICONS[f.kind]}</span><span style="min-width:0"><span class="t">${f.txt}</span></span>${chev}</button>`).join('')}</div></div>`).join('')}</div>`;
 }
 function account(){
   const sw=[['al-votes','Votes by people I follow',1],['al-trades','New stock trade reports',1],['al-noms','New confirmations',1],['al-elect','Election reminders',1]];
-  return `<div class="wrap"><div class="lt"><h1>Account</h1></div>
+  return `<div class="wrap"><div class="lbanner bg-white pghero"><h1>Account</h1></div>
    <div class="sec" style="margin-top:16px"><div class="plan"><span style="opacity:.75;font-size:14px">Free plan</span><b>Capitol Receipts Pro · $0.99/mo</b><span style="opacity:.85;font-size:15px">Instant alerts for anyone you follow, full trade histories, and state lawmakers.</span><button id="pro">Start 7-day free trial</button><span id="proNote" hidden style="font-size:13px;opacity:.85">Payments aren't connected in this prototype.</span></div></div>
    <div class="sec"><div class="sh"><h2>Notify me about</h2></div><div class="group">${sw.map(([id,l,c])=>`<label class="row plain" for="${id}" style="grid-template-columns:1fr auto"><span>${l}</span><input class="sw" type="checkbox" id="${id}" ${c?'checked':''}></label>`).join('')}</div></div>
    <div class="sec"><div class="group"><button class="row plain" data-how style="grid-template-columns:1fr auto"><span>How we score officials</span>${chev}</button><button class="row plain" data-sources style="grid-template-columns:1fr auto"><span>Where our data comes from</span>${chev}</button><button class="row plain" data-next style="grid-template-columns:1fr auto"><span>What's coming next</span>${chev}</button></div>

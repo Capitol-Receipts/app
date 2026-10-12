@@ -13,7 +13,7 @@ const NAVI={
  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v6M12 7.5v.5"/></svg>',
  pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11M4 6h.5M4 12h.5M4 18h.5"/></svg>'
 };
-S.dopen=store.get('dopen',{congress:true});
+S.dopen=store.get('dopen',{congress:true});{const k=Object.keys(S.dopen).filter(k=>S.dopen[k]);S.dopen=k.length?{[k[0]]:true}:{}}
 function navGroup(id,icon,label,items){
   const open=!!S.dopen[id];
   return `<div class="dgroup ${open?'open':''}"><button class="dhead" data-dtoggle="${id}" aria-expanded="${open}">${icon}<span>${label}</span><svg class="dchev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5 6 7.5 9 4.5"/></svg></button>
@@ -63,14 +63,47 @@ function navGo(g){
 }
 
 /* ---------- bills browser ---------- */
+function billSponsor(b){
+  const id=b[2],m=byId[id],h=!m&&HP[id];
+  const pt=m?m.party:h?(h.pc||'N'):((b[3]||'').match(/\[([DRI])-/)||[])[1]||'N';
+  const nm=m?m.name:h?h.n:(b[3]||'').replace(/\s*\[.*$/,'').replace(/^(Rep|Sen)\.\s*/,'').replace(/^(\w[^,]*),\s*(.*)$/,'$2 $1');
+  const where=((b[3]||'').match(/\[[DRI]-([A-Z]{2})/)||[])[1]||'';
+  const fc=m?face(m,26):h&&typeof hFace==='function'?hFace(h,26):`<span class="face fb ring-${pt}" style="width:26px;height:26px;font-size:10px">${esc((nm||'?').split(' ').map(w=>w[0]).slice(0,2).join(''))}</span>`;
+  return {pt,nm,where,fc};
+}
+function billCard(k,extra){
+  const b=H.bills[k],p=bkParse(k);if(!b)return '';
+  const [st,cls]=billStatus(b,p.ty);const ms=b[10]||{};
+  const when=ms.L?fmtISO(ms.L):ms.V?fmtISO(ms.V):ms.P?fmtISO(ms.P):b[4]?fmtISO(b[4]):'';
+  const sp=billSponsor(b);
+  const icon=cls==='Yes'?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg>':cls==='No'?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>':'';
+  return `<button class="bcard" data-bk="${k}"><span class="bctop"><span class="bnum">${esc(p.label)}</span><span class="bst s-${cls||'off'}">${icon}${esc(st)}${when?` · ${when}`:''}</span></span>
+    <span class="btitle">${esc(b[1]||b[0])}</span>
+    ${extra||''}
+    <span class="bspon">${sp.fc}<span>${esc(sp.nm||'Sponsor not listed')}${sp.pt&&sp.pt!=='N'?` <em class="p-${sp.pt}">${sp.pt}${sp.where?'-'+sp.where:''}</em>`:''}</span>${b[5]?`<small>${ord(b[5])} co-sponsor${b[5]===1?'':'s'}</small>`:''}</span></button>`;
+}
+function billStats(keys,mode){
+  const bs=keys.map(k=>H.bills[k]).filter(Boolean);
+  const pc={D:0,R:0,O:0};bs.forEach(b=>{const t=billSponsor(b).pt;pc[t==='D'||t==='R'?t:'O']++});
+  const days=bs.map(b=>b[10]&&b[10].L&&b[4]?(new Date(b[10].L)-new Date(b[4]))/864e5:null).filter(x=>x!=null&&x>=0).sort((a,b)=>a-b);
+  const med=days.length?Math.round(days[days.length>>1]):null;
+  const cos=bs.filter(b=>b[5]>=10).length;
+  const tiles=[];
+  tiles.push(['votes',mode==='lobbied'?'Bills lobbied on':mode==='veto'?'Vetoes':'Laws',ord(bs.length),mode==='laws'&&S.bcong!=='All'?congLabel(S.bcong):mode==='new'?'this Congress (2025–26)':mode==='veto'?'since 2003':'this Congress']);
+  if(mode==='veto')tiles.push(['ethics','Overridden by Congress',ord(bs.filter(b=>b[10].L||b[11]).length),'became law anyway']);
+  else if(med!=null)tiles.push(['confirm','Typical time to become law',med>=60?`${Math.round(med/30.4)} months`:`${med} days`,'from introduction to signing']);
+  tiles.push(['influence','Broad support',ord(cos),'with 10 or more co-sponsors']);
+  const split=pc.D+pc.R?`<div class="bsplit"><div class="boph"><b>Who wrote them</b><span>by the sponsor's party</span></div><div class="bopbar">${pc.D?`<span class="bseg p-D" style="flex:${pc.D}">${pc.D}</span>`:''}${pc.O?`<span class="bseg p-I" style="flex:${pc.O}">${pc.O>=bs.length/20?pc.O:''}</span>`:''}${pc.R?`<span class="bseg p-R" style="flex:${pc.R}">${pc.R}</span>`:''}</div><div class="bopk"><span><i class="p-D"></i>Democrats ${pct(pc.D/(bs.length||1),0)}</span><span><i class="p-R"></i>Republicans ${pct(pc.R/(bs.length||1),0)}</span>${pc.O?`<span><i class="p-I"></i>Other ${pc.O}</span>`:''}</div></div>`:'';
+  return `<section class="sec dash wide billdash"><div class="bdgrid">${tiles.map(([c,k,v,s])=>`<div class="dstat c-${c}"><span class="dic">${CAT[c].icon}</span><span class="dk">${k}</span><b class="dv">${v}</b><span class="ds">${s}</span></div>`).join('')}${split}</div></section>`;
+}
 function billsScreen(){
-  if(!H)return `<div class="wrap"><div class="lt"><h1>Bills & laws</h1></div><div class="calm">Loading bill records…</div></div>`;
+  if(!H)return `<div class="wrap"><div class="lbanner bg-library pghero"><h1>Bills & laws</h1></div><div class="calm">Loading bill records…</div></div>`;
   S.bmode=S.bmode||'lobbied';
   const q=(S.bq||'').trim().toLowerCase();
   const modes=[['lobbied','Most lobbied'],['new','New laws'],['laws','All laws'],['veto','Vetoed']];
   const K=Object.keys(H.bills);
   const lawDate=k=>H.bills[k][10].L||'';
-  let list=[],cap='',right=null;
+  let list=[],cap='';
   if(S.bmode==='lobbied'){
     const rows=Object.entries(DATA.bills).sort((a,b)=>b[1].n-a[1].n);
     list=rows.map(([b,x])=>({k:key119(b),b,n:x.n})).filter(x=>!q||(hasBill(x.k)?billTitle(x.k).toLowerCase().includes(q):x.b.toLowerCase().includes(q)));
@@ -81,19 +114,24 @@ function billsScreen(){
     S.bcong=S.bcong||119;
     list=K.filter(k=>H.bills[k][10].L&&(S.bcong==='All'||bkParse(k).c===+S.bcong)).sort((a,b)=>lawDate(b).localeCompare(lawDate(a))).map(k=>({k}));cap='Every bill and joint resolution that became law, from GovInfo records.';
   }else{
-    list=K.filter(k=>H.bills[k][10].V).sort((a,b)=>(H.bills[b][10].V||'').localeCompare(H.bills[a][10].V||'')).map(k=>({k}));cap='Bills the President vetoed since 2003. A green "Law" tag means Congress overrode the veto.';
+    list=K.filter(k=>H.bills[k][10].V).sort((a,b)=>(H.bills[b][10].V||'').localeCompare(H.bills[a][10].V||'')).map(k=>({k}));cap='Bills the President vetoed since 2003. "Became law" means Congress overrode the veto.';
   }
   if(q&&S.bmode!=='lobbied')list=list.filter(x=>billTitle(x.k).toLowerCase().includes(q)||H.bills[x.k][0].toLowerCase().includes(q)||bkParse(x.k).label.toLowerCase().replace(/[.\s]/g,'').includes(q.replace(/[.\s]/g,'')));
   const congs=Array.from({length:40},(_,i)=>119-i);
+  const mx=S.bmode==='lobbied'?Math.max(1,...list.slice(0,1).map(x=>x.n)):1;
+  const lobExtra=x=>`<span class="blob"><span class="blobbar"><i style="width:${(x.n/mx*100).toFixed(1)}%"></i></span><b>${ord(x.n)}</b> groups lobbied on it</span>`;
+  const cards=list.slice(0,S.limit).map(x=>S.bmode==='lobbied'?(hasBill(x.k)?billCard(x.k,lobExtra(x)):`<button class="bcard" data-bill="${x.b}"><span class="bctop"><span class="bnum">${esc(x.b)}</span></span><span class="btitle">${esc(billName(x.b))}</span>${lobExtra(x)}</button>`):billCard(x.k)).join('');
   return `<header class="pnav scrolled" id="nav"><div class="in"><button data-back aria-label="Back">${ICONS.back}</button><span class="mid" style="opacity:1">Bills & laws</span><button data-menu aria-label="Menu">${MENU_ICON}</button></div></header>
-   <div class="wrap" style="padding-top:calc(var(--navh) + 8px)"><div class="lt" style="padding-top:4px"><div class="lbanner bg-library"><h1>Bills & laws</h1><span>${ord(Object.keys(H.bills).length)} bills since 2003</span></div>
-   <input class="search" id="bq" type="search" placeholder="Search bill names or numbers" value="${esc(S.bq||'')}" aria-label="Search bills" autocomplete="off">
-   <div class="seg" role="group">${modes.map(([k,l])=>`<button data-bmode="${k}" aria-pressed="${k===S.bmode}">${l}</button>`).join('')}</div></div>
-   ${S.bmode==='laws'?`<div class="chipsrow">${['All',...congs].map(c=>`<button data-bcong="${c}" aria-pressed="${String(c)===String(S.bcong)}">${c==='All'?'All years':congLabel(c)}</button>`).join('')}</div>`:''}
-   <div class="sec"><div class="sh"><h2>${{lobbied:'Most-lobbied bills',new:'New laws',laws:S.bcong==='All'?'Every law since 1947':'Laws from '+congLabel(S.bcong),veto:'Vetoed bills'}[S.bmode]}</h2><span class="cap" style="padding:0">${ord(list.length)}</span></div>
-    <div class="group">${list.slice(0,S.limit).map(x=>S.bmode==='lobbied'?(hasBill(x.k)?billRow(x.k,null,`<span class="val" style="font-size:15px">${ord(x.n)}<small> groups</small></span>`):`<button class="row plain" data-bill="${x.b}" style="grid-template-columns:1fr auto auto"><span class="t">${esc(billName(x.b))}</span><span class="val" style="font-size:15px">${ord(x.n)}<small> groups</small></span>${chev}</button>`):billRow(x.k,null,S.bmode==='veto'&&H.bills[x.k][10].L?'<span class="cast Yes">Law</span>':'')).join('')||'<div class="empty">No bills match.</div>'}</div>
+   <div class="wrap" style="padding-top:calc(var(--navh) + 8px)">
+   <div class="lbanner bg-library pghero"><h1>Bills & laws</h1><span>${ord(Object.keys(H.bills).length)} bills since 2003, and every law since 1947.</span></div>
+   <div class="seg bseg4" role="group" style="margin-top:14px">${modes.map(([k,l])=>`<button data-bmode="${k}" aria-pressed="${k===S.bmode}">${l}</button>`).join('')}</div>
+   ${S.bmode==='laws'?`<div class="chipsrow" style="margin-top:10px">${['All',...congs].map(c=>`<button data-bcong="${c}" aria-pressed="${String(c)===String(S.bcong)}">${c==='All'?'All years':congLabel(c)}</button>`).join('')}</div>`:''}
+   ${list.length?billStats(list.map(x=>x.k).filter(k=>H.bills[k]),S.bmode):''}
+   <input class="search" id="bq" type="search" placeholder="Search bill names or numbers" value="${esc(S.bq||'')}" aria-label="Search bills" autocomplete="off" style="margin-top:14px">
+   <section class="sec wide"><div class="sh"><h2>${{lobbied:'Most-lobbied bills',new:'New laws',laws:S.bcong==='All'?'Every law since 1947':'Laws from '+congLabel(S.bcong),veto:'Vetoed bills'}[S.bmode]}</h2><span class="cap" style="padding:0">${ord(list.length)}</span></div>
+    <div class="bcards">${cards||'<div class="empty">No bills match.</div>'}</div>
     ${list.length>S.limit?`<button class="more" data-more>Show ${Math.min(list.length-S.limit,100)} more</button>`:''}
-    <div class="cap">${cap}</div></div></div>`;
+    <div class="cap">${cap}</div></section></div>`;
 }
 
 /* ---------- wiring ---------- */
@@ -115,7 +153,10 @@ document.addEventListener('click',e=>{
   const g=s=>e.target.closest(s);let el;
   if(g('[data-menu]')||g('[data-tab="menu"]')){e.stopImmediatePropagation();openDrawer();return}
   if(g('[data-dclose]')){e.stopImmediatePropagation();closeDrawer();return}
-  if(el=g('[data-dtoggle]')){e.stopImmediatePropagation();const id=el.dataset.dtoggle;S.dopen[id]=!S.dopen[id];store.set('dopen',S.dopen);el.parentElement.classList.toggle('open');el.setAttribute('aria-expanded',!!S.dopen[id]);return}
+  if(el=g('[data-dtoggle]')){e.stopImmediatePropagation();const id=el.dataset.dtoggle;const opening=!S.dopen[id];
+    /* one section open at a time: opening one closes the rest, in the sidebar and the phone menu alike */
+    S.dopen=opening?{[id]:true}:{};store.set('dopen',S.dopen);
+    document.querySelectorAll('.dgroup').forEach(gr=>{const h=gr.querySelector('[data-dtoggle]');const on=!!(h&&S.dopen[h.dataset.dtoggle]);gr.classList.toggle('open',on);if(h)h.setAttribute('aria-expanded',on)});return}
   if(el=g('[data-jump]')){e.stopImmediatePropagation();const t=document.getElementById(el.dataset.jump);closeDrawer();if(t)setTimeout(()=>scrollTo({top:t.getBoundingClientRect().top+scrollY-70,behavior:'smooth'}),230);return}
   if(el=g('[data-go]')){e.stopImmediatePropagation();navGo(el.dataset.go);return}
   if(el=g('[data-bmode]')){e.stopImmediatePropagation();S.bmode=el.dataset.bmode;S.limit=60;render();return}

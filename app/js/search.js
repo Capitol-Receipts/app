@@ -21,7 +21,7 @@ function discover(){
   const sen=MEM.filter(m=>m.chamber==='Senate').length,hou=MEM.filter(m=>m.chamber==='House').length;
   const st=S.home?MEM.filter(m=>m.state===S.home).slice(0,8):[];
   const tries=['Pelosi','Texas','H.R. 1','Pfizer','Agriculture','Cuellar','Lincoln','Realtors'];
-  return `<div class="lbanner bg-old" style="margin-top:14px"><h1>236 years of public records</h1><span>Every member since 1789, every bill since 1947, and who pays to lobby them.</span></div>
+  return `${S.tab==='home'?'<div style="display:none">':''}<div class="lbanner bg-old" style="margin-top:14px"><h1>236 years of public records</h1><span>Every member since 1789, every bill since 1947, and who pays to lobby them.</span></div>${S.tab==='home'?'</div>':''}
    ${zipSection()}
    ${RECENT.length?`<section class="sec"><div class="sh"><h2>Recent</h2><button data-rclear>Clear</button></div><div class="tries">${RECENT.map(r=>`<button data-try="${esc(r)}">${SI.clock}${esc(r)}</button>`).join('')}</div></section>`:''}
    <section class="sec"><div class="sh"><h2>Browse</h2></div><div class="bgrid">
@@ -74,7 +74,7 @@ function topCard(r){
   else if(r.lob[0]&&scoreName(r.lob[0].n,q)>=70){const c=r.lob[0];t=`<button class="topcard t-amber" data-lob="${c.id}"><span class="tcb"><span class="tck">Lobbying group</span><b>${hl(c.n,q)}</b><span class="tcs">${M(c.spend)} on lobbying${c.nlob?` · ${c.nlob} lobbyists`:''}</span></span></button>`}
   return t?`<section class="sec">${t}</section>`:'';
 }
-/* Democrats vs Republicans across whatever the search returned */
+/* Democrats vs Republicans across whatever the search returned: small side-by-side tiles */
 function partyCompare(ms,title){
   const P={D:ms.filter(m=>m.party==='D'),R:ms.filter(m=>m.party==='R')};
   if(P.D.length+P.R.length<3||!P.D.length||!P.R.length)return '';
@@ -89,11 +89,13 @@ function partyCompare(ms,title){
     ['Votes with own party',a=>avg(a,m=>m.unityN>=50?m.unity:null),n=>pct(n,0)],
     ['Ex-staff now lobbyists',a=>tot(a,m=>m.revN),n=>ord(n)],
   ];
-  const body=rows.map(([l,f,fmt])=>{const d=f(P.D),r=f(P.R);if(d==null&&r==null)return '';const mx=Math.max(d||0,r||0)||1;
-    return `<div class="pcr"><span class="pcv d">${d==null?'—':fmt(d)}</span><span class="pcb d"><i style="width:${((d||0)/mx*100).toFixed(1)}%"></i></span><span class="pcl">${l}</span><span class="pcb r"><i style="width:${((r||0)/mx*100).toFixed(1)}%"></i></span><span class="pcv r">${r==null?'—':fmt(r)}</span></div>`}).join('');
+  const tiles=rows.map(([l,f,fmt])=>{const d=f(P.D),r=f(P.R);if(d==null&&r==null)return '';
+    const t=(d||0)+(r||0)||1,dp=Math.round((d||0)/t*100);
+    const lead=Math.abs((d||0)-(r||0))/Math.max(d||0,r||0,1)<.05?'':(d||0)>(r||0)?'D':'R';
+    return `<div class="pct"><span class="pctl">${l}</span><div class="pctv"><b class="d ${lead==='D'?'hi':''}">${d==null?'—':fmt(d)}</b><b class="r ${lead==='R'?'hi':''}">${r==null?'—':fmt(r)}</b></div><div class="pcts"><i class="d" style="width:${dp}%"></i><i class="r" style="width:${100-dp}%"></i></div></div>`}).join('');
   const others=ms.length-P.D.length-P.R.length;
-  return `<section class="sec pcmp wide"><div class="sh"><h2>${esc(title||'Democrats vs Republicans')}</h2>${others?`<span class="cap" style="padding:0">+${others} independent${others>1?'s':''}</span>`:''}</div>
-    <div class="pcard"><div class="pch"><span class="p-D">Democrats</span><span class="p-R">Republicans</span></div>${body}</div></section>`;
+  return `<section class="sec pcmp wide"><div class="sh"><h2>${esc(title||'Democrats vs Republicans')}</h2><span class="pkey"><span class="d">Democrats</span><span class="r">Republicans</span>${others?`<em>+${others} independent${others>1?'s':''}</em>`:''}</span></div>
+    <div class="pctiles">${tiles}</div></section>`;
 }
 function universal(){
   const r=resultsFor(S.q),q=r.q;
@@ -133,3 +135,11 @@ document.addEventListener('click',e=>{
   // remember what people searched for when they open a result
   if(S.tab==='search'&&!S.stack.length&&S.q.trim().length>=2&&g('[data-p],[data-n],[data-hp],[data-ha],[data-bk],[data-lob],[data-firm],[data-com],[data-eth]'))saveRecent(S.q);
 },true);
+
+/* Home is the Everything page: search, browse, parties and leaderboards, with the election countdown on top */
+home=function(){
+  if(S.filter!=='All')S.filter='All';
+  const el=typeof elHomeBlock==='function'?elHomeBlock():'';
+  const hero=`<div class="homehero bg-capfull"><header class="brandbar"><div class="logo"><span>Capitol</span>Receipts</div><span class="asof">Updated ${fmtISO(DATA.asOf.votes)}</span></header><h1 class="hello">Who's in Congress, who pays them, and how they vote.</h1><button class="langbtn notr" data-lang="${S.lang==='es'?'en':'es'}">${S.lang==='es'?'English':'Español'}</button></div>`;
+  return `<div class="wrap home">${S.q.trim()?'':hero}${searchHeader('')}${S.q.trim()?universal():el+discover()}</div>`;
+};

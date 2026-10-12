@@ -77,7 +77,7 @@ var comparePage=function(){
   const row=(label,f,fmt,note)=>{const vals=P.map(f),mx=Math.max(...vals.filter(x=>x!=null))||1;return `<div class="crow"><div class="cl">${label}${note?`<span>${note}</span>`:''}</div>${P.map((s,i)=>vals[i]==null?'':`<div class="cb"><span class="cn">${s.p}</span><span class="ct"><span class="pf-${s.p}" style="width:${(vals[i]/mx*100).toFixed(1)}%"></span></span><b>${fmt(vals[i])}</b></div>`).join('')}</div>`};
   return `<header class="pnav scrolled" id="nav"><div class="in"><button data-back aria-label="Back">${ICONS.back}</button><span class="mid" style="opacity:1">Compare the parties</span><span style="width:36px"></span></div></header>
   <div class="wrap" style="padding-top:calc(var(--navh) + env(safe-area-inset-top,0px) + 6px)">
-   <div class="lt" style="padding-top:8px"><h1>Side by side</h1></div>
+   <div class="lbanner bg-old pghero"><h1>Side by side</h1></div>
    <div class="ptiles" style="margin-top:16px">${P.map(s=>`<button class="ptile p-${s.p}" data-party-page="${s.p}"><span class="pbadge sm">${s.p}</span><b>${s.n}</b><span>${PARTYNAME[s.p]}</span></button>`).join('')}</div>
    <section class="sec"><div class="sh"><h2>Votes</h2></div><div class="group pad">${row('Votes missed',s=>s.missed,x=>pct(x,1),'average')}${row('Votes with own party',s=>s.unity,x=>pct(x,1),'when parties split')}</div></section>
    <section class="sec"><div class="sh"><h2>Money</h2></div><div class="group pad">${row('Raised per member',s=>s.raised,M,'2025–26')}${row('From small donors',s=>s.small,x=>pct(x),'average share')}${row('From PACs',s=>s.pac,x=>pct(x),'average share')}${row('Cash on hand',s=>s.cash,M,'average')}</div></section>
