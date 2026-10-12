@@ -122,3 +122,12 @@ img,svg,video,canvas,table{max-width:100%}
 .up{color:#1f7a45}.dn{color:#b3261e}
 .ccf{font-size:12.5px;color:var(--soft)}.ccf a{color:inherit}
 .chiplink{cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+/* vote pages */
+.vbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr) auto;gap:10px;align-items:center;padding:6px 0}
+.vbar .vt{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--seg)}
+.vy{background:#1f7a45}.vn{background:#b3261e}
+.key{display:inline-block;width:10px;height:10px;border-radius:3px;margin:0 4px 0 8px;vertical-align:-1px}
+.vrow.mine{background:color-mix(in srgb,#2557a8 7%,var(--surface))}
+.yourrep{font-style:normal;font-size:12px;font-weight:700;color:#2557a8;margin-left:6px}
+.linkish{border:0;background:none;padding:0;font:inherit;cursor:pointer;text-align:left;color:inherit;display:block;width:100%}
+.allvotes{margin-top:8px;background:var(--surface);border-radius:14px}

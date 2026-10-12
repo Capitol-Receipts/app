@@ -10,8 +10,8 @@ KEY = os.environ['SUPABASE_SERVICE_ROLE_KEY']
 DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'export')
 PK = {'bills': 'key', 'app_meta': 'key', 'zip_districts': 'zip'}
 ORDER = ['app_meta', 'members', 'nominations', 'roll_calls', 'photos', 'zip_districts', 'committees', 'lobby_firms',
-         'ethics_matters', 'lobby_clients', 'pacs', 'careers', 'appointees', 'people', 'bills', 'races', 'outside_groups']
-MAX_BYTES = 4_000_000
+         'ethics_matters', 'lobby_clients', 'pacs', 'careers', 'appointees', 'people', 'bills', 'races', 'outside_groups', 'companies', 'congress_votes']
+MAX_BYTES = 3_000_000
 
 def post(table, rows):
     body = ('[' + ','.join(rows) + ']').encode()
