@@ -43,8 +43,11 @@ for kind in ('members', 'rollcalls', 'votes'):
 for y in (20, 22, 24, 26):
     if y == 26 or not os.path.exists(os.path.join(D, f'weball{y}.zip')):
         fetch(f'https://www.fec.gov/files/bulk-downloads/20{y}/weball{y}.zip', os.path.join(D, f'weball{y}.zip'))
-for f in ('pas226.zip', 'cm26.zip'):
+for f in ('pas226.zip', 'cm26.zip', 'cn26.zip'):
     fetch(f'https://www.fec.gov/files/bulk-downloads/2026/{f}', os.path.join(D, f))
+# official committee rosters, used for new members the community list hasn't added yet
+fetch('https://clerk.house.gov/xml/lists/MemberData.xml', os.path.join(D, 'house_member_data.xml'), 100000)
+fetch('https://www.senate.gov/general/committee_assignments/assignments.htm', os.path.join(D, 'senate_assignments.htm'), 50000)
 for y in ('2025', '2026'):
     z = os.path.join(D, f'{y}FD.zip')
     if fetch(f'https://disclosures-clerk.house.gov/public_disc/financial-pdfs/{y}FD.zip', z):
@@ -80,6 +83,8 @@ if WEEKLY:
 
 # ---------- 3. rebuild ----------
 step('core', ['build.py', D, os.path.join(W, 'data.json')])
+try: step('photos', ['fill_photos.py', D, os.path.join(W, 'data', 'photos.json')])
+except SystemExit as e: log('photo refresh skipped:', e)
 step('extras', ['extras.py', D, os.path.join(W, 'data.json'), os.path.join(W, 'data2.json')])
 step('pacs', ['build_pacs.py', W])
 step('pages', ['build_pages.py'])

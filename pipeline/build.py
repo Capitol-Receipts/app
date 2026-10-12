@@ -50,6 +50,39 @@ for cid, lst in CMM.items():
         if m.get('bioguide') in members:
             members[m['bioguide']]['committees'].append([cname[cid], m.get('title', '')])
 
+# New members often reach the House and Senate's own committee rosters before the community list above.
+# For anyone still without committees, fall back to those official rosters (if they were downloaded).
+def _lasts(m):
+    # every surname form a member goes by: roster last name, its first word, and the last word of their official name
+    full = [w for w in m['name'].replace(',', '').split() if w.rstrip('.') not in ('Jr', 'Sr', 'II', 'III', 'IV')]
+    return {x.upper() for x in (m['last'], m['last'].split()[0], full[-1] if full else '') if x}
+def _norm(s): return re.sub(r'[^a-z]', '', re.sub(r'^(house|senate|united states senate)\s+', '', s.lower()).replace('committee on ', '').replace('committee', ''))
+_byname = {(c['type'], _norm(c['name'])): c['thomas_id'] for c in CM}
+if os.path.exists(p('house_member_data.xml')):
+    try:
+        for x in ET.parse(p('house_member_data.xml')).getroot().iter('member'):
+            m = members.get(x.findtext('member-info/bioguideID'))
+            if not m or m['committees'] or m['chamber'] != 'House': continue
+            for c in x.iter('committee'):
+                cid = 'HS' + (c.get('comcode') or '')[:2]
+                if cid in cname: m['committees'].append([cname[cid], 'Chair' if c.get('leadership') == 'Chairman' else ''])
+    except Exception as e: print('house committee roster skipped:', e)
+if os.path.exists(p('senate_assignments.htm')):
+    import html as _html
+    t = open(p('senate_assignments.htm'), encoding='utf-8', errors='ignore').read()
+    blocks = re.split(r'<a name="[A-Za-z]+">', t)
+    for b in blocks[1:]:
+        txt = [s.strip() for s in _html.unescape(re.sub(r'<[^>]+>', '\n', b)).split('\n') if s.strip()]
+        if len(txt) < 2 or not re.match(r'\([A-Z]+-[A-Z]{2}\)', txt[1]): continue
+        last, st = txt[0].split(',')[0].strip(), txt[1][-3:-1]
+        cands = [m for m in members.values() if m['chamber'] == 'Senate' and m['state'] == st and last.upper() in _lasts(m) and not m['committees']]
+        if len(cands) != 1: continue
+        for s in txt[2:]:
+            if s == 'Back to top': break
+            if re.match(r'(Committee|Select Committee|Special Committee|Joint)', s) and not s.startswith('Subcommittee'):
+                cid = _byname.get(('senate', _norm(s))) or _byname.get(('joint', _norm(s)))
+                if cid in cname: cands[0]['committees'].append([cname[cid], ''])
+
 # ---------- Voteview ----------
 vm = {}
 for r in csv.DictReader(open(p('HS119_members.csv'))):
@@ -144,6 +177,22 @@ def load_weball(y):
         out[f[0]] = dict(rec=n(5), xfer=n(6), disb=n(7), coh=n(10), self=n(11) + n(12), debt=n(16), indiv=n(17), pac=n(25), party=n(26), thru=f[27])
     return out
 FEC = {y: load_weball(y) for y in (20, 22, 24, 26)}
+# Members the roster has no FEC ID for (often brand-new appointees): find them in the FEC's 2026 candidate list
+# by office, state, last and first name, and only when exactly one candidate matches.
+if os.path.exists(p('cn26.zip')):
+    import zipfile as _zf
+    _z = _zf.ZipFile(p('cn26.zip'))
+    _cn = [l.split('|') for l in _z.read(_z.namelist()[0]).decode('latin-1').splitlines()]
+    for m in members.values():
+        if any(i in FEC[26] for i in m['fec']): continue
+        off = 'S' if m['chamber'] == 'Senate' else 'H'
+        firsts = {m['first'].upper()}
+        hit = [f[0] for f in _cn if len(f) > 6 and f[5] == off and f[4] == m['state']
+               and (off == 'S' or int(f[6] or 0) == int(m['district'] or 0))
+               and f[1].upper().split(',')[0].strip() in _lasts(m)
+               and (f[1].upper().split(',') + [''])[1].split()[:1] and (f[1].upper().split(',') + [''])[1].split()[0] in firsts]
+        if len(hit) == 1 and hit[0] not in m['fec']:
+            m['fec'] = m['fec'] + [hit[0]]; print('FEC ID found by name:', m['name'], hit[0])
 for m in members.values():
     pref = 'S' if m['chamber'] == 'Senate' else 'H'
     ids = [i for i in m['fec'] if i.startswith(pref)] or m['fec']
