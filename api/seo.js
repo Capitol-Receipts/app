@@ -69,7 +69,7 @@ function head(pg) {
   const ld = [...(pg.ld || []), { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c[0], item: c[1] })) }];
   return [
     pg.noindex ? '' : `<link rel="canonical" href="${esc(url)}">`,
-    pg.noindex ? '<meta name="robots" content="noindex">' : '<meta name="robots" content="index,follow,max-image-preview:large">',
+    pg.noindex ? '<meta name="robots" content="noindex,follow">' : '<meta name="robots" content="index,follow,max-image-preview:large">',
     '<meta property="og:site_name" content="Capitol Receipts">',
     `<meta property="og:type" content="${pg.ogType || 'website'}">`,
     `<meta property="og:title" content="${esc(pg.title)}">`,

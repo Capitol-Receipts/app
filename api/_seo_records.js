@@ -21,7 +21,7 @@ function billStatus(ms, law) {
   if (ms.H && ms.S) return 'Passed both chambers'; if (ms.H) return 'Passed the House'; if (ms.S) return 'Passed the Senate'; return 'Introduced';
 }
 async function bill(key) {
-  const r = await one(`bills?key=eq.${encodeURIComponent(key)}&select=key,congress,bill_type,number,light,detail`);
+  const r = await one(`bills?key=eq.${encodeURIComponent(key)}&select=key,congress,bill_type,number,indexable,light,detail`);
   if (!r) return null;
   const b = (r.light || []).slice();
   Object.entries(r.detail || {}).forEach(([i, v]) => b[+i] = v);
@@ -52,7 +52,7 @@ ${sec('Committees', (com || []).length ? cols(com.map(x => { const h = commId(x)
 ${sec('More', cols([a(`https://www.congress.gov/bill/${ord(c)}-congress/${BURL[ty] || ty}/${r.number}`, 'Full text and every action on Congress.gov'), a('/bills', 'Browse all bills')]))}
 ${note(c < 108 ? 'From the Congressional Bills Project (Adler and Wilkerson), covering 1947–2002.' : 'From GovInfo bill records, Congressional Research Service summaries, Voteview roll calls and lobbying reports.')}`;
   return {
-    title: title(t), desc, path: P('bill', key, name), route: 'bill:' + key, ogType: 'article',
+    noindex: !r.indexable, title: title(t), desc, path: P('bill', key, name), route: 'bill:' + key, ogType: 'article',
     crumbs: [['Bills', L.abs('/bills')], [label, null]],
     ld: [{ '@context': 'https://schema.org', '@type': 'Legislation', name, alternateName: label, legislationIdentifier: `${label} (${ord(c)} Congress)`,
       legislationJurisdiction: 'US', legislationType: ty.includes('res') ? 'Joint resolution' : 'Bill', legislationDate: intro || undefined,
@@ -103,7 +103,7 @@ ${sec(`How each ${who} voted: Yes`, cols(casts.Y.map(ml)))}${sec(`How each ${who
 ${sec('Voted present', cols(casts.P.map(ml)))}${sec('Did not vote', cols(casts['.'].map(ml)))}
 ${sec('Other votes', cols([prev ? a(P('vote', `${c}-${ch}-${prev[0]}`, prev[7] || prev[3]), `Previous: ${clamp(prev[7] || prev[3], 80)}`) : '', next ? a(P('vote', `${c}-${ch}-${next[0]}`, next[7] || next[3]), `Next: ${clamp(next[7] || next[3], 80)}`) : '', a('/votes', 'All votes in Congress')].filter(Boolean)))}
 ${note('From Voteview roll call records.')}`;
-  return { title: title(`${clamp(what, 46)}: ${chamber} Vote, ${date(dt)}`), desc: clamp(lead + ` See how every ${who} voted.`, 158), path: P('vote', key, what), route: 'vote:' + key, ogType: 'article',
+  return { noindex: c < 93, title: title(`${clamp(what, 46)}: ${chamber} Vote, ${date(dt)}`), desc: clamp(lead + ` See how every ${who} voted.`, 158), path: P('vote', key, what), route: 'vote:' + key, ogType: 'article',
     crumbs: [['Votes', L.abs('/votes')], [`${chamber} vote ${roll} (${c}th Congress)`.replace(/(\d+)th Congress/, (x, k) => ord(+k) + ' Congress'), null]],
     ld: [{ '@context': 'https://schema.org', '@type': 'Event', name: `${chamber} vote: ${clamp(what, 100)}`, startDate: dt, eventStatus: 'https://schema.org/EventScheduled',
       location: { '@type': 'Place', name: `U.S. ${chamber}`, address: 'Washington, DC' }, description: lead }],
@@ -112,7 +112,7 @@ ${note('From Voteview roll call records.')}`;
 
 /* ---------------- PAC ---------------- */
 async function pac(id) {
-  const r = await one(`pacs?id=eq.${encodeURIComponent(id)}&select=id,name,category,total,cycle_total,light,detail`);
+  const r = await one(`pacs?id=eq.${encodeURIComponent(id)}&select=id,name,category,total,cycle_total,indexable,light,detail`);
   if (!r) return null;
   const p = { ...(r.light || {}), ...(r.detail || {}) };
   const nm = p.fn || r.name || p.n;
@@ -131,13 +131,13 @@ ${sec('Biggest recipients over time', top.length ? rows(top.slice(0, 30).map(x =
 ${sec('Connected company', co ? `<p>${a(P('company', co.id, co.name), co.name)}</p>` : '')}
 ${sec('More', cols([a(`https://www.fec.gov/data/committee/${id}/`, 'FEC filings'), a('/pacs', 'All PACs')]))}
 ${note('From FEC itemized contribution records.')}`;
-  return { title: title(t), desc: clamp(lead, 158), path: P('pac', id, nm), route: 'pac:' + id, crumbs: [['PACs', L.abs('/pacs')], [nm, null]],
+  return { noindex: !r.indexable, title: title(t), desc: clamp(lead, 158), path: P('pac', id, nm), route: 'pac:' + id, crumbs: [['PACs', L.abs('/pacs')], [nm, null]],
     ld: [{ '@context': 'https://schema.org', '@type': 'Organization', name: nm, url: L.abs(P('pac', id, nm)), identifier: id, description: lead, address: p.loc || undefined }], body };
 }
 
 /* ---------------- lobbying client ---------------- */
 async function lobbying(id) {
-  const r = await one(`lobby_clients?id=eq.${encodeURIComponent(id)}&select=id,name,spend,light,detail`);
+  const r = await one(`lobby_clients?id=eq.${encodeURIComponent(id)}&select=id,name,spend,indexable,light,detail`);
   if (!r) return null;
   const d = { ...(r.light || {}), ...(r.detail || {}) };
   const meta = await META(['pages_issue', 'lobby']);
@@ -160,13 +160,13 @@ ${sec('Agencies contacted', (d.ents || []).length ? cols(d.ents.slice(0, 15).map
 ${sec('Related', cols([co ? a(P('company', co.id, co.name), `${co.name}: stock trades, contracts and PAC`) : '', a('/lobbying', 'All lobbying groups')].filter(Boolean)))}
 ${sec('Filings', (d.fil || []).length ? rows(d.fil.slice(0, 8).map(f => [a(f[1], `${f[0]} report`), money(f[2])])) : '')}
 ${note('From Lobbying Disclosure Act reports filed with the Senate and House.')}`;
-  return { title: title(t), desc: clamp(lead, 158), path: P('lobbying', id, r.name), route: 'lob:' + id, crumbs: [['Lobbying', L.abs('/lobbying')], [r.name, null]],
+  return { noindex: !r.indexable, title: title(t), desc: clamp(lead, 158), path: P('lobbying', id, r.name), route: 'lob:' + id, crumbs: [['Lobbying', L.abs('/lobbying')], [r.name, null]],
     ld: [{ '@context': 'https://schema.org', '@type': 'Organization', name: r.name, url: L.abs(P('lobbying', id, r.name)), description: lead }], body };
 }
 
 /* ---------------- lobbying firm ---------------- */
 async function lobbyingFirm(id) {
-  const r = await one(`lobby_firms?id=eq.${encodeURIComponent(id)}&select=id,name,income,data`);
+  const r = await one(`lobby_firms?id=eq.${encodeURIComponent(id)}&select=id,name,income,indexable,data`);
   if (!r) return null;
   const d = r.data || {}, cl = d.cl || [];
   const meta = await META(['lobby']); const periods = (meta.lobby || {}).periods || '';
@@ -177,13 +177,13 @@ ${facts([['Lobbying income', money(r.income)], ['Clients', num(cl.length)]])}
 ${sec('Clients', rows(cl.slice(0, 80).map(c => [c[0] ? a(P('lobbying', c[0], c[1]), c[1]) : esc(c[1]), money(c[2])])))}
 ${sec('More', cols([a('/lobbying-firms', 'All lobbying firms'), a('/lobbying', 'All lobbying groups')]))}
 ${note('From Lobbying Disclosure Act reports.')}`;
-  return { title: title(t), desc: clamp(lead, 158), path: P('lobbying-firm', id, r.name), route: 'firm:' + id, crumbs: [['Lobbying firms', L.abs('/lobbying-firms')], [r.name, null]],
+  return { noindex: !r.indexable, title: title(t), desc: clamp(lead, 158), path: P('lobbying-firm', id, r.name), route: 'firm:' + id, crumbs: [['Lobbying firms', L.abs('/lobbying-firms')], [r.name, null]],
     ld: [{ '@context': 'https://schema.org', '@type': 'Organization', name: r.name, url: L.abs(P('lobbying-firm', id, r.name)), description: lead }], body };
 }
 
 /* ---------------- company ---------------- */
 async function company(id) {
-  const r = await one(`companies?id=eq.${encodeURIComponent(id)}&select=id,name,tickers,data`);
+  const r = await one(`companies?id=eq.${encodeURIComponent(id)}&select=id,name,tickers,indexable,data`);
   if (!r) return null;
   const d = r.data || {}, tr = d.tr || [], gov = d.gov || {};
   const [n, lobc, pacr] = await Promise.all([names(tr.map(x => x[0])), d.lob ? one(`lobby_clients?id=eq.${encodeURIComponent(d.lob)}&select=id,name,spend`) : null, d.pac ? one(`pacs?id=eq.${encodeURIComponent(d.pac)}&select=id,name,light->>fn`) : null]);
@@ -199,7 +199,7 @@ ${sec('Lobbying and PAC', cols([lobc ? a(P('lobbying', lobc.id, lobc.name), `${l
 ${sec('Former congressional staff lobbying for it', (d.rev || []).length ? rows(d.rev.slice(0, 10).map(x => [esc(x[0]), esc(clamp(x[1], 110))])) : '')}
 ${sec('More', cols([a('/companies', 'All companies'), a(`${SITE}/receipts`, 'Biggest stock traders in Congress')]))}
 ${note('From House and Senate stock trade disclosures, USAspending.gov, lobbying reports and FEC records.')}`;
-  return { title: title(t), desc: clamp(lead, 158), path: P('company', id, r.name), route: 'co:' + id, crumbs: [['Companies', L.abs('/companies')], [r.name, null]],
+  return { noindex: !r.indexable, title: title(t), desc: clamp(lead, 158), path: P('company', id, r.name), route: 'co:' + id, crumbs: [['Companies', L.abs('/companies')], [r.name, null]],
     ld: [{ '@context': 'https://schema.org', '@type': 'Corporation', name: r.name, tickerSymbol: tk || undefined, url: L.abs(P('company', id, r.name)), description: lead }], body };
 }
 
@@ -267,7 +267,7 @@ ${note('From FEC candidate summaries and independent expenditure reports.')}`;
 
 /* ---------------- outside spending group ---------------- */
 async function outsideGroup(id) {
-  const r = await one(`outside_groups?id=eq.${encodeURIComponent(id)}&select=id,name,total,data`);
+  const r = await one(`outside_groups?id=eq.${encodeURIComponent(id)}&select=id,name,total,indexable,data`);
   if (!r) return null;
   const d = r.data || {}, rs = d.rows || [];
   const lead = `${r.name} has spent ${money(r.total)} on 2026 congressional races: ${money(d.for || 0)} supporting candidates and ${money(d.vs || 0)} opposing them.${rs.length ? ` Biggest target: ${rs[0][1]} (${money(rs[0][4])}).` : ''}`;
@@ -277,13 +277,13 @@ ${facts([['Total spent', money(r.total)], ['Supporting', money(d.for || 0)], ['O
 ${sec('Where the money went', rows(rs.slice(0, 60).map(x => [`${esc(x[1])} <small>${x[3] === 'S' ? 'supporting' : 'opposing'}${x[2] ? ' · ' + a(P('race', x[2], ''), raceLabel(x[2])) : ''}</small>`, money(x[4])])))}
 ${sec('More', cols([a(`https://www.fec.gov/data/committee/${id}/`, 'FEC filings'), a('/outside-groups', 'All outside spending groups'), a('/elections', '2026 races')]))}
 ${note('From FEC independent expenditure reports.')}`;
-  return { title: title(`${r.name}: 2026 Election Spending`), desc: clamp(lead, 158), path: P('outside-group', id, r.name), route: 'og:' + id,
+  return { noindex: !r.indexable, title: title(`${r.name}: 2026 Election Spending`), desc: clamp(lead, 158), path: P('outside-group', id, r.name), route: 'og:' + id,
     crumbs: [['Outside spending', L.abs('/outside-groups')], [r.name, null]], ld: [{ '@context': 'https://schema.org', '@type': 'Organization', name: r.name, identifier: id, url: L.abs(P('outside-group', id, r.name)), description: lead }], body };
 }
 
 /* ---------------- House ethics statement ---------------- */
 async function ethics(id) {
-  const r = await one(`ethics_matters?id=eq.${encodeURIComponent(id)}&select=id,title,data`);
+  const r = await one(`ethics_matters?id=eq.${encodeURIComponent(id)}&select=id,title,indexable,data`);
   if (!r) return null;
   const d = r.data || {}, who = d.who || [];
   const n = await names(who);
@@ -293,7 +293,7 @@ ${sec('Members involved', who.length ? cols(who.map(w => personLink(n, w))) : ''
 ${sec('Statement', d.body && d.body.length > 40 ? `<p>${esc(firstSentences(d.body, 1200))}</p>` : '')}
 ${sec('Documents', rows([d.url ? [a(d.url, 'Statement on ethics.house.gov'), ''] : null, ...(d.pdfs || []).slice(0, 8).map((u, i) => [a(u, `Document ${i + 1} (PDF)`), ''])].filter(Boolean)))}
 ${sec('More', cols([a('/ethics', 'All House ethics statements')]))}${note('From the House Committee on Ethics.')}`;
-  return { title: title(clamp(d.t || r.title, 70)), desc: clamp(lead, 158), path: P('ethics', id, d.t || r.title), route: 'eth:' + id, ogType: 'article',
+  return { noindex: !r.indexable, title: title(clamp(d.t || r.title, 70)), desc: clamp(lead, 158), path: P('ethics', id, d.t || r.title), route: 'eth:' + id, ogType: 'article',
     crumbs: [['Ethics statements', L.abs('/ethics')], [clamp(d.t || r.title, 60), null]],
     ld: [{ '@context': 'https://schema.org', '@type': 'NewsArticle', headline: clamp(d.t || r.title, 110), datePublished: d.d, publisher: { '@type': 'Organization', name: 'House Committee on Ethics' }, url: L.abs(P('ethics', id, d.t || r.title)) }], body };
 }

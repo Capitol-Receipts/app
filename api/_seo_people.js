@@ -126,7 +126,7 @@ ${note('From the congress-legislators project, Voteview, the Congressional Bills
 
 /* ---------------- appointee ---------------- */
 async function appointee(id) {
-  const r = await one(`appointees?id=eq.${encodeURIComponent(id)}&select=id,name,light,detail`);
+  const r = await one(`appointees?id=eq.${encodeURIComponent(id)}&select=id,name,indexable,light,detail`);
   if (!r) return null;
   const p = { ...(r.light || {}), ...(r.detail || {}) };
   const offices = (p.off || []).filter(o => o && o[0]);
@@ -146,7 +146,7 @@ ${sec('Biography', bio && p.wt ? `<p>${esc(bio)}</p><p><small>From ${a('https://
 ${sec('More', cols([a('/appointees', 'All appointees and nominees'), a(`${SITE}/appointees`, 'About appointee tracking')]))}
 ${note('From Senate roll call votes, Wikidata, Wikipedia and Office of Government Ethics records.')}`;
   return {
-    title: title(t), desc: clamp(lead, 158), path: P('appointee', id, r.name), route: 'ha:' + id, ogType: 'profile',
+    noindex: !r.indexable, title: title(t), desc: clamp(lead, 158), path: P('appointee', id, r.name), route: 'ha:' + id, ogType: 'profile',
     crumbs: [['Appointees', L.abs('/appointees')], [r.name, null]],
     ld: [{ '@context': 'https://schema.org', '@type': 'Person', name: r.name, jobTitle: ttl, url: L.abs(P('appointee', id, r.name)), description: bio || undefined }],
     body,

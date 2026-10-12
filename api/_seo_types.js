@@ -15,7 +15,7 @@ const PER = 250;
 function hub(o) { // o: {path, h1, sub, lead, title, desc, body, page, pages}
   if (o.page > o.pages) return L.notFound(o.path + '?page=' + o.page);
   const pg = o.page > 1 ? ` (page ${o.page} of ${o.pages})` : '';
-  return { title: title(o.title + pg), desc: clamp(o.desc, 158), path: o.path + (o.page > 1 ? `?page=${o.page}` : ''), route: null, noindex: o.page > o.pages && o.pages > 0,
+  return { title: title(o.title + pg), desc: clamp(o.desc, 158), path: o.path + (o.page > 1 ? `?page=${o.page}` : ''), route: null, noindex: o.page > 1,
     crumbs: [[o.h1, null]], ld: [{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: o.h1, description: o.desc, url: HOST + o.path }],
     body: `<h1>${esc(o.h1)}</h1>${o.sub ? `<p class="sr-sub">${esc(o.sub)}${pg}</p>` : ''}${o.lead ? `<p class="sr-lead">${esc(o.lead)}</p>` : ''}${o.body}${pager(o.path, o.page, o.pages)}` };
 }
@@ -133,22 +133,22 @@ const SM = 10000;
 const SOURCES = { // sitemap name -> table, columns, how to build the URL
   'members': ['members', 'id,name,updated_at', 'ord', r => P('member', r.id, r.name)],
   'past-members': ['people', 'id,name,updated_at', 'id', r => P('past-member', r.id, r.name)],
-  'appointees': ['appointees', 'id,name,updated_at', 'id', r => P('appointee', r.id, r.name)],
+  'appointees': ['appointees', 'id,name,updated_at', 'id&indexable=is.true', r => P('appointee', r.id, r.name)],
   'nominees': ['nominations', 'id,name,updated_at', 'id', r => P('nominee', r.id, r.name)],
   'judges': ['judges', 'id,name,updated_at', 'id', r => P('judge', r.id, r.name)],
-  'bills': ['bills', 'key,title,updated_at', 'key', r => P('bill', r.key, r.title)],
-  'votes': ['vote_index', 'key,title,updated_at', 'key', r => P('vote', r.key, r.title)],
-  'pacs': ['pacs', 'id,name,light->>fn,updated_at', 'id', r => P('pac', r.id, r.fn || r.name)],
-  'lobbying': ['lobby_clients', 'id,name,updated_at', 'id', r => P('lobbying', r.id, r.name)],
-  'lobbying-firms': ['lobby_firms', 'id,name,updated_at', 'id', r => P('lobbying-firm', r.id, r.name)],
-  'companies': ['companies', 'id,name,updated_at', 'id', r => P('company', r.id, r.name)],
+  'bills': ['bills', 'key,title,updated_at', 'key&indexable=is.true', r => P('bill', r.key, r.title)],
+  'votes': ['vote_index', 'key,title,updated_at', 'key&indexable=is.true', r => P('vote', r.key, r.title)],
+  'pacs': ['pacs', 'id,name,light->>fn,updated_at', 'id&indexable=is.true', r => P('pac', r.id, r.fn || r.name)],
+  'lobbying': ['lobby_clients', 'id,name,updated_at', 'id&indexable=is.true', r => P('lobbying', r.id, r.name)],
+  'lobbying-firms': ['lobby_firms', 'id,name,updated_at', 'id&indexable=is.true', r => P('lobbying-firm', r.id, r.name)],
+  'companies': ['companies', 'id,name,updated_at', 'id&indexable=is.true', r => P('company', r.id, r.name)],
   'committees': ['committees', 'id,name,updated_at', 'id', r => P('committee', r.id, r.name)],
   'caucuses': ['caucuses', 'id,name,updated_at', 'id', r => P('caucus', r.id, r.name)],
   'races': ['races', 'id,office,state,district,data->sp,updated_at', 'id', r => P('race', r.id, '2026 ' + R.raceName({ st: r.state, o: r.office, d: r.district, sp: r.sp }))],
-  'outside-groups': ['outside_groups', 'id,name,updated_at', 'id', r => P('outside-group', r.id, r.name)],
-  'ethics': ['ethics_matters', 'id,title,updated_at', 'id', r => P('ethics', r.id, r.title)],
+  'outside-groups': ['outside_groups', 'id,name,updated_at', 'id&indexable=is.true', r => P('outside-group', r.id, r.name)],
+  'ethics': ['ethics_matters', 'id,title,updated_at', 'id&indexable=is.true', r => P('ethics', r.id, r.title)],
 };
-const counts = () => cached('sm-counts', async () => Object.fromEntries(await Promise.all(Object.entries(SOURCES).map(async ([k, [t]]) => [k, (await q(`${t}?select=${['bills', 'vote_index'].includes(t) ? 'key' : 'id'}`, { range: '0-0', count: true })).total]))), 6 * 3600e3);
+const counts = () => cached('sm-counts', async () => Object.fromEntries(await Promise.all(Object.entries(SOURCES).map(async ([k, [t]]) => [k, (await q(`${t}?select=${['bills', 'vote_index'].includes(t) ? 'key' : 'id'}${SOURCES[k][2].includes('indexable') ? '&indexable=is.true' : ''}`, { range: '0-0', count: true })).total]))), 6 * 3600e3);
 const xmlEsc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 async function sitemapIndex() {
   const c = await counts(), files = ['hubs', 'places'];
@@ -160,7 +160,7 @@ const urlset = list => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="h
 async function sitemapFile(name) {
   if (name === 'hubs') {
     const c = await counts();
-    const pages = (k, path) => Array.from({ length: Math.max(1, Math.ceil((c[k] || 0) / PER)) }, (_, i) => [path + (i ? `?page=${i + 1}` : '')]);
+    const pages = (k, path) => [[path]]; // later pages are link lists marked noindex
     return urlset([['/'], ['/members'], ['/states'], ...pages('votes', '/votes'), ['/committees'], ['/caucuses'], ['/elections'], ...pages('past-members', '/past-members'), ...pages('appointees', '/appointees'),
       ...pages('judges', '/judges'), ...pages('bills', '/bills'), ...pages('pacs', '/pacs'), ...pages('lobbying', '/lobbying'), ...pages('lobbying-firms', '/lobbying-firms'),
       ...pages('companies', '/companies'), ...pages('outside-groups', '/outside-groups'), ...pages('ethics', '/ethics')]);
