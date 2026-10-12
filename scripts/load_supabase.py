@@ -7,7 +7,7 @@ import gzip, json, os, sys, time, urllib.request, urllib.error
 
 URL = os.environ['SUPABASE_URL'].rstrip('/')
 KEY = os.environ['SUPABASE_SERVICE_ROLE_KEY']
-DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'export')
+DIR = os.environ.get('EXPORT_DIR') or os.path.join(os.path.dirname(__file__), '..', 'data', 'export')
 PK = {'bills': 'key', 'app_meta': 'key', 'zip_districts': 'zip'}
 ORDER = ['app_meta', 'members', 'nominations', 'roll_calls', 'photos', 'zip_districts', 'committees', 'lobby_firms',
          'ethics_matters', 'lobby_clients', 'pacs', 'careers', 'appointees', 'people', 'bills', 'races', 'outside_groups', 'companies', 'congress_votes']
@@ -43,12 +43,20 @@ def load(table):
     if batch: post(table, batch)
     print(f'{table}: {n} rows')
 
+def record_update(tables):
+    body = json.dumps([{'key': 'updated', 'value': {'at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), 'tables': tables}}]).encode()
+    req = urllib.request.Request(f'{URL}/rest/v1/app_meta?on_conflict=key', data=body, method='POST', headers={
+        'apikey': KEY, 'Authorization': f'Bearer {KEY}', 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal'})
+    urllib.request.urlopen(req, timeout=60).read()
+
 def refresh_cache():
     req = urllib.request.Request(f'{URL}/rest/v1/rpc/refresh_light_cache', data=b'{}', method='POST', headers={
         'apikey': KEY, 'Authorization': f'Bearer {KEY}', 'Content-Type': 'application/json'})
     urllib.request.urlopen(req, timeout=300).read()
     print('light index cache rebuilt')
 
+done = []
 for t in (sys.argv[1:] or ORDER):
-    if os.path.exists(os.path.join(DIR, f'{t}.jsonl.gz')): load(t)
+    if os.path.exists(os.path.join(DIR, f'{t}.jsonl.gz')): load(t); done.append(t)
 refresh_cache()
+record_update(done)

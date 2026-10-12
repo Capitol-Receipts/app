@@ -1,0 +1,67 @@
+name: Daily data update
+
+on:
+  schedule:
+    - cron: '15 10 * * *'   # every day, about 6:15 a.m. Eastern
+  push:
+    branches: [main]
+    paths: ['pipeline/**', '.github/workflows/daily-update.yml']
+  workflow_dispatch:
+    inputs:
+      weekly:
+        description: 'Also refresh weekly sources (ethics, lobbying, companies)'
+        type: boolean
+        default: false
+
+concurrency: daily-update
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Tools
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+          pip install -q pyyaml
+      - name: Restore pipeline state
+        uses: actions/cache/restore@v4
+        with:
+          path: work
+          key: pipeline-state-${{ github.run_id }}
+          restore-keys: pipeline-state-
+      - name: Seed pipeline state on first run
+        run: |
+          if [ ! -f work/hist.json ]; then
+            git fetch --depth 1 origin pipeline-seed
+            mkdir -p work seedtmp
+            git --work-tree=seedtmp checkout origin/pipeline-seed -- .
+            cat seedtmp/seed.tar.gz.part* | tar -xz -C work
+            rm -rf seedtmp
+            git reset -q
+          fi
+          du -sh work
+      - name: Refresh and rebuild
+        run: python pipeline/daily.py work ${{ github.event.inputs.weekly == 'true' && '--weekly' || '' }}
+      - name: Load changed tables into Supabase
+        env:
+          SUPABASE_URL: https://hxgckcriehvrolwnabpd.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          EXPORT_DIR: work/export
+        run: |
+          TABLES=$(cat work/changed.txt)
+          if [ -z "$TABLES" ]; then echo "Nothing changed today."; exit 0; fi
+          python scripts/load_supabase.py $TABLES
+      - name: Save pipeline state
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: work
+          key: pipeline-state-${{ github.run_id }}
+      - name: Summary
+        if: always()
+        run: cat work/last_run.txt >> "$GITHUB_STEP_SUMMARY" || true

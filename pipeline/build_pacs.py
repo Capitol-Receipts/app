@@ -1,6 +1,6 @@
 """PAC pages: who each PAC gives to, all from FEC filings (1980-2026). Adds 'pacs' to pages.json."""
-import json, re, zipfile, collections, yaml
-B = '/tmp/claude-0/-home-claude/5941ef03-c418-5546-a338-6ac77d8d5bda/scratchpad'
+import json, os, re, sys, zipfile, collections, yaml
+B = os.path.abspath(sys.argv[1]) if len(sys.argv) > 1 else os.path.dirname(os.path.abspath(__file__))
 D = f'{B}/data'; H = f'{D}/hist'
 ACR = re.compile(r'\b(Pac|Llc|Usa|Us|Afl-Cio|Nra|Aipac|Ibew|Seiu|Uaw|Afscme|Nea|Aft|Ups|At&T|Bnsf|Cvs|Ge|Ibm|Jp|Pnc|Kpmg|Pwc|Ey|Lpl|Hca|Nrecc|Nrsc|Dccc|Dscc|Nrcc|Rnc|Dnc|Rtx|Ii|Iii)\b', re.I)
 def nice(s):

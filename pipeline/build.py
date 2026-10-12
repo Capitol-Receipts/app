@@ -4,7 +4,7 @@ FEC bulk candidate summaries (weball), House Clerk financial disclosure index (s
 import csv, json, sys, re, datetime, collections, xml.etree.ElementTree as ET, yaml, os, statistics
 D = sys.argv[1]
 OUT = sys.argv[2]
-TODAY = datetime.date(2026, 10, 11)
+TODAY = datetime.date.today()
 p = lambda f: os.path.join(D, f)
 
 L = yaml.safe_load(open(p('legislators-current.yaml')))

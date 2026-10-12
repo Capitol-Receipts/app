@@ -15,7 +15,7 @@ CH = {'House': 'H', 'Senate': 'S'}
 PARTY = {100: 'D', 200: 'R', 328: 'I'}
 
 rc = collections.defaultdict(list)
-for r in csv.DictReader(open(os.path.join(D, 'HSall_rollcalls.csv'), encoding='utf-8')):
+for r in csv.DictReader(open(os.path.join(D, os.environ.get('VOTE_PREFIX', 'HSall') + '_rollcalls.csv'), encoding='utf-8')):
     if r['chamber'] not in CH: continue
     c = int(r['congress'])
     if ONLY and c != ONLY: continue
@@ -26,7 +26,7 @@ for k in rc: rc[k].sort()
 pos = {k: {row[0]: i for i, row in enumerate(v)} for k, v in rc.items()}
 
 mem = collections.defaultdict(dict)
-for r in csv.DictReader(open(os.path.join(D, 'HSall_members.csv'), encoding='utf-8')):
+for r in csv.DictReader(open(os.path.join(D, os.environ.get('VOTE_PREFIX', 'HSall') + '_members.csv'), encoding='utf-8')):
     if r['chamber'] not in CH: continue
     c = int(r['congress'])
     if ONLY and c != ONLY: continue
@@ -40,7 +40,7 @@ for r in csv.DictReader(open(os.path.join(D, 'HSall_members.csv'), encoding='utf
 
 votes = collections.defaultdict(dict)
 CODE = {'1': 'Y', '2': 'Y', '3': 'Y', '4': 'N', '5': 'N', '6': 'N', '7': 'P'}
-with open(os.path.join(D, 'HSall_votes.csv'), encoding='utf-8') as f:
+with open(os.path.join(D, os.environ.get('VOTE_PREFIX', 'HSall') + '_votes.csv'), encoding='utf-8') as f:
     f.readline()
     for line in f:
         c, ch, roll, icpsr, cast = line.split(',', 5)[:5]
