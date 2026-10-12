@@ -9,6 +9,7 @@ Also serves /sitemap.xml, /sitemaps/*.xml and /robots.txt. Reads the public, rea
 const fs = require('fs'), path = require('path');
 const T = require('./_seo_types');
 const ESP = require('./_seo_es');
+const RK = require('./_seo_rank');
 const ES_TYPES = new Set(['member', 'state', 'district', 'race']), ES_HUBS = new Set(['members', 'states', 'elections']);
 const { HOST, SITE, esc, abs, q, notFound } = T;
 
@@ -58,9 +59,9 @@ main.has-cta{padding-bottom:96px}
 @media (prefers-color-scheme:dark){.sr{--i:#e9ecf2;--s:#a3abb9;--l:#2a3140;--b:#171c26;background:#0e1219}.sr a{color:#9db6ff}.sr-crumbs a,.sr-foot a{color:var(--s)}.sr-pager b{background:#2c4c9a}}
 </style>`;
 
-const NAV = [['/members', 'Members'], ['/bills', 'Bills'], ['/pacs', 'PACs'], ['/lobbying', 'Lobbying'], ['/elections', '2026 races'], ['/states', 'States'], ['/this-week', 'This week']];
+const NAV = [['/members', 'Members'], ['/bills', 'Bills'], ['/pacs', 'PACs'], ['/lobbying', 'Lobbying'], ['/elections', '2026 races'], ['/states', 'States'], ['/rankings', 'Rankings'], ['/this-week', 'This week']];
 const NAV_ES = [['/es/members', 'Miembros'], ['/es/states', 'Estados'], ['/es/elections', 'Elecciones 2026'], ['/members', 'English']];
-const FOOT = [['/members', 'Members of Congress'], ['/past-members', 'Past members'], ['/appointees/all', 'Appointees'], ['/judges', 'Federal judges'], ['/committees', 'Committees'], ['/caucuses', 'Caucuses'], ['/votes', 'Votes'], ['/bills', 'Bills'], ['/pacs', 'PACs'], ['/lobbying', 'Lobbying groups'], ['/lobbying-firms', 'Lobbying firms'], ['/outside-groups', 'Outside spending'], ['/ethics', 'Ethics statements'], ['/companies', 'Companies'], ['/elections', '2026 elections'], ['/states', 'States'], ['/this-week', 'This week in Congress'], ['/es/members', 'En español']];
+const FOOT = [['/members', 'Members of Congress'], ['/past-members', 'Past members'], ['/appointees/all', 'Appointees'], ['/judges', 'Federal judges'], ['/committees', 'Committees'], ['/caucuses', 'Caucuses'], ['/votes', 'Votes'], ['/bills', 'Bills'], ['/pacs', 'PACs'], ['/lobbying', 'Lobbying groups'], ['/lobbying-firms', 'Lobbying firms'], ['/outside-groups', 'Outside spending'], ['/ethics', 'Ethics statements'], ['/companies', 'Companies'], ['/elections', '2026 elections'], ['/states', 'States'], ['/this-week', 'This week in Congress'], ['/rankings', 'Rankings'], ['/es/members', 'En español']];
 const APP = 'https://app.capitolreceipts.com';
 const OG_TYPES = new Set(['member', 'past-member', 'bill', 'vote', 'pac', 'lobbying', 'company', 'race', 'state', 'district', 'nominee']);
 
@@ -140,6 +141,50 @@ function send(res, status, type, body, maxAge) {
 }
 const redirect = (res, loc, permanent = true) => { res.statusCode = permanent ? 301 : 302; res.setHeader('Location', loc); res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400'); res.end(); };
 
+// llms.txt: a plain-text guide for AI assistants, with current facts from the rankings
+async function llms() {
+  const [meta, leaders] = await Promise.all([T.META(['asOf']), Promise.all(Object.entries(RK.METRICS).map(async ([s, M]) => { const r = await RK.ranking(s); return r ? `- [${M.h}](${SITE}${RK.rpath(s, '')}): ${r.lead}` : ''; }))]);
+  const a = meta.asOf || {};
+  return `# Capitol Receipts
+
+> Nonpartisan, plain-English profiles of every member of the U.S. Congress, built entirely from public records: who funds their campaigns, what stocks they trade, how they vote, who lobbies them, and the appointees, judges and bills around them. Data is updated daily.
+
+Data as of: campaign finance ${a.fec || ''}, stock trade reports ${a.ptr || ''}, votes ${a.votes || ''}, roster ${a.roster || ''}.
+When citing, link to the specific page (each page has a stable address and a "Cite or embed" section). Corrections: corrections@capitolreceipts.com.
+
+## Current rankings
+${leaders.filter(Boolean).join('\n')}
+
+## Directories
+- [Members of Congress](${SITE}/members): all current senators and representatives, by state
+- [Congress by state](${SITE}/states) and congressional districts
+- [This week in Congress](${SITE}/this-week): latest trades, votes, confirmations and money, updated daily
+- [Rankings](${SITE}/rankings): each ranking for all of Congress, the Senate, the House, Democrats and Republicans
+- [Bills since 1947](${SITE}/bills), [every recorded vote since 1789](${SITE}/votes)
+- [PACs](${SITE}/pacs), [lobbying groups](${SITE}/lobbying), [lobbying firms](${SITE}/lobbying-firms), [outside spending](${SITE}/outside-groups), [companies](${SITE}/companies)
+- [Committees](${SITE}/committees), [caucuses](${SITE}/caucuses), [appointees and nominees](${SITE}/appointees/all), [federal judges](${SITE}/judges), [past members since 1789](${SITE}/past-members), [House ethics statements](${SITE}/ethics)
+- [En español](${SITE}/es/members)
+
+## Page addresses
+- Member: ${SITE}/member/{bioguide ID}/{name}, for example ${SITE}/member/P000197/nancy-pelosi
+- Bill: ${SITE}/bill/{congress}-{type}-{number}, for example ${SITE}/bill/119-hr-1
+- Vote: ${SITE}/vote/{congress}-{H or S}-{roll call number}, for example ${SITE}/vote/119-S-911
+- Also: /pac/{FEC ID}, /state/{postal code}, /district/{state}-{number}, /race/{race ID}, /company/{name}, /committee/{code}
+
+## Sources
+- Campaign finance: Federal Election Commission bulk data
+- Stock trades: House Clerk and Senate periodic transaction reports
+- Votes: Voteview roll call records; bills: GovInfo, Congressional Research Service summaries and the Congressional Bills Project
+- Lobbying: Senate Lobbying Disclosure Act database
+- Appointees: Senate roll calls and Office of Government Ethics filings; judges: Federal Judicial Center
+- Method and definitions: ${SITE}/how-it-works
+
+## Optional
+- [Sitemap](${SITE}/sitemap.xml)
+- [About and pricing](${SITE}/pricing)
+`;
+}
+
 async function embedCard(res, id) {
   const r = await T.one(`members?id=eq.${encodeURIComponent(id)}&select=id,name,party,state,chamber,district,data`);
   if (!r) return send(res, 404, 'text/plain', 'Not found');
@@ -179,6 +224,11 @@ module.exports = async (req, res) => {
     if (t === 'sitemaps') {
       const xml = await T.sitemapFile(id.replace(/\.xml$/, ''));
       return xml ? send(res, 200, 'application/xml; charset=utf-8', xml, 21600) : send(res, 404, 'text/plain', 'Not found');
+    }
+    if (t === 'llms') return send(res, 200, 'text/plain; charset=utf-8', await llms(), 21600);
+    if (t === 'rankings') {
+      const pg = id ? await RK.ranking(decodeURIComponent(id), slug) : await RK.index();
+      return send(res, pg ? 200 : 404, 'text/html; charset=utf-8', html(pg || notFound(publicPath), 'seo'));
     }
     let pg;
     const HUBS = lang === 'es' ? ESP.HUBS : T.HUBS, PAGES = lang === 'es' ? ESP.PAGES : T.PAGES;

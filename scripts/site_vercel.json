@@ -97,6 +97,22 @@
     {
       "source": "/:t(members|states|past-members|judges|bills|votes|pacs|lobbying|lobbying-firms|companies|committees|caucuses|elections|outside-groups|ethics|this-week)",
       "destination": "https://app.capitolreceipts.com/api/seo?t=:t&via=www"
+    },
+    {
+      "source": "/rankings",
+      "destination": "https://app.capitolreceipts.com/api/seo?t=rankings&via=www"
+    },
+    {
+      "source": "/rankings/:id",
+      "destination": "https://app.capitolreceipts.com/api/seo?t=rankings&id=:id&via=www"
+    },
+    {
+      "source": "/rankings/:id/:slug",
+      "destination": "https://app.capitolreceipts.com/api/seo?t=rankings&id=:id&slug=:slug&via=www"
+    },
+    {
+      "source": "/llms.txt",
+      "destination": "https://app.capitolreceipts.com/api/seo?t=llms&via=www"
     }
   ]
 }

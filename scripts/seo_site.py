@@ -35,7 +35,7 @@ PAGES = {  # file -> (path, title, description, breadcrumb name)
     'pricing.html': ('/pricing', 'Pricing: Free, or Pro for $0.99 a Month | Capitol Receipts',
                      'Free: every profile, party page and comparison. Pro adds instant alerts and full trade and donor histories for $0.99 a month. Newsroom plans too.', 'Pricing'),
 }
-EXPLORE = [('/this-week', 'This week in Congress'), ('/members', 'Every member of Congress'), ('/states', 'Find your state'), ('/bills', 'Bills since 1947'), ('/votes', 'Every vote since 1789'),
+EXPLORE = [('/this-week', 'This week in Congress'), ('/rankings', 'Rankings'), ('/members', 'Every member of Congress'), ('/states', 'Find your state'), ('/bills', 'Bills since 1947'), ('/votes', 'Every vote since 1789'),
            ('/pacs', 'PACs and who they fund'), ('/lobbying', 'Who lobbies Congress'), ('/elections', '2026 House and Senate races'), ('/companies', 'Companies members trade'),
            ('/committees', 'Committees'), ('/appointees/all', 'Appointees and nominees'), ('/judges', 'Federal judges'), ('/past-members', 'Past members since 1789'), ('/es/members', 'En español')]
 ORG = {'@context': 'https://schema.org', '@type': 'Organization', '@id': f'{SITE}/#org', 'name': 'Capitol Receipts', 'url': SITE + '/',

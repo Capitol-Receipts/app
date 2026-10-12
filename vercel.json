@@ -98,6 +98,22 @@
     {
       "source": "/:t(members|states|past-members|appointees|judges|bills|votes|pacs|lobbying|lobbying-firms|companies|committees|caucuses|elections|outside-groups|ethics|this-week)",
       "destination": "/api/seo?t=:t"
+    },
+    {
+      "source": "/rankings",
+      "destination": "/api/seo?t=rankings"
+    },
+    {
+      "source": "/rankings/:id",
+      "destination": "/api/seo?t=rankings&id=:id"
+    },
+    {
+      "source": "/rankings/:id/:slug",
+      "destination": "/api/seo?t=rankings&id=:id&slug=:slug"
+    },
+    {
+      "source": "/llms.txt",
+      "destination": "/api/seo?t=llms"
     }
   ],
   "redirects": [

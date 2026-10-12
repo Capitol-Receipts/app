@@ -190,7 +190,9 @@ async function sitemapFile(name) {
   if (name === 'hubs') {
     const c = await counts();
     const pages = (k, path) => [[path]]; // later pages are link lists marked noindex
-    return urlset([['/'], ['/members'], ['/this-week'], ['/es/members'], ['/es/states'], ['/es/elections'], ['/states'], ...pages('votes', '/votes'), ['/committees'], ['/caucuses'], ['/elections'], ...pages('past-members', '/past-members'), ...pages('appointees', '/appointees/all'),
+    const RK = require('./_seo_rank');
+    const rk = [['/rankings'], ...Object.keys(RK.METRICS).flatMap(k => Object.keys(RK.VIEWS).map(v => [RK.rpath(k, v)]))];
+    return urlset([['/'], ['/members'], ['/this-week'], ...rk, ['/es/members'], ['/es/states'], ['/es/elections'], ['/states'], ...pages('votes', '/votes'), ['/committees'], ['/caucuses'], ['/elections'], ...pages('past-members', '/past-members'), ...pages('appointees', '/appointees/all'),
       ...pages('judges', '/judges'), ...pages('bills', '/bills'), ...pages('pacs', '/pacs'), ...pages('lobbying', '/lobbying'), ...pages('lobbying-firms', '/lobbying-firms'),
       ...pages('companies', '/companies'), ...pages('outside-groups', '/outside-groups'), ...pages('ethics', '/ethics')]);
   }
