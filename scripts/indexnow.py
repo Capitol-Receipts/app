@@ -26,7 +26,7 @@ def submit(urls):
 mode = sys.argv[1] if len(sys.argv) > 1 else 'daily'
 files = re.findall(r'<loc>([^<]+)</loc>', get(f'{SITE}/sitemap.xml'))
 if mode == 'daily':
-    files = [f for f in files if re.search(r'/sitemaps/(site|hubs|places|members)\.xml$', f)]
+    files = [f for f in files if re.search(r'/sitemaps/(site|hubs|places|members|es)\.xml$', f)]
 urls = []
 for f in files:
     urls += re.findall(r'<loc>([^<]+)</loc>', get(f))
