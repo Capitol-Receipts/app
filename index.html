@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Capitol Receipts</title>
+<meta name="description" content="Who's in Congress, who pays them, and how they vote. Nonpartisan, built on public records.">
+<meta name="theme-color" content="#14274e">
+<link rel="preconnect" href="https://hxgckcriehvrolwnabpd.supabase.co" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Schibsted+Grotesk:wght@500;600;700;800&display=swap">
+<link rel="stylesheet" href="/app/css/style.css">
+<link rel="stylesheet" href="/app/css/friendly.css">
+<link rel="stylesheet" href="/app/css/hdr.css" media="print" onload="this.media='all'">
+<style>
+  .boot{min-height:70vh;display:grid;place-items:center;text-align:center;padding:24px;font-family:"Schibsted Grotesk",system-ui,sans-serif;color:var(--soft,#5b6069)}
+  .boot b{display:block;font:800 26px "Barlow Condensed",system-ui,sans-serif;color:var(--ink,#0e1116);letter-spacing:-.01em}
+  .boot b span{background:#c8323a;color:#fff;padding:1px 7px 2px;border-radius:5px;margin-right:3px}
+  .boot button{margin-top:14px;font:inherit;font-weight:700;padding:10px 18px;border-radius:999px;border:0;background:#14274e;color:#fff;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="app"><div class="boot"><div><b><span>Capitol</span>Receipts</b><p id="bootmsg">Loading the latest records…</p></div></div></div>
+<nav class="tabbar" aria-label="Main"><div class="in" id="tabbar"></div></nav>
+<div id="sheet" class="sheet" hidden><div class="panel" id="panel" role="dialog" aria-modal="true"></div></div>
+<script>
+/* Supabase: public, read-only access (publishable key; tables are protected by row-level security) */
+window.SB={url:'https://hxgckcriehvrolwnabpd.supabase.co',key:'sb_publishable_jiwF5q1sFMuaGXLKg6FKAQ_3rCjcZ1J'};
+SB.req=async(path,opt={})=>{
+  const r=await fetch(SB.url+'/rest/v1/'+path,{method:opt.method||'GET',headers:Object.assign({apikey:SB.key,Accept:'application/json'},opt.body?{'Content-Type':'application/json'}:{},opt.headers||{}),body:opt.body});
+  if(!r.ok)throw new Error(path.split('?')[0]+' '+r.status);
+  return r.json();
+};
+SB.get=path=>SB.req(path);
+/* page through tables bigger than the API's 1,000-row limit */
+SB.all=async(path,size=1000)=>{let out=[],from=0;for(;;){const rows=await SB.req(path,{headers:{Range:`${from}-${from+size-1}`,'Range-Unit':'items'}});out=out.concat(rows);if(rows.length<size)return out;from+=size}};
+SB.rpc=(fn,args)=>SB.req('rpc/'+fn,{method:'POST',body:JSON.stringify(args||{})});
+SB.meta=async keys=>Object.fromEntries((await SB.get('app_meta?select=key,value&key=in.('+keys.join(',')+')')).map(r=>[r.key,r.value]));
+
+const APP_SCRIPTS=['core','party','hist','ui','nav','pages','search','leaders','linkify','pacs','friendly','glossary_es','es_dict','i18n','db'];
+async function boot(){
+  const msg=document.getElementById('bootmsg');
+  try{
+    const [members,noms,rc,meta,photos]=await Promise.all([
+      SB.all('members?select=data&order=ord'),SB.all('nominations?select=data&order=ord'),SB.all('roll_calls?select=id,data&order=ord'),
+      SB.meta(['asOf','months','passage','lobby','parties','lobbied_bills']),SB.all('photos?select=id,img&order=id')]);
+    window.__DATA={asOf:meta.asOf,months:meta.months,members:members.map(r=>r.data),rc:Object.fromEntries(rc.map(r=>[r.id,r.data])),
+      noms:noms.map(r=>r.data),passage:meta.passage,lobby:meta.lobby,bills:meta.lobbied_bills,parties:meta.parties};
+    window.__PHOTOS=Object.fromEntries(photos.map(r=>[r.id,r.img]));
+  }catch(e){
+    console.error(e);
+    msg.innerHTML='Couldn’t reach the database. Check your connection.<br><button onclick="location.reload()">Try again</button>';
+    return;
+  }
+  for(const n of APP_SCRIPTS){const s=document.createElement('script');s.src='/app/js/'+n+'.js';s.async=false;document.body.appendChild(s)}
+}
+boot();
+</script>
+</body>
+</html>

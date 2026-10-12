@@ -1,0 +1,73 @@
+/* ---- fit every screen: nothing wider than the phone ---- */
+#app{overflow-x:clip;max-width:100vw}
+.topics{grid-template-columns:minmax(0,1fr)}
+.topic>*,.group>*,.sec>*,.row>*,.th>.tt{min-width:0}
+.spark{gap:2px;min-width:0;overflow:hidden}
+.spark span{min-width:1px}
+.t,.tsum,.lbl,.why,.cap,.calm,.row .s,p{overflow-wrap:anywhere}
+img,svg,video,canvas,table{max-width:100%}
+.sbar,.chips,.scope,.lseg{max-width:100%}
+/* ---- easier to read ---- */
+.cap{font-size:14px;line-height:1.45}
+.row .s{font-size:14px}
+.score .why{font-size:14px;line-height:1.4;margin-top:6px}
+.sparkl{font-size:13px}
+.mini-legend{font-size:14px}
+.tsum{font-size:17px;line-height:1.45}
+/* verdict chips on comparisons */
+.verdict{display:inline-block;margin:8px 0 2px;font-size:13px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--fill4);color:var(--ink2)}
+.verdict.v-hi2,.verdict.v-lo2{background:var(--ink);color:var(--surface)}
+.verdict.v-hi{background:var(--fill4);color:var(--ink)}
+.verdict.v-lo{background:var(--fill4);color:var(--ink)}
+/* plain-English term explanations */
+.gterm{text-decoration:underline dotted;text-decoration-thickness:1.5px;text-underline-offset:3px;text-decoration-color:var(--soft);cursor:help;border-radius:3px}
+.gterm:hover,.gterm:focus-visible{background:var(--fill4);outline:none}
+#gloss{position:fixed;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom));z-index:200;display:flex;justify-content:center;padding:0 12px;pointer-events:none}
+#gloss[hidden]{display:none}
+#gloss .gin{pointer-events:auto;max-width:520px;width:100%;background:var(--ink);color:var(--surface);border-radius:18px;padding:16px 18px;box-shadow:0 14px 40px rgba(0,0,0,.28);transform:translateY(12px);opacity:0;transition:transform .18s ease,opacity .18s ease}
+#gloss.in .gin{transform:none;opacity:1}
+#gloss .gtop{display:flex;align-items:center;gap:10px;font-size:17px}
+#gloss .gq{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#c8323a;color:#fff;font-weight:800;font-size:14px;flex:none}
+#gloss .gx{all:unset;margin-left:auto;font-size:26px;line-height:1;padding:0 4px;cursor:pointer;opacity:.75}
+#gloss p{margin:8px 0 0;font-size:15.5px;line-height:1.5;opacity:.92}
+@media (prefers-reduced-motion: reduce){#gloss .gin{transition:none}}
+.names{grid-template-columns:minmax(0,1fr)}
+.names span{min-width:0}
+.names em{white-space:normal;overflow:visible;max-width:60%}
+.pe-card{background:var(--surface);border-radius:20px;padding:16px 18px 18px;margin:16px 0 4px;border-left:5px solid #c8323a;box-shadow:0 1px 0 var(--hair)}
+.pe-h{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#c8323a;margin-bottom:6px}
+.pe-card p{margin:0;font-size:17px;line-height:1.5;color:var(--ink)}
+/* ZIP code picker */
+.ziprow{display:flex;gap:8px}
+.zipin{flex:1;min-width:0;font:600 20px var(--ui);letter-spacing:.06em;padding:12px 14px;border-radius:12px;border:2px solid var(--hair);background:var(--seg);color:var(--ink)}
+.zipin:focus{outline:none;border-color:var(--ink)}
+.zipgo{all:unset;cursor:pointer;background:#c8323a;color:#fff;font-weight:700;padding:0 18px;border-radius:12px}
+.zipmsg{font-size:14px;color:#b3261e;min-height:0}
+.zipmsg:empty{display:none}
+.orstate summary{cursor:pointer;font-size:14px;color:var(--soft);font-weight:600}
+.orstate .select{margin-top:10px}
+.repwhere{font-size:14px;color:var(--soft);margin:-4px 2px 10px;font-weight:600}
+.pick{grid-template-columns:minmax(0,1fr)}
+.pick>*{min-width:0}
+.ziprow .zipin{width:auto;margin:0}
+.zipgo{flex:none}
+/* your reps' votes */
+.yrvh{font-size:14px;font-weight:600;color:var(--soft);margin:4px 2px 8px}
+.yrv .group+.yrvh{margin-top:16px}
+.vchip{font-weight:800;font-size:14px;padding:5px 12px;border-radius:999px;background:var(--fill4);color:var(--ink);white-space:nowrap}
+.vchip.vY{background:#1f7a4a;color:#fff}
+.vchip.vN{background:#b3261e;color:#fff}
+.vchip.vM{background:var(--fill4);color:var(--soft)}
+/* weekly digest */
+.dgsub{font-size:14px;color:var(--soft);margin:-4px 2px 10px;font-weight:600}
+.row.dg{grid-template-columns:auto 1fr auto}
+.dgi{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;font-weight:800;font-size:17px;color:#fff;background:var(--ink)}
+.dgi.c-law{background:#1f7a4a}.dgi.c-votes{background:#2557a8}.dgi.c-stocks{background:#6b4fd8}.dgi.c-confirm{background:#b8650a}
+/* language switch */
+.langseg{display:flex;gap:4px;background:var(--seg);border-radius:12px;padding:4px;margin:4px 0 12px}
+.langseg button{all:unset;flex:1;text-align:center;padding:8px 0;border-radius:9px;font-weight:700;font-size:15px;cursor:pointer;color:var(--soft)}
+.langseg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.langbtn{all:unset;cursor:pointer;margin-top:12px;display:inline-block;font-size:14px;font-weight:700;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.4)}
+/* PAC donor names open the PAC page */
+.row[data-pac]{cursor:pointer}
+.pacname{color:var(--link,#2557a8);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
