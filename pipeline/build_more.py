@@ -117,6 +117,7 @@ for cy in ('24', '22', '20'):
         if bg in MEM: X[bg].setdefault('donors', {})['20' + cy] = {'item': v['itemized'], 'n': v['donations'], 'emp': v['employers'][:8], 'ind': v['industries'][:10]}
 
 # ---------- paper trade reports read by OCR ----------
+seen_paper = set()
 if os.path.exists(p('ptr_ocr.json')) and os.path.exists(p('ptr_parsed.json')):
     PP = json.load(open(p('ptr_parsed.json')))
     for doc, rows in json.load(open(p('ptr_ocr.json'))).items():
@@ -129,14 +130,26 @@ if os.path.exists(p('ptr_ocr.json')) and os.path.exists(p('ptr_parsed.json')):
         if not bg: continue
         url = f"https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/{r['year']}/{doc}.pdf"
         for d_, o, a in rows:
-            m = re.match(r'^[\W_]*(sp|jt|dc|oc|op)[\W_]+', a, re.I)
-            if m and not o: o = {'sp': 'Spouse', 'jt': 'Joint', 'dc': 'Child'}.get(m.group(1).lower(), '')
-            a = re.sub(r'^[\W_]*(?:(?:sp|jt|dc|oc|op)\b[\W_]*)?', '', a, flags=re.I)
-            a = re.sub(r'(\s+[xX]\b.*|[\s=%:;|\]\[}{_]+[A-Z0-9]?)$', '', a).strip(' .,-_[]|')
-            a = re.sub(r'\s+CMN$', '', a)
+            m = re.match(r'^[\W_]*(sp|jt|dc|oc|op|bc|pc|sc|de|pe)(?=[\W_]|$)[\W_]*', a, re.I)
+            if m:
+                if not o: o = {'sp': 'Spouse', 'jt': 'Joint', 'dc': 'Child', 'bc': 'Child', 'oc': 'Child', 'de': 'Child'}.get(m.group(1).lower(), '')
+                a = a[m.end():]
+            a = re.sub(r'^[\W_]+', '', a)
+            a = re.sub(r'(\s+[xX]\b.*|[\s=%:;|\]\[}{_]+[A-Z0-9]?)$', '', a).strip(' .,-_[]|:')
+            a = re.sub(r'[\s~!¥/^*]+$', '', a); a = re.sub(r'\s*i?CMI?N$', '', a).strip(' .,-_')
+            if len(re.findall(r'[A-Za-z]{3,}', a)) < 1 or len(a) < 4 or re.fullmatch(r'(?i)class\s?a|corp|sponsored adr|inc', a): continue
+            if len(re.findall(r'[^A-Za-z0-9 .,&()\'/-]', a)) > 2: continue
+            a = re.sub(r'^(.*?\([A-Z][A-Z.]{0,5}\)).*$', r'\1', a)       # stop at the ticker
+            a = re.split(r'\s*[\[|{®©]', a)[0].strip(' .,-_')                # check-box debris after the name
+            a = re.sub(r'\s+(?:[A-Za-z]{1,2}|[xX]+)$', '', a).strip(' .,-_')
+            if (d_, o, a) in seen_paper: continue
+            seen_paper.add((d_, o, a))
             if len(re.findall(r'[A-Za-z]{3,}', a)) < 1 or len(a) < 4 or re.fullmatch(r'(?i)class\s?a|corp', a): continue
             X[bg].setdefault('paper', []).append([d_, o, a, url])
 
+for x in X.values():
+    if 'paper' in x:
+        x['paper'].sort(key=lambda r: r[0], reverse=True); x['paperN'] = len(x['paper']); x['paper'] = x['paper'][:150]
 with gzip.open(os.path.join(OUT, 'member_extras.jsonl.gz'), 'wt', encoding='utf-8') as fh:
     for bg, x in X.items():
         fh.write(json.dumps({'id': bg, 'data': x}, separators=(',', ':'), ensure_ascii=False) + '\n')
