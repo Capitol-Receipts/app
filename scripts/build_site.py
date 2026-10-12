@@ -151,3 +151,5 @@ shutil.copy(os.path.join(os.path.dirname(__file__), 'site_forms.js'), os.path.jo
 shutil.copy(os.path.join(os.path.dirname(__file__), 'site_vercel.json'), os.path.join(OUT, 'vercel.json'))
 open(os.path.join(OUT, '404.html'), 'w').write(open(os.path.join(OUT, 'index.html')).read())
 print('pages', len(PAGES), 'images', len(used))
+# titles, descriptions, share tags, structured data and links into the app's record pages
+import subprocess; subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), 'seo_site.py')], check=True)

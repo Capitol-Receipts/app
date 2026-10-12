@@ -1,10 +1,81 @@
 {
   "cleanUrls": true,
   "headers": [
-    { "source": "/app/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, stale-while-revalidate=86400" }] },
-    { "source": "/(.*)", "headers": [
-      { "key": "X-Content-Type-Options", "value": "nosniff" },
-      { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
-    ] }
+    {
+      "source": "/app/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?<h>.*\\.vercel\\.app)"
+        }
+      ],
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "api/seo.js": {
+      "includeFiles": "index.html",
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/robots.txt",
+      "destination": "/api/seo?t=robots"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/seo?t=sitemap"
+    },
+    {
+      "source": "/sitemaps/:f",
+      "destination": "/api/seo?t=sitemaps&id=:f"
+    },
+    {
+      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district)/:id/:slug",
+      "destination": "/api/seo?t=:t&id=:id&slug=:slug"
+    },
+    {
+      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district)/:id",
+      "destination": "/api/seo?t=:t&id=:id"
+    },
+    {
+      "source": "/:t(members|states|past-members|appointees|judges|bills|votes|pacs|lobbying|lobbying-firms|companies|committees|caucuses|elections|outside-groups|ethics)",
+      "destination": "/api/seo?t=:t"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/site/:path*",
+      "destination": "https://www.capitolreceipts.com/:path*",
+      "permanent": true
+    }
   ]
 }

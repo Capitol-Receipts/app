@@ -294,6 +294,7 @@ const TABS2=[
  ['more','More','<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>']
 ];
 function render(){
+  if(window.__HOLD)return; /* a server-rendered record page stays on screen until that record can open (routes.js) */
   const cur=S.stack.at(-1);if($('#sheet').hidden)$('#panel').className='panel';
   $('#app').innerHTML=cur?(cur==='compare'?comparePage():cur.startsWith('hp:')?pastProfile(HP[cur.slice(3)]||HC[cur.slice(3)]):cur.startsWith('ha:')?appProfile(HA[cur.slice(3)]):cur.startsWith('bill:')?billPage(cur.slice(5)):cur.startsWith('party:')?partyPage(cur.slice(6)):byId[cur]?memberProfile(byId[cur]):nomById[cur]?nomProfile(nomById[cur]):`<div class="wrap"><div class="empty" style="padding-top:calc(var(--navh) + 24px)">Loading…</div></div>`):{home,search:searchScreen,following,more}[S.tab]();
   $('#tabbar').innerHTML=TABS2.map(([k,l,svg])=>`<button data-tab="${k}" aria-current="${k===S.tab?'page':'false'}">${svg}${l}</button>`).join('');

@@ -12,17 +12,29 @@
   gtag('config', 'G-2PVF462YXR');
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Capitol Receipts</title>
-<meta name="description" content="Who's in Congress, who pays them, and how they vote. Nonpartisan, built on public records.">
+<title>Capitol Receipts: Who Funds Congress, Their Stock Trades & Votes</title>
+<meta name="description" content="Look up any member of Congress: who funds their campaigns, what stocks they trade, how they vote and who lobbies them. Free, nonpartisan, built on public records.">
+<link rel="canonical" href="https://app.capitolreceipts.com/">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:site_name" content="Capitol Receipts">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Capitol Receipts: Who Funds Congress, Their Stock Trades & Votes">
+<meta property="og:description" content="Look up any member of Congress: who funds them, what stocks they trade, how they vote and who lobbies them.">
+<meta property="og:url" content="https://app.capitolreceipts.com/">
+<meta property="og:image" content="https://www.capitolreceipts.com/img/share.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://www.capitolreceipts.com/img/share.png">
+<link rel="icon" href="https://www.capitolreceipts.com/favicon.svg" type="image/svg+xml">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Capitol Receipts","url":"https://app.capitolreceipts.com/","applicationCategory":"ReferenceApplication","operatingSystem":"Any","description":"Who funds every member of Congress, what stocks they trade, how they vote and who lobbies them, from public records.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"Capitol Receipts","url":"https://www.capitolreceipts.com/"}}</script>
 <meta name="theme-color" content="#14274e">
 <link rel="preconnect" href="https://hxgckcriehvrolwnabpd.supabase.co" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Schibsted+Grotesk:wght@500;600;700;800&display=swap">
-<link rel="stylesheet" href="/app/css/style.css?v=20261012t">
-<link rel="stylesheet" href="/app/css/friendly.css?v=20261012t">
-<link rel="stylesheet" href="/app/css/desktop.css?v=20261012t">
-<link rel="stylesheet" href="/app/css/hdr.css?v=20261012t" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="/app/css/style.css?v=20261012seo">
+<link rel="stylesheet" href="/app/css/friendly.css?v=20261012seo">
+<link rel="stylesheet" href="/app/css/desktop.css?v=20261012seo">
+<link rel="stylesheet" href="/app/css/hdr.css?v=20261012seo" media="print" onload="this.media='all'">
 <style>
   .boot{min-height:70vh;display:grid;place-items:center;text-align:center;padding:24px;font-family:"Schibsted Grotesk",system-ui,sans-serif;color:var(--soft,#5b6069)}
   .boot b{display:block;font:800 26px "Barlow Condensed",system-ui,sans-serif;color:var(--ink,#0e1116);letter-spacing:-.01em}
@@ -31,7 +43,7 @@
 </style>
 </head>
 <body>
-<div id="app"><div class="boot"><div><b><span>Capitol</span>Receipts</b><p id="bootmsg">Loading the latest records…</p></div></div></div>
+<div id="app"><div class="boot"><div><b><span>Capitol</span>Receipts</b><p id="bootmsg">Loading the latest records…</p><p style="font-size:13px;margin-top:18px"><a href="/members">Members</a> · <a href="/bills">Bills</a> · <a href="/pacs">PACs</a> · <a href="/lobbying">Lobbying</a> · <a href="/elections">2026 races</a> · <a href="/states">States</a></p></div></div></div>
 <nav class="tabbar" aria-label="Main"><div class="in" id="tabbar"></div></nav>
 <div id="sheet" class="sheet" hidden><div class="panel" id="panel" role="dialog" aria-modal="true"></div></div>
 <script>
@@ -53,8 +65,8 @@ SB.all=async(path,size=1000)=>{let out=[],from=0;for(;;){const rows=await SB.req
 SB.rpc=(fn,args)=>SB.req('rpc/'+fn,{method:'POST',body:JSON.stringify(args||{})});
 SB.meta=async keys=>Object.fromEntries((await SB.get('app_meta?select=key,value&key=in.('+keys.join(',')+')')).map(r=>[r.key,r.value]));
 
-const APP_VER='20261012t'; /* bump on every release so browsers and the CDN fetch fresh files */
-const APP_SCRIPTS=['core','party','hist','ui','nav','pages','search','leaders','linkify','pacs','elections','companies','friendly','votes','places','extras','glossary_es','es_dict','i18n','db','account','trust','desktop'];
+const APP_VER='20261012seo'; /* bump on every release so browsers and the CDN fetch fresh files */
+const APP_SCRIPTS=['core','party','hist','ui','nav','pages','search','leaders','linkify','pacs','elections','companies','friendly','votes','places','extras','glossary_es','es_dict','i18n','db','account','trust','desktop','routes'];
 async function boot(){
   const msg=document.getElementById('bootmsg');
   try{

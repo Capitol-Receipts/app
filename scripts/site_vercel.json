@@ -2,16 +2,63 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [
-    { "source": "/img/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
-    { "source": "/(.*)", "headers": [
-      { "key": "X-Content-Type-Options", "value": "nosniff" },
-      { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-      { "key": "X-Frame-Options", "value": "SAMEORIGIN" }
-    ] }
+    {
+      "source": "/img/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?<h>.*\\.vercel\\.app)"
+        }
+      ],
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
+      ]
+    }
   ],
   "redirects": [
-    { "source": "/app", "destination": "https://app.capitolreceipts.com", "permanent": false },
-    { "source": "/leaderboards", "destination": "/receipts", "permanent": true },
-    { "source": "/method", "destination": "/how-it-works", "permanent": true }
+    {
+      "source": "/app",
+      "destination": "https://app.capitolreceipts.com",
+      "permanent": false
+    },
+    {
+      "source": "/leaderboards",
+      "destination": "/receipts",
+      "permanent": true
+    },
+    {
+      "source": "/method",
+      "destination": "/how-it-works",
+      "permanent": true
+    }
   ]
 }
