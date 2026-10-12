@@ -43,5 +43,12 @@ def load(table):
     if batch: post(table, batch)
     print(f'{table}: {n} rows')
 
+def refresh_cache():
+    req = urllib.request.Request(f'{URL}/rest/v1/rpc/refresh_light_cache', data=b'{}', method='POST', headers={
+        'apikey': KEY, 'Authorization': f'Bearer {KEY}', 'Content-Type': 'application/json'})
+    urllib.request.urlopen(req, timeout=300).read()
+    print('light index cache rebuilt')
+
 for t in (sys.argv[1:] or ORDER):
     load(t)
+refresh_cache()
