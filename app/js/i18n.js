@@ -24,6 +24,13 @@ function i18nCompile(){
   }
   I18N_RX.sort((a,b)=>b.len-a.len);
 }
+function esWord(w){const c=w.charAt(0).toUpperCase()+w.slice(1);const t=I18N_EXACT.get(w)||I18N_EXACT.get(c);return t?(w===c?t:t.charAt(0).toLowerCase()+t.slice(1)):null}
+function esPhrase(v){
+  const t=esWord(v);if(t)return t;
+  const parts=v.split(/, | and /);if(parts.length<2)return v;
+  const tr=parts.map(esWord);if(tr.some(x=>!x))return v;
+  return tr.slice(0,-1).join(', ')+' y '+tr.at(-1);
+}
 function i18nStr(raw){
   const t=raw.replace(/\s+/g,' ').trim();if(!t||!/[A-Za-z]/.test(t))return null;
   let out=I18N_EXACT.get(t);
@@ -31,7 +38,7 @@ function i18nStr(raw){
     for(const r of I18N_RX){
       if(!t.includes(r.lit))continue;
       const m=r.rx.exec(t);if(!m)continue;
-      let i=0;out=r.es.replace(/\{([emdpn])\}/g,(_,k)=>{const v=m[1+i++];return v==null?'':k==='d'?esDate(v):k==='e'?(I18N_EXACT.get(v)||v):v});
+      let i=0;out=r.es.replace(/\{([emdpn])\}/g,(_,k)=>{const v=m[1+i++];return v==null?'':k==='d'?esDate(v):k==='e'?esPhrase(v):v});
       break;
     }
   }

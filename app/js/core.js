@@ -115,7 +115,11 @@ function colChart(rows,{h=150,fmt=v=>v,ref,showVals=true,every=1,flagIdx}={}){
     if(v>0)s+=`<rect class="${flagIdx&&flagIdx(r)?'bf':'b'}" x="${x.toFixed(1)}" y="${y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${(h-pb-y(v)).toFixed(1)}" rx="2"/>`;
     if(showVals&&v>0)s+=`<text class="tv" x="${(x+bw/2).toFixed(1)}" y="${(y(v)-5).toFixed(1)}" text-anchor="middle">${fmt(v)}</text>`;
     if(i%every===0)s+=`<text class="tl" x="${(x+bw/2).toFixed(1)}" y="${h-6}" text-anchor="middle">${r[0]}</text>`;});
-  if(ref){const yy=y(ref.v);s+=`<line class="ref" x1="0" x2="${W}" y1="${yy.toFixed(1)}" y2="${yy.toFixed(1)}"/><text x="${W}" y="${(yy-5).toFixed(1)}" text-anchor="end">${ref.label}</text>`}
+  if(ref){const yy=y(ref.v);s+=`<line class="ref" x1="0" x2="${W}" y1="${yy.toFixed(1)}" y2="${yy.toFixed(1)}"/>`;
+    // put the label where the bars are lowest so it never sits on top of one
+    const k=Math.max(1,Math.ceil(n*.35)),lo=Math.max(0,...rows.slice(0,k).map(r=>r[1])),hi=Math.max(0,...rows.slice(-k).map(r=>r[1]));
+    const right=hi<=lo,peak=right?hi:lo,above=y(peak)>yy-16,ty=above?yy-5:Math.min(h-pb-4,yy+13);
+    s+=`<text class="reft" x="${right?W:0}" y="${ty.toFixed(1)}" text-anchor="${right?'end':'start'}" style="paint-order:stroke;stroke:var(--surface,#fff);stroke-width:4px;stroke-linejoin:round">${ref.label}</text>`}
   return s+'</svg>';
 }
 const SC=['var(--fill)','var(--fill2)','var(--fill3)','var(--fill4)','var(--flag)','var(--soft)','var(--yes)','var(--no)'];

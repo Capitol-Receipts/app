@@ -1,6 +1,5 @@
 /* ================= Desktop: full menu in the side rail and two balanced columns ================= */
 const WIDE=matchMedia('(min-width:1240px)');
-const SPAN_SEL='.homehero,.fakesearch,.shead,.scopes,.lhero,.lbanner,.glance,.note,.boot,.pnav,.phero';
 const RAIL=matchMedia('(min-width:1024px)');
 /* desktop: the full site menu lives in the side rail */
 function railMenu(){
@@ -14,25 +13,37 @@ function railMenu(){
   const cur=S.stack.length?null:S.tab;
   m.querySelectorAll('[data-go]').forEach(b=>{if(b.dataset.go===cur&&!b.closest('.dtop'))b.setAttribute('aria-current','page')});
 }
+/* Only content sections go into columns; headers, controls and wide carousels stay full width,
+   so a page reads in order: [full] [two columns] [full] [two columns] ... */
+const COL_OK=e=>(e.matches('section.sec,div.sec,section.pe-card'))&&!e.querySelector('.carousel,.chipsrow,.seg,.sortbar')&&!e.matches('.rsec');
 function twoColumns(){
   document.body.classList.remove('two');
   const w=document.querySelector('#app > .wrap');if(!w)return;
   w.classList.remove('two');
   if(!WIDE.matches)return;
-  const items=[...w.children].filter(c=>!c.matches(SPAN_SEL));
-  if(items.length<3)return;
-  const box=document.createElement('div');box.className='dcols';
-  const a=document.createElement('div'),b=document.createElement('div');a.className=b.className='dcol';
-  box.append(a,b);
+  if(w.querySelector(':scope > .shead')&&S.q)return;      // search results stay one list
+  const kids=[...w.children];
+  const runs=[];let cur=[];
+  for(const k of kids){if(COL_OK(k))cur.push(k);else{if(cur.length)runs.push(cur);cur=[]}}
+  if(cur.length)runs.push(cur);
+  let made=0;
+  for(const items of runs){
+    if(items.length<2)continue;
+    const box=document.createElement('div');box.className='dcols';
+    const a=document.createElement('div'),b=document.createElement('div');a.className=b.className='dcol';
+    box.append(a,b);items[0].before(box);
+    items.forEach(el=>a.appendChild(el));                 // measure at final column width
+    const hs=items.map(el=>el.getBoundingClientRect().height+28);
+    let ha=0,hb=0;
+    items.forEach((el,i)=>{if(ha<=hb){a.appendChild(el);ha+=hs[i]}else{b.appendChild(el);hb+=hs[i]}});
+    made++;
+  }
   w.classList.add('two');document.body.classList.add('two');
-  items[0].before(box);
-  items.forEach(el=>a.appendChild(el));               // measure at final column width
-  const hs=items.map(el=>el.getBoundingClientRect().height+28);
-  let ha=0,hb=0;
-  items.forEach((el,i)=>{if(ha<=hb){a.appendChild(el);ha+=hs[i]}else{b.appendChild(el);hb+=hs[i]}});
+  // long lists that run the full width get two columns of rows
+  w.querySelectorAll('.group').forEach(g=>{if(g.closest('.dcol'))return;const rows=[...g.children].filter(r=>r.classList.contains('row')&&!r.classList.contains('kv'));if(rows.length>=8&&rows.length===g.children.length)g.classList.add('biglist')});
 }
 const _renderDesk=render;
-render=function(){_renderDesk();try{twoColumns();railMenu()}catch(e){console.warn(e)}};
+render=function(){_renderDesk();try{railMenu();twoColumns()}catch(e){console.warn(e)}};
 WIDE.addEventListener('change',()=>render());
 RAIL.addEventListener('change',()=>render());
 render();
