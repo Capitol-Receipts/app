@@ -1,11 +1,15 @@
 // Pro billing for the signed-in user: open Stripe Checkout (subscribe) or the Stripe customer portal (manage/cancel).
-// Needs STRIPE_SECRET_KEY, STRIPE_PRICE_MONTHLY and STRIPE_PRICE_YEARLY. Until they're set it answers {error:"not_configured"}.
+// Needs STRIPE_SECRET_KEY. Until it is set it answers {error:"not_configured"}.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
 const URL_ = Deno.env.get("SUPABASE_URL")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const STRIPE = Deno.env.get("STRIPE_SECRET_KEY") || "";
-const PRICE = { m: Deno.env.get("STRIPE_PRICE_MONTHLY") || "", y: Deno.env.get("STRIPE_PRICE_YEARLY") || "" };
+// Live Pro prices (Capitol Receipts Pro). Env vars override these if set.
+const PRICE = {
+  m: Deno.env.get("STRIPE_PRICE_MONTHLY") || "price_1UQC165TFbyxT2b0snH5tywX",
+  y: Deno.env.get("STRIPE_PRICE_YEARLY") || "price_1UQC185TFbyxT2b0axtGOmT0",
+};
 const ORIGINS = ["https://app.capitolreceipts.com", "https://www.capitolreceipts.com", "http://localhost:8811"];
 const cors = (o: string | null) => ({
   "Access-Control-Allow-Origin": o && ORIGINS.includes(o) ? o : ORIGINS[0],
