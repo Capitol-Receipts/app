@@ -303,6 +303,7 @@ function render(){
   const zi=$('#zip');if(zi){zi.addEventListener('input',e=>{const v=e.target.value.replace(/\D/g,'').slice(0,5);e.target.value=v;const m=$('#zipmsg');if(m)m.textContent='';if(v.length===5)setZip(v)});zi.addEventListener('keydown',e=>{if(e.key==='Enter'){const v=zi.value.replace(/\D/g,'');if(v.length===5)setZip(v)}})}
   const ms=$('#msort');if(ms)ms.addEventListener('change',e=>{S.msort=e.target.value;S.mdir=null;S.limit=60;render()});
   const hs=$('#hsort');if(hs)hs.addEventListener('change',e=>{S.hsort=e.target.value;S.hdir=null;S.limit=60;render()});
+  if(typeof bindYearCard==='function')bindYearCard();
   const as=$('#asort');if(as)as.addEventListener('change',e=>{S.asort=e.target.value;S.adir=null;S.limit=60;render()});
   const ns=$('#nsort');if(ns)ns.addEventListener('change',e=>{S.nsort=e.target.value;S.ndir=null;S.limit=60;render()});
 }
@@ -326,10 +327,11 @@ document.addEventListener('click',e=>{
   if(el=g('[data-hk]')){S.hk=el.dataset.hk;S.limit=60;render();return}
   if(el=g('[data-hkgo]')){S.filter='History';S.hk=el.dataset.hkgo;S.limit=60;render();scrollTo(0,0);return}
   if(g('[data-hist]')){S.stack=[];S.tab='search';S.filter='History';S.hk='members';S.limit=60;render();scrollTo(0,0);return}
-  if(el=g('[data-hera]')){S.hera=el.dataset.hera;S.limit=60;render();return}
-  if(el=g('[data-hparty]')){S.hparty=el.dataset.hparty;S.limit=60;render();return}
-  if(el=g('[data-hch]')){S.hch=el.dataset.hch;S.limit=60;render();return}
-  if(el=g('[data-acat]')){S.acat=el.dataset.acat;S.limit=60;render();return}
+  if(el=g('[data-hyset]')){const [a,b]=el.dataset.hyset.split(',');setHY(a,b);return}
+  if(g('[data-hreset]')){S.hy0=HY_MIN;S.hy1=HY_MAX;S.hparty='All';S.hch='All';S.acat='All';S.limit=60;const y=scrollY;render();scrollTo(0,y);return}
+  if(el=g('[data-hparty]')){S.hparty=el.dataset.hparty;S.limit=60;const y=scrollY;render();scrollTo(0,y);return}
+  if(el=g('[data-hch]')){S.hch=el.dataset.hch;S.limit=60;const y=scrollY;render();scrollTo(0,y);return}
+  if(el=g('[data-acat]')){S.acat=el.dataset.acat;S.limit=60;const y=scrollY;render();scrollTo(0,y);return}
   if(el=g('[data-hdir]')){const k=el.dataset.hdir;if(k==='h')S.hdir=-(S.hdir??HSORT[S.hsort][3]);else S.adir=-(S.adir??ASORT[S.asort][3]);render();return}
   if(el=g('[data-n]')){go(el.dataset.n);return}
   if(g('[data-back]')){S.stack.pop();render();scrollTo(0,0);return}
