@@ -180,9 +180,9 @@ const counts = () => cached('sm-counts', async () => Object.fromEntries(await Pr
 const xmlEsc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 async function sitemapIndex() {
   const c = await counts(), files = ['hubs', 'places', 'es'];
-  const site = `<sitemap><loc>${HOST}/sitemaps/site.xml</loc></sitemap>\n`; // marketing pages (a static file on www)
-  Object.keys(SOURCES).forEach(k => { const n = Math.ceil((c[k] || 0) / SM); for (let i = 1; i <= n; i++) files.push(n > 1 ? `${k}-${i}` : k); });
   const today = new Date().toISOString().slice(0, 10);
+  const site = `<sitemap><loc>${HOST}/sitemaps/site.xml</loc><lastmod>${today}</lastmod></sitemap>\n`; // marketing pages (a static file on www)
+  Object.keys(SOURCES).forEach(k => { const n = Math.ceil((c[k] || 0) / SM); for (let i = 1; i <= n; i++) files.push(n > 1 ? `${k}-${i}` : k); });
   return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${site}${files.map(f => `<sitemap><loc>${HOST}/sitemaps/${f}.xml</loc><lastmod>${today}</lastmod></sitemap>`).join('\n')}\n</sitemapindex>\n`;
 }
 const urlset = list => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${list.map(([u, lm]) => `<url><loc>${xmlEsc(HOST + u)}</loc>${lm ? `<lastmod>${String(lm).slice(0, 10)}</lastmod>` : ''}</url>`).join('\n')}\n</urlset>\n`;

@@ -1,0 +1,22 @@
+name: Keep sitemaps loaded
+
+# Loads the sitemap index and every sitemap file every few hours so search engines
+# always get an instant, cached copy instead of a slow first load.
+on:
+  schedule:
+    - cron: '7 */3 * * *'
+  workflow_dispatch:
+
+jobs:
+  warm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Load sitemaps
+        run: |
+          UA='Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+          curl -sS -A "$UA" --max-time 60 -o index.xml -w 'index %{http_code} %{time_total}s\n' https://www.capitolreceipts.com/sitemap.xml
+          grep -o '<loc>[^<]*' index.xml | sed 's/<loc>//' | while read u; do
+            curl -sS -A "$UA" --max-time 60 -o /dev/null -w "%{http_code} %{time_total}s $u\n" "$u" || true
+          done
+          curl -sS -A "$UA" --max-time 60 -o /dev/null -w 'index again %{http_code} %{time_total}s\n' https://www.capitolreceipts.com/sitemap.xml
