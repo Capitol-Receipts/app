@@ -390,7 +390,7 @@ function yearCard(kind){
   const bars=c.map((v,i)=>{const d=lo+i*10,inR=d+9>=S.hy0&&d<=S.hy1;return `<i class="${inR?'on':''}" data-d="${d}" style="height:${Math.max(4,v/mx*100).toFixed(1)}%"></i>`}).join('');
   const label=S.hy0===S.hy1?`${S.hy0}`:`${S.hy0} – ${S.hy1===HY_MAX?'today':S.hy1}`;
   return `<div class="yrcard" id="yrcard" style="--a:${pc(S.hy0)};--b:${pc(S.hy1)}">
-   <div class="yrtop"><div><span class="yrk">In office during</span><b class="yrval" id="yrval">${hyOn()?label:'All years'}</b></div>${hyOn()?`<button class="yrclear" data-hyset="${HY_MIN},${HY_MAX}">Clear</button>`:''}</div>
+   <div class="yrtop"><div><span class="yrk">In office during</span><b class="yrval" id="yrval">${hyOn()?label:'All years'}</b></div></div>
    <div class="yrhist" aria-hidden="true">${bars}</div>
    <div class="yrslide"><span class="trk"></span><span class="rng"></span>
     <input type="range" id="hy0" min="${HY_MIN}" max="${HY_MAX}" value="${S.hy0}" aria-label="Start year">
@@ -399,10 +399,24 @@ function yearCard(kind){
    <div class="yrpre">${HY_PRESETS.map(([l,a,b])=>`<button data-hyset="${a},${b}" aria-pressed="${S.hy0===a&&S.hy1===b}">${l}</button>`).join('')}</div>
   </div>`;
 }
-const seg=(key,opts,cur)=>`<div class="segc" role="group">${opts.map(([k,l,dot])=>`<button data-${key}="${k}" aria-pressed="${k===cur}">${dot?`<i style="background:var(--${dot})"></i>`:''}${l}</button>`).join('')}</div>`;
-function hSummary(n,noun,bits){
-  const act=bits.filter(Boolean);
-  return `<div class="hsum"><span><b>${ord(n)}</b> ${noun}${act.length?` · ${act.map(esc).join(' · ')}`:''}</span>${act.length?`<button data-hreset>Reset filters</button>`:''}</div>`;
+/* one filter bar: every filter is a dropdown */
+const caret='<svg class="ddc" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const tick='<svg class="ddt" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function dd(key,label,value,active,body,wide){
+  const open=S.hpop===key;
+  return `<div class="dd${open?' open':''}${wide?' wide':''}"><button class="ddb${active?' on':''}" data-dd="${key}" aria-haspopup="true" aria-expanded="${open}"><span class="ddl">${label}</span><span class="ddv">${value}</span>${caret}</button><div class="ddm" role="menu">${body}</div></div>`;
+}
+const ddOpts=(attr,opts,cur)=>opts.map(([k,l,dot])=>`<button role="menuitemradio" class="ddo" data-${attr}="${esc(k)}" aria-checked="${k===cur}">${dot?`<i style="background:var(--${dot})"></i>`:''}<span>${esc(l)}</span>${k===cur?tick:''}</button>`).join('');
+function sortDD(specs,cur,dir){
+  const d=dir??specs[cur][3];
+  return dd('sort','Sort',esc(specs[cur][0]),false,`${ddOpts('hsortk',Object.entries(specs).map(([k,v])=>[k,v[0]]),cur)}<div class="ddsep"></div><div class="dddir"><button data-hsdir="-1" aria-pressed="${d===-1}">High to low</button><button data-hsdir="1" aria-pressed="${d===1}">Low to high</button></div>`);
+}
+function filterBar(kind,extra){
+  const yv=hyOn()?(S.hy0===S.hy1?`${S.hy0}`:`${S.hy0}–${S.hy1===HY_MAX?'now':S.hy1}`):'All';
+  return `<div class="fbar">${dd('years','Years',yv,hyOn(),yearCard(kind)+`<button class="dddone" data-ddclose>Done</button>`,true)}${extra}</div>`;
+}
+function hSummary(n,noun,act){
+  return `<div class="hsum"><span><b>${ord(n)}</b> ${noun}</span>${act?`<button data-hreset>Clear all filters</button>`:''}</div>`;
 }
 function historyScreen(){
   const q=S.q.trim().toLowerCase();
@@ -411,36 +425,41 @@ function historyScreen(){
   S.hk=S.hk||'members';
   if(S.hy0==null){S.hy0=HY_MIN;S.hy1=HY_MAX}
   S.hparty=S.hparty||'All';S.hch=S.hch||'All';
-  const yrBit=hyOn()?(S.hy0===S.hy1?`in ${S.hy0}`:`${S.hy0}–${S.hy1===HY_MAX?'today':S.hy1}`):null;
   h+=`<div class="hseg" role="tablist">${[['members','Members',ord(PASTS.length)],['apps','Appointees',ord(APPS.length)],['exec','Presidents & VPs',EXEC.length]].map(([k,l,n])=>`<button role="tab" data-hk="${k}" aria-selected="${k===S.hk}">${l}<small>${n}</small></button>`).join('')}</div>`;
-  h+=`<div class="hfilters">${yearCard(S.hk)}`;
   if(S.hk==='members'){
     S.hsort=S.hsort||'recent';
-    h+=`<div class="hrow">${seg('hparty',[['All','All parties'],['D','Democrats',null,'D'],['R','Republicans',null,'R'],['I','Independents',null,'I'],['O','Other',null,'N']].map(([k,l,_,d])=>[k,l,d]),S.hparty)}${seg('hch',[['All','Both chambers'],['S','Senate'],['H','House']],S.hch)}</div></div>`;
+    const PO=[['All','All parties'],['D','Democrats','D'],['R','Republicans','R'],['I','Independents','I'],['O','Other parties','N']];
+    const CO=[['All','Both chambers'],['S','Senate'],['H','House']];
+    const act=hyOn()||S.hparty!=='All'||S.hch!=='All';
+    h+=filterBar('members',
+      dd('party','Party',S.hparty==='All'?'All':PO.find(o=>o[0]===S.hparty)[1],S.hparty!=='All',ddOpts('hparty',PO,S.hparty))+
+      dd('chamber','Chamber',S.hch==='All'?'Both':CO.find(o=>o[0]===S.hch)[1],S.hch!=='All',ddOpts('hch',CO,S.hch))+
+      sortDD(HSORT,S.hsort,S.hdir));
     const pf=p=>S.hparty==='All'||(S.hparty==='O'?p.pc==='N':p.pc===S.hparty);
     const list=sortList(PASTS.filter(p=>p.chambers.length&&pf(p)&&((!hyOn()&&S.hch==='All')||memberIn(p))&&(!q||p.search.includes(q))),HSORT[S.hsort],S.hdir);
     const vf=HSORT[S.hsort][2];
-    if(!q&&!hyOn()&&S.hparty==='All'&&S.hch==='All')h+=archiveCarousel();
-    h+=`<div class="sec"><div class="sh"><h2>Former members of Congress</h2></div>${hSummary(list.length,'people',[yrBit,S.hparty!=='All'?{D:'Democrats',R:'Republicans',I:'Independents',O:'Other parties'}[S.hparty]:null,S.hch!=='All'?(S.hch==='S'?'Senate':'House'):null])}${hsortBar(HSORT,S.hsort,S.hdir,'h')}
+    if(!q&&!act)h+=archiveCarousel();
+    h+=`<div class="sec"><div class="sh"><h2>Former members of Congress</h2></div>${hSummary(list.length,'people',act)}
      <div class="group" style="margin-top:10px">${list.slice(0,S.limit).map(p=>pastRow(p,vf?vf(p):null)).join('')||'<div class="empty">No one matches these filters.</div>'}</div>
      ${list.length>S.limit?`<button class="more" data-more>Show ${Math.min(list.length-S.limit,100)} more</button>`:''}
      <div class="cap">Everyone who has served in the House or Senate since 1789. The year filter matches anyone holding a seat at any point in that period. Bills are tracked from 1947, campaign money from 1980, individual stock trades from 2012.</div></div>`;
   }else if(S.hk==='apps'){
     S.asort=S.asort||'recent';S.acat=S.acat||'All';
     const cats=['All','Cabinet & top officials','Judges','Senate votes','Ethics filings'];
-    h+=`<div class="hrow">${seg('acat',cats.map(c=>[c,c==='All'?'All types':c]),S.acat)}</div></div>`;
+    const act=hyOn()||S.acat!=='All';
+    h+=filterBar('apps',dd('type','Type',S.acat==='All'?'All':esc(S.acat),S.acat!=='All',ddOpts('acat',cats.map(c=>[c,c==='All'?'All types':c]),S.acat))+sortDD(ASORT,S.asort,S.adir));
     let base=APPS.filter(a=>(S.acat==='All'||a.cat===S.acat)&&appIn(a)&&(!q||a.search.includes(q)));
     if(S.asort==='close')base=base.filter(a=>a.vote);
     const list=sortList(base,ASORT[S.asort],S.adir);const vf=ASORT[S.asort][2];
-    if(!q&&!hyOn()&&S.acat==='All')h+=archiveCarousel();
-    h+=`<div class="sec"><div class="sh"><h2>Past appointees</h2></div>${hSummary(list.length,'people',[yrBit,S.acat!=='All'?S.acat:null])}${hsortBar(ASORT,S.asort,S.adir,'a')}
+    if(!q&&!act)h+=archiveCarousel();
+    h+=`<div class="sec"><div class="sh"><h2>Past appointees</h2></div>${hSummary(list.length,'people',act)}
      <div class="group" style="margin-top:10px">${list.slice(0,S.limit).map(a=>appRow(a,vf?vf(a):null)).join('')||'<div class="empty">No one matches these filters.</div>'}</div>
      ${list.length>S.limit?`<button class="more" data-more>Show ${Math.min(list.length-S.limit,100)} more</button>`:''}
      <div class="cap">Cabinet members and top officials since 1789, every federal judge, every nominee who got a recorded Senate vote, and officials who filed ethics reports since 2016.</div></div>`;
   }else{
-    h+=`</div>`;
+    h+=filterBar('exec','');
     const list=EXEC.filter(p=>execIn(p)&&(!q||p.search.includes(q)));
-    h+=`<div class="sec"><div class="sh"><h2>Presidents & vice presidents</h2></div>${hSummary(list.length,'people',[yrBit])}<div class="group" style="margin-top:10px">${list.map(p=>{const ex=p.t.filter(t=>t[0]==='P'||t[0]==='V');const r=ex.map(t=>`${t[0]==='P'?'President':'VP'} ${t[1]}–${t[2]>2026?'now':t[2]}`);
+    h+=`<div class="sec"><div class="sh"><h2>Presidents & vice presidents</h2></div>${hSummary(list.length,'people',hyOn())}<div class="group" style="margin-top:10px">${list.map(p=>{const ex=p.t.filter(t=>t[0]==='P'||t[0]==='V');const r=ex.map(t=>`${t[0]==='P'?'President':'VP'} ${t[1]}–${t[2]>2026?'now':t[2]}`);
       return `<button class="row" ${HC[p.id]?`data-p="${p.id}"`:`data-hp="${p.id}"`}>${hFace(p,44)}<span style="min-width:0"><span class="t">${esc(p.n)}</span><br><span class="s">${esc([...new Set(r)].slice(0,2).join(' · '))}${ex[0]?.[5]?' · '+esc(ex.at(-1)[5]):''}</span></span><span class="rr">${chev}</span></button>`}).join('')||'<div class="empty">No one matches these filters.</div>'}</div></div>`;
   }
   return `<div class="wrap">${h}</div>`;
