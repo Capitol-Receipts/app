@@ -32,8 +32,8 @@ PAGES = {  # file -> (path, title, description, breadcrumb name)
                           'Every number comes from public records: FEC filings, House and Senate disclosures, Voteview votes and lobbying reports. Here is how we count.', 'How it works'),
     'newsrooms.html': ('/newsrooms', 'Congress Data for Newsrooms, Reporters & Researchers',
                        'Congress data for reporters, researchers and watchdogs: campaign money, stock trades, votes, lobbying and appointees, with a source for every number.', 'Newsrooms'),
-    'pricing.html': ('/pricing', 'Pricing: Free, or Pro for $0.99 a Month | Capitol Receipts',
-                     'Free: every profile, party page and comparison. Pro adds instant alerts and full trade and donor histories for $0.99 a month. Newsroom plans too.', 'Pricing'),
+    'pricing.html': ('/pricing', 'Pricing: Free, or Pro for $4.99 a Month | Capitol Receipts',
+                     'Every record is free. Pro adds daily alerts, a stock watchlist, the conflict radar and CSV downloads for $4.99 a month or $39 a year. Newsroom plans too.', 'Pricing'),
 }
 EXPLORE = [('/this-week', 'This week in Congress'), ('/rankings', 'Rankings'), ('/members', 'Every member of Congress'), ('/states', 'Find your state'), ('/bills', 'Bills since 1947'), ('/votes', 'Every vote since 1789'),
            ('/pacs', 'PACs and who they fund'), ('/lobbying', 'Who lobbies Congress'), ('/elections', '2026 House and Senate races'), ('/companies', 'Companies members trade'),
@@ -125,10 +125,12 @@ def main():
             ld.append({'@context': 'https://schema.org', '@type': 'BreadcrumbList', 'itemListElement': [
                 {'@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': SITE + '/'}, {'@type': 'ListItem', 'position': 2, 'name': crumb, 'item': url}]})
         if path == '/pricing':
-            ld.append({'@context': 'https://schema.org', '@type': 'Product', 'name': 'Capitol Receipts Pro', 'description': 'Instant alerts and full trade and donor histories for members of Congress.',
+            ld.append({'@context': 'https://schema.org', '@type': 'Product', 'name': 'Capitol Receipts Pro', 'description': 'Daily trade alerts, a stock watchlist, the conflict radar and CSV downloads for members of Congress.',
                        'brand': {'@id': f'{SITE}/#org'}, 'offers': [{'@type': 'Offer', 'name': 'Free', 'price': '0', 'priceCurrency': 'USD', 'url': url},
-                       {'@type': 'Offer', 'name': 'Pro', 'price': '0.99', 'priceCurrency': 'USD', 'url': url,
-                        'priceSpecification': {'@type': 'UnitPriceSpecification', 'price': '0.99', 'priceCurrency': 'USD', 'unitCode': 'MON'}}]})
+                       {'@type': 'Offer', 'name': 'Pro monthly', 'price': '4.99', 'priceCurrency': 'USD', 'url': url,
+                        'priceSpecification': {'@type': 'UnitPriceSpecification', 'price': '4.99', 'priceCurrency': 'USD', 'unitCode': 'MON'}},
+                       {'@type': 'Offer', 'name': 'Pro yearly', 'price': '39', 'priceCurrency': 'USD', 'url': url,
+                        'priceSpecification': {'@type': 'UnitPriceSpecification', 'price': '39', 'priceCurrency': 'USD', 'unitCode': 'ANN'}}]})
         fq = faqs(doc) if path in ('/how-it-works', '/pricing') else []
         if fq: ld.append({'@context': 'https://schema.org', '@type': 'FAQPage', 'mainEntity': fq})
         doc = re.sub(r'<script type="application/ld\+json" data-seo>.*?</script>\n?', '', doc, flags=re.S)
