@@ -81,6 +81,11 @@ for name, (path, fname, desc) in PAGES.items():
     body = body.replace('<textarea rows="4"', '<textarea name="note" rows="4" maxlength="2000"')
     body = body.replace('id="email-home" type="email"', 'id="email-home" name="email" type="email" required')
 
+    # Squared Away Labs and its other apps, last thing in the footer.
+    sys.path.insert(0, os.path.dirname(__file__))
+    from studio_footer import add_studio
+    body = add_studio(body)
+
     canon = SITE + (path if path != '/' else '/')
     html = f'''<!doctype html>
 <html lang="en">
