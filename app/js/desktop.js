@@ -51,3 +51,9 @@ render();
 (function(){const m=location.hash.match(/^#p=([A-Za-z0-9:_-]{3,60})$/);if(!m)return;
   const t=setInterval(()=>{if(typeof byId!=='undefined'&&byId&&byId[m[1]]){clearInterval(t);S.tab='search';S.stack=[m[1]];render();scrollTo(0,0);history.replaceState(null,'',location.pathname)}},300);
   setTimeout(()=>clearInterval(t),30000)})();
+/* iPhone and Android apps: coming soon note on the More screen */
+const _moreSoon=more;
+more=function(){
+  const card=`<section class="sec"><div class="soon"><span class="soonic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="3"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg></span><span><b>iPhone and Android apps are coming soon</b><span>Capitol Receipts already works in your phone’s browser. To open it like an app: on iPhone, tap Share, then Add to Home Screen. On Android, tap the menu, then Add to Home screen. Your account and Pro plan will carry over to the apps.</span></span></div></section>`;
+  return _moreSoon().replace(/<\/div>\s*$/,card+'</div>');
+};

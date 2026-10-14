@@ -159,3 +159,7 @@ open(os.path.join(OUT, '404.html'), 'w').write(open(os.path.join(OUT, 'index.htm
 print('pages', len(PAGES), 'images', len(used))
 # titles, descriptions, share tags, structured data and links into the app's record pages
 import subprocess; subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), 'seo_site.py')], check=True)
+
+# iPhone and Android apps: mark as coming soon on every page
+import subprocess
+subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "app_soon.py")], check=False)
