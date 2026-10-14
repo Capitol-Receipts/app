@@ -18,9 +18,15 @@ const fmtDate = (d: string) => new Date(d + "T12:00:00Z").toLocaleDateString("en
 const monthName = (ym: string) => new Date(ym + "-15T12:00:00Z").toLocaleDateString("en-US", { month: "long" });
 const font = "-apple-system,Segoe UI,Arial,sans-serif";
 
-function authorized(req: Request) {
+// Only the project's own privileged key may trigger sends. A key that matches the function's env is accepted
+// directly; any other key (e.g. a newer sb_secret_ key the daily job uses) is accepted only if Supabase itself
+// lets it list users, which publishable and user keys cannot do.
+async function authorized(req: Request) {
   const h = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || req.headers.get("apikey") || "";
-  return !!h && (h === SERVICE || SECRET_KEYS.includes(h));
+  if (!h || h.startsWith("sb_publishable_")) return false;
+  if (h === SERVICE || SECRET_KEYS.includes(h)) return true;
+  const r = await fetch(`${URL_}/auth/v1/admin/users?per_page=1`, { headers: { apikey: h, Authorization: `Bearer ${h}` } });
+  return r.ok;
 }
 type Trade = { key: string; member_id: string; name: string; party: string; state: string; chamber: string; district: number | null; tdate: string; kind: string; ticker: string | null; asset: string | null; lo: number; hi: number; owner: string | null; comm: string | null; first_seen: string };
 const who = (t: Trade) => `${t.chamber === "Senate" ? "Sen." : "Rep."} ${esc(t.name)} (${esc(t.party?.[0] || "")}-${esc(t.state)})`;
@@ -31,7 +37,7 @@ const section = (title: string, sub: string, lines: string[]) => `<tr><td style=
   <ul style="margin:8px 0 0;padding-left:18px;font:14px/1.6 ${font};color:#1f2937">${lines.map((l) => `<li style="margin-bottom:4px">${l}</li>`).join("")}</ul></td></tr>`;
 
 Deno.serve(async (req) => {
-  if (!authorized(req)) return new Response("Unauthorized", { status: 401 });
+  if (!(await authorized(req))) return new Response("Unauthorized", { status: 401 });
   const body = await req.json().catch(() => ({}));
   const dry = !!body.dry;
   if (!RESEND && !dry) return Response.json({ sent: 0, note: "RESEND_API_KEY not set" });
