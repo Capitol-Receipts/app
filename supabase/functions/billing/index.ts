@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
 
   const body = await req.json().catch(() => ({}));
   const back = typeof body.back === "string" && ORIGINS.some((o) => body.back.startsWith(o)) ? body.back : ORIGINS[0] + "/?go=pro";
-  const { data: sub } = await db.from("subscriptions").select("stripe_customer").eq("user_id", user.id).maybeSingle();
+  const { data: sub } = await db.from("subscriptions").select("stripe_customer,status").eq("user_id", user.id).maybeSingle();
 
   try {
     if (body.action === "portal") {
@@ -61,6 +61,13 @@ Deno.serve(async (req) => {
       cancel_url: back,
     };
     if (sub?.stripe_customer) p.customer = sub.stripe_customer; else if (user.email) p.customer_email = user.email;
+    // free week: only for accounts that have never had Pro; a card is always collected, first charge after 7 days
+    if (body.trial && !sub) {
+      p["subscription_data[trial_period_days]"] = "7";
+      p["payment_method_collection"] = "always";
+      p["subscription_data[trial_settings][end_behavior][missing_payment_method]"] = "cancel";
+      p["custom_text[submit][message]"] = "You won't be charged today. Your first payment is after your free week. Cancel anytime before then.";
+    }
     const s = await stripe("checkout/sessions", p);
     return json({ url: s.url });
   } catch (e) {

@@ -1,9 +1,9 @@
 // Stripe tells us when someone subscribes, renews, changes plan or cancels; we keep public.subscriptions in step
 // and send our own branded billing emails through Resend (receipt, failed payment, yearly renewal reminder,
-// cancellation scheduled, Pro ended). Emails only go out while app_meta.billing_emails = "on".
+// cancellation scheduled, Pro ended, free week ending). Emails only go out while app_meta.billing_emails = "on".
 // Needs STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET and RESEND_API_KEY.
 // Events: checkout.session.completed, customer.subscription.created/updated/deleted, invoice.paid,
-// invoice.payment_failed, invoice.upcoming.
+// invoice.payment_failed, invoice.upcoming, customer.subscription.trial_will_end.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import * as M from "./emails.ts";
 
@@ -64,7 +64,7 @@ async function sync(db: DB, ev: any) {
   } else return;
   userId = userId || await userFor(db, sub.customer, sub);
   if (!userId) return;
-  const status = ev.type === "customer.subscription.deleted" ? "canceled" : statusOf(sub.status);
+  const status = ev.type === "customer.subscription.deleted" ? "canceled" : sub.status === "trialing" ? "trialing" : statusOf(sub.status);
   if (!status) return;
   const item = sub.items?.data?.[0];
   const end = sub.current_period_end || item?.current_period_end;
@@ -72,6 +72,7 @@ async function sync(db: DB, ev: any) {
   const { error } = await db.from("subscriptions").upsert({
     user_id: userId, status, plan: interval === "month" ? "monthly" : interval === "year" ? "yearly" : "pro",
     period_end: end ? new Date(end * 1000).toISOString() : null,
+    trial_ends: sub.status === "trialing" && sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
     stripe_customer: sub.customer, stripe_sub: sub.id, updated_at: new Date().toISOString(),
   });
   if (error) throw error;
@@ -123,6 +124,15 @@ async function buildEmail(db: DB, ev: any): Promise<{ kind: string; userId: stri
     return { kind: "upcoming", userId, email, msg: M.upcoming({ amount: o.amount_due, plan, renewsAt, email }) };
   }
 
+  if (ev.type === "customer.subscription.trial_will_end") {
+    if (o.status !== "trialing" || o.cancel_at_period_end || o.cancel_at || !o.trial_end) return null;
+    const userId = await userFor(db, o.customer, o);
+    const email = await emailOf(userId);
+    if (!email) return null;
+    const amount = o.items?.data?.[0]?.price?.unit_amount || 0;
+    return { kind: "trial_ending", userId, email, msg: M.trialEnding({ amount, plan: planOfSub(o), endsAt: o.trial_end, email }) };
+  }
+
   if (ev.type === "customer.subscription.updated") {
     const prev = ev.data.previous_attributes || {};
     const nowCancel = !!(o.cancel_at_period_end || o.cancel_at);
@@ -132,7 +142,7 @@ async function buildEmail(db: DB, ev: any): Promise<{ kind: string; userId: stri
     const email = await emailOf(userId);
     if (!email) return null;
     const endsAt = o.cancel_at || o.current_period_end || o.items?.data?.[0]?.current_period_end;
-    return { kind: "canceling", userId, email, msg: M.canceling({ plan: planOfSub(o), endsAt, email }) };
+    return { kind: "canceling", userId, email, msg: M.canceling({ plan: planOfSub(o), endsAt, email, trial: o.status === "trialing" }) };
   }
 
   if (ev.type === "customer.subscription.deleted") {

@@ -1,7 +1,7 @@
 /* ================= Capitol Receipts Pro =================
 Records stay free for everyone. Pro is the early-warning system on top:
 daily alerts, a stock watchlist, the conflict radar across all of Congress, unlimited follows and CSV downloads.
-Who has Pro lives in the database (subscriptions); the 7-day trial needs no card. */
+Who has Pro lives in the database (subscriptions); the 7-day free trial runs through Stripe Checkout and needs a card. */
 const PRO={price:{m:4.99,y:39},cycle:'y',feed:null,feedErr:null,rmode:'all',FREE_FOLLOWS:5,BIG:250001};
 const isPro=()=>!!(ACCT.plan&&ACCT.plan.pro);
 const PRO_FEATS=[
@@ -27,24 +27,18 @@ async function loadPlan(){
   try{const {data,error}=await ACCT.client.rpc('my_plan');if(error)throw error;ACCT.plan=data}catch(e){console.warn('plan',e);ACCT.plan=null}
 }
 async function startTrial(){
-  if(!signedIn())return authSheet('up','Create a free account to start your free week of Pro. No card needed.');
-  const msg=$('#promsg');if(msg)msg.textContent='One moment…';
-  try{const {data,error}=await ACCT.client.rpc('start_trial');if(error)throw error;ACCT.plan=data;
-    if(!data.pro){if(msg)msg.textContent='Your free week has been used. Subscribe to keep Pro.';return}
-    ACCT.alerts=Object.assign({trades:true,votes:true,money:true,radar:true},ACCT.alerts||{},{email:true});
-    ACCT.client.from('user_prefs').upsert({user_id:ACCT.user.id,alerts:ACCT.alerts,following:[...S.following]}).then(()=>{});
-    $('#sheet').hidden=true;S.stack=[];S.tab='more';go('pro');toast('Pro is on. Your free week runs until '+new Date(data.trial_ends).toLocaleDateString('en-US',{month:'long',day:'numeric'})+'.');
-  }catch(e){if(msg)msg.textContent='That didn’t work. Try again in a moment.';console.warn(e)}
+  if(!signedIn())return authSheet('up','Create a free account, then start your free week of Pro.');
+  return billing('checkout',true);
 }
-async function billing(action){
+async function billing(action,trial){
   if(!signedIn())return authSheet('up','Create a free account first, then pick your plan.');
   const msg=$('#promsg');if(msg)msg.textContent='Opening secure checkout…';
   try{
     const {data:{session}}=await ACCT.client.auth.getSession();
-    const r=await fetch(SB.url+'/functions/v1/billing',{method:'POST',headers:{'Content-Type':'application/json',apikey:SB.key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({action,cycle:PRO.cycle,back:location.origin+'/?go=pro'})});
+    const r=await fetch(SB.url+'/functions/v1/billing',{method:'POST',headers:{'Content-Type':'application/json',apikey:SB.key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({action,trial:!!trial,cycle:PRO.cycle,back:location.origin+'/?go=pro'})});
     const j=await r.json().catch(()=>({}));
     if(j.url){location.href=j.url;return}
-    if(msg)msg.textContent=j.error==='not_configured'?'Card payments are being switched on. Start your free week now and you won’t lose anything.':'Checkout didn’t open. Try again in a moment.';
+    if(msg)msg.textContent=j.error==='not_configured'?'Card payments are being switched on. Try again shortly.':'Checkout didn’t open. Try again in a moment.';
   }catch(e){console.warn(e);if(msg)msg.textContent='Checkout didn’t open. Try again in a moment.'}
 }
 function toast(t){let el=$('#toast');if(!el){el=document.createElement('div');el.id='toast';el.className='toast';document.body.appendChild(el)}el.textContent=t;el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),3600)}
@@ -57,7 +51,7 @@ function planPicker(){
     <button role="radio" data-cycle="y" aria-checked="${y}"><span class="pn">Yearly <em>Save ${save}%</em></span><b>$${PRO.price.y}<small>/year</small></b><span class="ps">$${mo} a month</span></button>
     <button role="radio" data-cycle="m" aria-checked="${!y}"><span class="pn">Monthly</span><b>$${PRO.price.m}<small>/month</small></b><span class="ps">Cancel anytime</span></button></div>
    ${used?`<button class="pcta" data-billing="checkout">Subscribe · $${y?PRO.price.y+'/year':PRO.price.m+'/month'}</button>`:`<button class="pcta" data-protrial>Start your free week</button>`}
-   <div class="pfine" id="promsg" role="status">${used?'Secure checkout. Cancel anytime.':`7 days free, no card needed. Then $${y?PRO.price.y+' a year':PRO.price.m+' a month'} if you keep it.`}</div></div>`;
+   <div class="pfine" id="promsg" role="status">${used?'Secure checkout. Cancel anytime.':`7 days free, then $${y?PRO.price.y+' a year':PRO.price.m+' a month'}. Card required; you won’t be charged if you cancel during your free week.`}</div></div>`;
 }
 function featList(){return `<div class="pfeats">${PRO_FEATS.map(([i,t,d])=>`<div class="pfeat"><span class="pfi">${PI[i]}</span><span><b>${t}</b><span>${d}</span></span></div>`).join('')}</div>`}
 function needPro(why){
@@ -244,4 +238,15 @@ window.addEventListener('click',e=>{
   if(q!=='pro'&&q!=='radar')return;
   try{const u=new URL(location.href);u.searchParams.delete('go');history.replaceState(null,'',u.pathname+u.search+u.hash)}catch(e){}
   const t0=Date.now(),iv=setInterval(()=>{if((typeof byId!=='undefined'&&byId&&Object.keys(byId).length&&!window.__HOLD)||Date.now()-t0>20000){clearInterval(iv);S.stack=[];S.tab='more';go(q)}},150);
+})();
+/* back from Stripe Checkout: wait for the subscription to land, then confirm */
+(function(){
+  let paid=null;try{paid=new URLSearchParams(location.search).get('paid')}catch(e){}
+  if(paid!=='1')return;
+  try{const u=new URL(location.href);u.searchParams.delete('paid');history.replaceState(null,'',u.pathname+u.search+u.hash)}catch(e){}
+  let n=0;const iv=setInterval(async()=>{n++;
+    if(typeof ACCT==='undefined'||!ACCT.user){if(n>40)clearInterval(iv);return}
+    await loadPlan();
+    if(isPro()||n>20){clearInterval(iv);if(isPro()){const p=ACCT.plan;toast(p.status==='trialing'&&p.trial_ends?'Pro is on. Your free week runs until '+new Date(p.trial_ends).toLocaleDateString('en-US',{month:'long',day:'numeric'})+'.':'Pro is on. Thanks for subscribing.')}render()}
+  },1500);
 })();
