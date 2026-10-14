@@ -8,6 +8,15 @@ function loadCV(id){
   SB.get('congress_votes?select=data&id=eq.'+id).then(r=>{CV[id]=r[0]?.data||'missing';render()}).catch(()=>{CV[id]='error';render()});
   return null;
 }
+/* one roll call (the vote, its neighbors, members and each member's vote), ~20 KB instead of the whole Congress */
+const VS={};
+function loadVS(id,roll){
+  const k=`${id}-${roll}`;
+  if(VS[k])return VS[k]==='loading'||VS[k]==='missing'?null:VS[k];
+  VS[k]='loading';
+  SB.get(`rpc/vote_slice?cid=${encodeURIComponent(id)}&roll=${roll}`).then(r=>{VS[k]=r&&r.rc&&r.rc[1]?r:'missing';render()}).catch(()=>{VS[k]='error';render()});
+  return null;
+}
 const congressYears=c=>`${1787+2*c}–${(1788+2*c)%100<10?'0':''}${(1788+2*c)%100}`;
 const ordn=n=>n+(['th','st','nd','rd'][(n%100-20)%10]||['th','st','nd','rd'][n%100]||'th');
 function voteKey(c,ch,roll){return `${c}-${ch}-${roll}`}
@@ -15,18 +24,17 @@ function billCodeToKey(c,code){const m=(code||'').match(/^([A-Z]+?)(\d+)$/);if(!
 function memberIdx(d,bg){for(let i=0;i<d.m.length;i++)if(d.m[i][0]===bg)return i;return -1}
 function votePage(key){
   const [c,ch,roll]=key.split('-');const id=`${c}-${ch}`;
-  const d=loadCV(id);
-  if(!d)return CV[id]==='loading'||!CV[id]?loading('the vote'):`<div class="wrap"><div class="empty">Vote not found.</div></div>`;
+  const d=loadVS(id,+roll);
+  if(!d)return VS[key]==='missing'?`<div class="wrap"><div class="empty">Vote not found.</div></div>`:loading('the vote');
   if(typeof d!=='object')return `<div class="wrap"><div class="empty">Couldn’t load this vote.</div></div>`;
-  const ri=d.rc.findIndex(r=>r[0]===+roll);if(ri<0)return `<div class="wrap"><div class="empty">Vote not found.</div></div>`;
-  const [rn,date,bill,q,res,yea,nay,desc]=d.rc[ri];
+  const [rn,date,bill,q,res,yea,nay,desc]=d.rc[1];
   const by={};const counts={Y:0,N:0,P:0,'.':0};
-  d.m.forEach((m,i)=>{const v=d.v[i][ri];if(!v)return;counts[v]++;(by[m[2]]=by[m[2]]||{Y:[],N:[],P:[],'.':[]})[v].push(i)});
+  d.m.forEach((m,i)=>{const v=d.v[i];if(!v)return;counts[v]++;(by[m[2]]=by[m[2]]||{Y:[],N:[],P:[],'.':[]})[v].push(i)});
   const mine=(typeof myReps==='function'?myReps():[]).map(m=>m.id);
   const bk=bill&&!/^PN/.test(bill)?billCodeToKey(c,bill):null;
   const filt=S.vfilt||'all';
   const parties=Object.keys(by).sort((a,b)=>({D:0,R:1,I:2,O:3}[a]-({D:0,R:1,I:2,O:3}[b])));
-  const pRow=i=>{const m=d.m[i];const v=d.v[i][ri];const cur=byId[m[0]];const hp=typeof HP!=='undefined'&&(HP[m[0]]||HC[m[0]]);const attr=cur?`data-p="${m[0]}"`:hp?`data-hp="${m[0]}"`:'';
+  const pRow=i=>{const m=d.m[i];const v=d.v[i];const cur=byId[m[0]];const hp=typeof HP!=='undefined'&&(HP[m[0]]||HC[m[0]]);const attr=cur?`data-p="${m[0]}"`:hp?`data-hp="${m[0]}"`:'';
     return `<button class="row plain vrow ${mine.includes(m[0])?'mine':''}" ${attr} style="grid-template-columns:1fr auto auto"><span style="min-width:0"><span class="t">${esc(m[1])}${mine.includes(m[0])?' <em class="yourrep">your rep</em>':''}</span><br><span class="s">${esc(m[3])}${ch==='H'&&m[4]?'-'+m[4]:''}</span></span><span class="cast ${v==='Y'?'Yes':v==='N'?'No':''}">${VWORD[v]}</span>${attr?chev:'<span></span>'}</button>`};
   const myRows=d.m.map((m,i)=>i).filter(i=>mine.includes(d.m[i][0]));
   return `${pageHead((ch==='H'?'House':'Senate')+' vote '+rn)}

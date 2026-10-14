@@ -73,14 +73,9 @@ ${note(c < 108 ? 'From the Congressional Bills Project (Adler and Wilkerson), co
 }
 
 /* ---------------- roll call vote (every vote since 1789, member by member) ---------------- */
-const CVC = new Map(); // a few per-Congress vote records, kept 30 minutes
-function cvRow(id) {
-  const c = CVC.get(id);
-  if (c && Date.now() - c.at < 1800e3) return c.p;
-  const p = one(`congress_votes?id=eq.${encodeURIComponent(id)}&select=congress,chamber,data`).catch(e => { CVC.delete(id); throw e; });
-  CVC.set(id, { at: Date.now(), p }); if (CVC.size > 12) CVC.delete(CVC.keys().next().value);
-  return p;
-}
+// one roll call from a Congress's vote record: the vote, its neighbors, the member list and each member's vote on it
+// (vote_slice returns ~20 KB instead of the whole Congress, which is 200-700 KB)
+const voteSlice = (cid, roll) => q(`rpc/vote_slice?cid=${encodeURIComponent(cid)}&roll=${roll}`);
 // old vote records are often ALL CAPS: show them in sentence case, keeping bill numbers and acronyms
 const ACRO = new Set('USA US TVA FHA NATO UN GI VA RFC OPA NLRB AEC FBI CIA NASA HUD EPA IRS SEC FCC ICC FTC AFL CIO WPA NRA REA SBA OEO HEW DC NY USSR UK OAS SEATO NSF FAA AMTRAK OMB GAO HMO ERA ABM SALT MX AIDS NAFTA GATT WTO IMF'.split(' '));
 const unshout = t => { t = String(t || ''); if (/[a-z]/.test(t) || !/[A-Z]{4}/.test(t)) return t;
@@ -95,15 +90,15 @@ async function vote(key) {
   let m = String(key).match(/^([HS])(\d+)$/); if (m) key = `119-${m[1]}-${m[2]}`; // short IDs from the current Congress
   m = String(key).match(/^(\d{1,3})-([HS])-(\d+)$/); if (!m) return null;
   const c = +m[1], ch = m[2], roll = +m[3];
-  const row = await cvRow(`${c}-${ch}`); if (!row || !row.data) return null;
-  const d = row.data, i = (d.rc || []).findIndex(r => +r[0] === roll); if (i < 0) return null;
-  const [, dt, code, qn, res, y, n, descr] = d.rc[i];
+  const d = await voteSlice(`${c}-${ch}`, roll); if (!d || !d.rc || !d.rc[1]) return null;
+  const vAt = j => (d.v || [])[j] || '';
+  const [, dt, code, qn, res, y, n, descr] = d.rc[1];
   const chamber = ch === 'S' ? 'Senate' : 'House', who = ch === 'S' ? 'senator' : 'representative';
   const bm = String(code || '').match(/^(HR|S|HJRES|SJRES)(\d+)$/i);
   const [{ by }, bill] = await Promise.all([MEMBERS(), bm && c >= 80 ? one(`bills?key=eq.${c}-${bm[1].toLowerCase()}-${+bm[2]}&select=key,title`) : null]);
   const casts = { Y: [], N: [], P: [], '.': [] }, parties = {};
   (d.m || []).forEach((mm, j) => {
-    const v = ((d.v || [])[j] || '')[i]; if (!v || !casts[v]) return;
+    const v = vAt(j); if (!v || !casts[v]) return;
     casts[v].push(mm);
     const pp = parties[mm[2]] = parties[mm[2]] || { Y: 0, N: 0, P: 0, '.': 0 }; pp[v]++;
   });
@@ -111,7 +106,7 @@ async function vote(key) {
   // how each party voted as a bloc, and who broke from their own party's majority
   const side = {}; Object.entries(parties).forEach(([p, v]) => { if (['D', 'R', 'I'].includes(p) && v.Y + v.N >= 5) side[p] = v.Y >= v.N ? 'Y' : 'N'; });
   const crossed = [];
-  (d.m || []).forEach((mm, j) => { const v = ((d.v || [])[j] || '')[i]; if ((v === 'Y' || v === 'N') && side[mm[2]] && v !== side[mm[2]]) crossed.push([mm, v]); });
+  (d.m || []).forEach((mm, j) => { const v = vAt(j); if ((v === 'Y' || v === 'N') && side[mm[2]] && v !== side[mm[2]]) crossed.push([mm, v]); });
   const cohesion = p => { const v = parties[p]; return v && v.Y + v.N ? Math.max(v.Y, v.N) / (v.Y + v.N) : null; };
   let kind = '';
   if (side.D && side.R) {
@@ -124,7 +119,7 @@ async function vote(key) {
   const lead0 = `On ${date(dt)}, the ${chamber} voted ${y}–${n}${qn ? ` on “${unshout(qn)}”` : ''}${code ? ` (${code.replace(/^([A-Z]+)(\d+)$/, '$1 $2')})` : ''}. Result: ${res || (y > n ? 'passed' : 'failed')}.${split ? ` By party: ${split}.` : ''}`;
   const lead = lead0 + (kind ? ` It was ${kind}.` : '') + (crossed.length ? ` ${num(crossed.length)} member${crossed.length === 1 ? '' : 's'} voted against their own party.` : '');
   const ml = mm => `${a(P(by[mm[0]] ? 'member' : 'past-member', mm[0], mm[1]), mm[1])} <small>${esc(mm[2] || '')}-${esc(mm[3] || '')}</small>`;
-  const prev = d.rc[i - 1], next = d.rc[i + 1];
+  const prev = d.rc[0], next = d.rc[2];
   const body = `<p class="sr-sub">${chamber} roll call ${roll} · ${ord(c)} Congress · ${esc(date(dt))}</p><h1>${esc(clamp(what, 180))}</h1>
 <p class="sr-lead">${esc(lead)}</p>${ctx ? `<p>${esc(ctx)}</p>` : ''}
 ${facts([['Result', res || null], ['Yes', num(y)], ['No', num(n)], ['Did not vote', casts['.'].length ? num(casts['.'].length) : null], ['Date', date(dt)]])}
