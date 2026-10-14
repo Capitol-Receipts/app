@@ -50,10 +50,20 @@ def record_update(tables):
     urllib.request.urlopen(req, timeout=60).read()
 
 def refresh_cache():
-    req = urllib.request.Request(f'{URL}/rest/v1/rpc/refresh_light_cache', data=b'{}', method='POST', headers={
-        'apikey': KEY, 'Authorization': f'Bearer {KEY}', 'Content-Type': 'application/json'})
-    urllib.request.urlopen(req, timeout=300).read()
-    print('light index cache rebuilt')
+    # The rebuild can outlast the API gateway (504) when Supabase is slow. Retry, and if it still won't finish,
+    # warn instead of failing: the data itself is loaded, alerts can still go out, and tomorrow's run rebuilds it.
+    for attempt in range(3):
+        req = urllib.request.Request(f'{URL}/rest/v1/rpc/refresh_light_cache', data=b'{}', method='POST', headers={
+            'apikey': KEY, 'Authorization': f'Bearer {KEY}', 'Content-Type': 'application/json'})
+        try:
+            urllib.request.urlopen(req, timeout=300).read()
+            print('light index cache rebuilt'); return
+        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError) as e:
+            code = getattr(e, 'code', None)
+            if code is not None and code < 500: raise
+            print(f'  cache rebuild attempt {attempt + 1} failed: {e}')
+            time.sleep(60 * (attempt + 1))
+    print('::warning::Light index cache rebuild timed out 3 times; data is loaded, the cache rebuilds on the next run.')
 
 done = []
 for t in (sys.argv[1:] or ORDER):
