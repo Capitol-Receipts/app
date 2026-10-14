@@ -135,7 +135,9 @@ function html(pg, mode) {
 function send(res, status, type, body, maxAge) {
   res.statusCode = status;
   res.setHeader('Content-Type', type);
-  const cc = status === 200 ? `public, max-age=600, s-maxage=${maxAge || 21600}, stale-while-revalidate=604800` : 'public, max-age=60, s-maxage=600';
+  // Pages are kept at Vercel's edge for a week (data changes once a day; the app itself always loads live data),
+  // so search-engine crawling rarely reaches the database.
+  const cc = status === 200 ? `public, max-age=600, s-maxage=${maxAge || 604800}, stale-while-revalidate=2592000` : 'public, max-age=60, s-maxage=600';
   res.setHeader('Cache-Control', cc); res.setHeader('CDN-Cache-Control', cc);
   res.end(body);
 }
@@ -201,7 +203,7 @@ async function embedCard(res, id) {
 <div class="g">${stat('Raised for 2026', f.rec ? T.money(f.rec) : '—')}${stat('Stock trades since 2025', T.num(d.tradeN || 0))}${stat('Votes missed', d.elig >= 25 ? T.pct(1 - d.present, 1) : '—')}${stat('From small donors', T.pct(d.smallShare))}</div>
 <div class="f"><span>Public records · updated daily</span><a href="${page}" target="_blank" rel="noopener">Full profile on Capitol Receipts</a></div></div></body></html>`;
   res.setHeader('Content-Security-Policy', 'frame-ancestors *');
-  return send(res, 200, 'text/html; charset=utf-8', body, 21600);
+  return send(res, 200, 'text/html; charset=utf-8', body);
 }
 
 module.exports = async (req, res) => {
@@ -220,12 +222,12 @@ module.exports = async (req, res) => {
     if (t === 'robots') return send(res, 200, 'text/plain; charset=utf-8', `User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${SITE}/sitemap.xml\n`, 86400);
     // the app's domain is for using the app; every public page lives on www.capitolreceipts.com
     if (onApp && !appMode && u.searchParams.get('via') !== 'www') return redirect(res, SITE + publicPath);
-    if (t === 'sitemap') return send(res, 200, 'application/xml; charset=utf-8', await T.sitemapIndex(), 21600);
+    if (t === 'sitemap') return send(res, 200, 'application/xml; charset=utf-8', await T.sitemapIndex(), 86400);
     if (t === 'sitemaps') {
       const xml = await T.sitemapFile(id.replace(/\.xml$/, ''));
-      return xml ? send(res, 200, 'application/xml; charset=utf-8', xml, 21600) : send(res, 404, 'text/plain', 'Not found');
+      return xml ? send(res, 200, 'application/xml; charset=utf-8', xml, 86400) : send(res, 404, 'text/plain', 'Not found');
     }
-    if (t === 'llms') return send(res, 200, 'text/plain; charset=utf-8', await llms(), 21600);
+    if (t === 'llms') return send(res, 200, 'text/plain; charset=utf-8', await llms(), 86400);
     if (t === 'rankings') {
       const pg = id ? await RK.ranking(decodeURIComponent(id), slug) : await RK.index();
       return send(res, pg ? 200 : 404, 'text/html; charset=utf-8', html(pg || notFound(publicPath), 'seo'));

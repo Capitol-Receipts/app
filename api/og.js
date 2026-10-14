@@ -138,7 +138,7 @@ module.exports = async (req, res) => {
     const buf = new Resvg(svg, { fitTo: { mode: 'width', value: 1200 } }).render().asPng();
     res.statusCode = 200;
     res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800');
+    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000');
     res.end(buf);
   } catch (e) {
     console.error('og', t, id, e);
