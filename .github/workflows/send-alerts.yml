@@ -1,0 +1,17 @@
+name: Send alert emails
+# Runs the alert email job on its own, without a full data update. The daily update also calls it.
+on:
+  workflow_dispatch:
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send alert emails
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          code=$(curl -s -m 280 -o out.json -w "%{http_code}" -X POST https://hxgckcriehvrolwnabpd.supabase.co/functions/v1/send-alerts \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" -d '{}')
+          echo "HTTP $code"; cat out.json; echo
+          test "$code" = 200

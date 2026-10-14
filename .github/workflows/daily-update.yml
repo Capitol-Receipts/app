@@ -56,8 +56,8 @@ jobs:
           TABLES=$(cat work/changed.txt)
           if [ -z "$TABLES" ]; then echo "Nothing changed today."; exit 0; fi
           python scripts/load_supabase.py $TABLES
-      - name: Send weekly alert emails
-        if: success()
+      - name: Send alert emails
+        if: always()
         env:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
