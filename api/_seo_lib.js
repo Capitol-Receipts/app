@@ -3,7 +3,20 @@ const SITE = 'https://www.capitolreceipts.com', HOST = SITE; // all public pages
 const SB = 'https://hxgckcriehvrolwnabpd.supabase.co/rest/v1/';
 const KEY = 'sb_publishable_jiwF5q1sFMuaGXLKg6FKAQ_3rCjcZ1J'; // public, read-only
 
+// reads go through the app's CDN-cached endpoint first (so crawler and visitor spikes rarely reach the database),
+// and straight to the database if that fails
+const CACHE_EP = 'https://app.capitolreceipts.com/api/db?q=';
+async function viaCache(p, opt) {
+  const url = CACHE_EP + encodeURIComponent(p) + (opt.range ? '&range=' + opt.range : '') + (opt.count ? '&count=1' : '');
+  const r = await fetch(url, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(20000) });
+  if (r.status === 416) return opt.count ? { rows: [], total: +((r.headers.get('content-range') || '').split('/')[1] || 0) } : [];
+  if (!r.ok) throw new Error('cache ' + r.status);
+  const rows = await r.json();
+  if (opt.count) { const cr = r.headers.get('content-range') || ''; if (!cr.includes('/')) throw new Error('no count'); return { rows, total: +(cr.split('/')[1] || rows.length) }; }
+  return rows;
+}
 async function q(p, opt = {}) {
+  try { return await viaCache(p, opt); } catch (e) { /* fall through to the database */ }
   const headers = { apikey: KEY, Accept: 'application/json' };
   if (opt.range) { headers.Range = opt.range; headers['Range-Unit'] = 'items'; }
   if (opt.count) headers.Prefer = 'count=exact';
