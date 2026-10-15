@@ -53,11 +53,19 @@ jobs:
               return gzip.decompress(b) if r.headers.get('Content-Encoding') == 'gzip' else b
           rows = json.loads(get('https://app.capitolreceipts.com/api/db?q=' + enc('races?select=data&order=id&limit=1000&offset=0')))
           imgs = sorted({c['img'] for r in rows for c in (r['data'].get('c') or []) if c.get('img')})
-          ok = 0
-          for u in imgs:
-              try:
-                  get('https://app.capitolreceipts.com/api/cimg?u=' + enc(u)); ok += 1
-              except Exception as e:
-                  print('miss', u, e)
-          print(f'{ok}/{len(imgs)} candidate photos cached')
+          import time
+          left = imgs
+          for attempt in range(3):   # Wikimedia rate-limits bursts: go slowly and retry the misses
+              miss = []
+              for u in left:
+                  try:
+                      get('https://app.capitolreceipts.com/api/cimg?u=' + enc(u))
+                  except Exception as e:
+                      miss.append(u)
+                  time.sleep(1.2)
+              left = miss
+              if not left: break
+              time.sleep(30)
+          for u in left: print('miss', u)
+          print(f'{len(imgs) - len(left)}/{len(imgs)} candidate photos cached')
           PY

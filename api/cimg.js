@@ -29,10 +29,10 @@ module.exports = async (req, res) => {
   const fail = (status, cc) => { res.statusCode = status; res.setHeader('Cache-Control', cc); res.end(); };
   if (!OK.test(u)) return fail(400, 'public, s-maxage=86400');
   let r = null;
-  for (let i = 0; i < 2 && !r; i++) {
+  for (let i = 0; i < 3 && !r; i++) {   // Wikimedia answers 429 to bursts: back off and try again
     try { const x = await get(u); if (x.status === 200 && /^image\//.test(x.type) && x.body.length) r = x; else if (x.status === 404) return fail(404, 'public, s-maxage=86400'); }
-    catch (e) { /* retry once */ }
-    if (!r) await new Promise((f) => setTimeout(f, 800));
+    catch (e) { /* try again */ }
+    if (!r) await new Promise((f) => setTimeout(f, 1200 * (i + 1)));
   }
   if (!r) return fail(502, 'no-store');
   res.statusCode = 200;
