@@ -42,3 +42,22 @@ jobs:
               sleep 10
             done
           done
+      - name: Fetch candidate photos through our photo cache
+        run: |
+          python3 - <<'PY'
+          import json, urllib.request, urllib.parse, gzip
+          enc = lambda s: urllib.parse.quote(s, safe="-_.!~*'()")
+          def get(u):
+              r = urllib.request.urlopen(urllib.request.Request(u, headers={'Accept-Encoding': 'gzip'}), timeout=90)
+              b = r.read()
+              return gzip.decompress(b) if r.headers.get('Content-Encoding') == 'gzip' else b
+          rows = json.loads(get('https://app.capitolreceipts.com/api/db?q=' + enc('races?select=data&order=id&limit=1000&offset=0')))
+          imgs = sorted({c['img'] for r in rows for c in (r['data'].get('c') or []) if c.get('img')})
+          ok = 0
+          for u in imgs:
+              try:
+                  get('https://app.capitolreceipts.com/api/cimg?u=' + enc(u)); ok += 1
+              except Exception as e:
+                  print('miss', u, e)
+          print(f'{ok}/{len(imgs)} candidate photos cached')
+          PY
