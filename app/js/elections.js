@@ -73,7 +73,7 @@ function electionsScreen(){
   const q=(S.eq||'').trim().toLowerCase();
   const stOpts=Object.entries(ST).filter(([k])=>R.some(r=>r.st===k)).sort((a,b)=>a[1].localeCompare(b[1]));
   const tot=R.reduce((a,r)=>a+(r.rt||0),0),out=R.reduce((a,r)=>a+(r.ot||0),0);
-  const mine=signedIn()?myRaces():[];
+  const authed=typeof signedIn==="function"&&signedIn(),mine=authed?myRaces():[];
   let list;
   if(q)list=R.filter(r=>raceName(r).toLowerCase().includes(q)||raceShort(r).toLowerCase().includes(q)||r.c.some(c=>c.n.toLowerCase().includes(q)));
   else if(mode==='senate')list=sen;
@@ -90,7 +90,7 @@ function electionsScreen(){
     <div class="dstat c-influence"><span class="dic">${CAT.influence.icon}</span><span class="dk">Outside spending</span><b class="dv">${M(out)}</b><span class="ds">by super PACs and other groups</span></div>
    </div></section>
    ${!q?`<section class="sec wide"><div class="sh"><h2>Races to watch</h2><button data-emode="close">All competitive</button></div><div class="fgrid">${toWatch(8).map(featCard).join('')}</div></section>`:''}
-   ${mine.length?`<section class="sec"><div class="sh"><h2>Your races</h2><span class="cap" style="padding:0">${esc(repWhere())}</span></div><div class="group">${mine.map(r=>raceRow(r)).join('')}</div></section>`:signedIn()?`<section class="sec"><div class="calm">Add your ZIP code on the Search page to see your races here.</div></section>`:`<section class="sec"><div class="signin-card"><b>See your races</b><span>Sign in and add your ZIP code to keep your Senate and House races at the top.</span><div><button class="abtn sm" data-auth="up">Create free account</button><button class="link" data-auth="in">Sign in</button></div></div></section>`}
+   ${mine.length?`<section class="sec"><div class="sh"><h2>Your races</h2><span class="cap" style="padding:0">${esc(repWhere())}</span></div><div class="group">${mine.map(r=>raceRow(r)).join('')}</div></section>`:authed?`<section class="sec"><div class="calm">Add your ZIP code on the Search page to see your races here.</div></section>`:`<section class="sec"><div class="signin-card"><b>See your races</b><span>Sign in and add your ZIP code to keep your Senate and House races at the top.</span><div><button class="abtn sm" data-auth="up">Create free account</button><button class="link" data-auth="in">Sign in</button></div></div></section>`}
    <section class="sec"><div class="sfield"><input id="eq" class="search" type="search" placeholder="Search a state, district or candidate" value="${esc(S.eq||'')}" aria-label="Search races"></div>
     <div class="seg" style="margin-top:10px">${[['top','Most outside money'],['close','Competitive'],['senate','Senate'],['money','Most expensive'],['state','By state']].map(([k,l])=>`<button data-emode="${k}" aria-pressed="${mode===k}">${l}</button>`).join('')}</div>
     ${mode==='state'&&!q?`<select class="select" id="est" aria-label="State" style="margin-top:10px">${stOpts.map(([k,v])=>`<option value="${k}" ${k===(S.est||S.home||'AL')?'selected':''}>${v}</option>`).join('')}</select>`:''}
@@ -241,7 +241,7 @@ drawerHtml=function(){
 function elHomeBlock(){
   loadRaces();
   const days=daysToElection();
-  const mine=signedIn()?myRaces():[];
+  const authed=typeof signedIn==="function"&&signedIn(),mine=authed?myRaces():[];
   return `<section class="sec elhome wide"><div class="sh"><h2>2026 elections</h2><button data-go="elections">All races</button></div>
     <div class="elhomegrid"><button class="elcard" data-go="elections"><span class="elk">Election Day · Nov 3</span><b>${days>0?days:'Today'}</b><span class="eld">${days>0?'days to go':''}</span><span>All 435 House seats and 35 Senate seats are on the ballot. See who's running and who's paying for it.</span></button>
     ${EL.races?toWatch(3).map(featCard).join(''):''}</div>
