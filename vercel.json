@@ -37,6 +37,46 @@
           "value": "noindex"
         }
       ]
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "admin.capitolreceipts.com"
+        }
+      ],
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        }
+      ]
+    },
+    {
+      "source": "/admin",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        }
+      ]
     }
   ],
   "functions": {
@@ -51,6 +91,16 @@
     }
   },
   "rewrites": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "admin.capitolreceipts.com"
+        }
+      ],
+      "destination": "/admin.html"
+    },
     {
       "source": "/robots.txt",
       "destination": "/api/seo?t=robots"
@@ -121,6 +171,17 @@
       "source": "/site/:path*",
       "destination": "https://www.capitolreceipts.com/:path*",
       "permanent": true
+    },
+    {
+      "source": "/admin",
+      "has": [
+        {
+          "type": "host",
+          "value": "app.capitolreceipts.com"
+        }
+      ],
+      "destination": "https://admin.capitolreceipts.com/",
+      "permanent": false
     }
   ]
 }

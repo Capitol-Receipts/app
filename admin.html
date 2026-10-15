@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Capitol Receipts Admin</title>
+<link rel="icon" href="https://www.capitolreceipts.com/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Schibsted+Grotesk:wght@500;600;700;800&display=swap">
+<style>
+/* layout: fixed left rail of sections, content area of stat tiles, charts and tables */
+:root{--bg:#f1f3f7;--panel:#ffffff;--ink:#121a2e;--ink2:#3c4558;--soft:#6a7387;--line:#e3e7ee;--navy:#0f1f40;--red:#c8323a;--D:#2557a8;--good:#1f7a4a;--warn:#9a5b00;--bad:#b42318;--sel:#e8edf6;
+--ui:"Schibsted Grotesk",-apple-system,Segoe UI,Arial,sans-serif;--num:"Barlow Condensed","Schibsted Grotesk",Arial,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c111b;--panel:#151c2a;--ink:#e9edf4;--ink2:#c3cad8;--soft:#97a0b2;--line:#263044;--sel:#1e2840;--good:#4fc184;--warn:#e0a34a;--bad:#f07167;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0c111b;--panel:#151c2a;--ink:#e9edf4;--ink2:#c3cad8;--soft:#97a0b2;--line:#263044;--sel:#1e2840;--good:#4fc184;--warn:#e0a34a;--bad:#f07167;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--ui)}
+a{color:var(--D)}
+button{font:inherit;cursor:pointer}
+.rail{position:fixed;inset:0 auto 0 0;width:236px;background:var(--navy);color:#fff;padding:18px 12px;display:flex;flex-direction:column;gap:4px;z-index:5}
+.brand{font:800 17px var(--ui);padding:4px 10px 16px;display:flex;align-items:center;gap:8px}.brand b{background:var(--red);padding:2px 7px;border-radius:5px}.brand em{font-style:normal;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.7}
+.nav{border:0;background:none;color:#c9d3e8;text-align:left;padding:10px 12px;border-radius:10px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.nav:hover{background:rgba(255,255,255,.07);color:#fff}.nav[aria-current="page"]{background:rgba(255,255,255,.13);color:#fff}
+.nav i{font-style:normal;font-size:12px;background:var(--red);color:#fff;border-radius:999px;padding:1px 8px}
+.rail .me{margin-top:auto;font-size:12.5px;color:#9fb0cf;padding:10px;border-top:1px solid rgba(255,255,255,.1);word-break:break-all}
+.rail .me button{background:none;border:0;color:#fff;padding:0;text-decoration:underline;margin-top:4px}
+main{margin-left:236px;padding:26px 32px 60px;max-width:1500px}
+@media (max-width:860px){.rail{position:static;width:auto;flex-direction:row;flex-wrap:wrap;padding:10px}.brand{width:100%;padding-bottom:6px}.rail .me{display:none}main{margin-left:0;padding:18px 16px 40px}.nav{padding:8px 10px}}
+h1{font:800 28px/1.15 var(--ui);margin:0 0 4px}
+.sub{color:var(--soft);margin:0 0 20px}
+h2{font:800 17px var(--ui);margin:26px 0 10px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.tile{background:var(--panel);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.tile span{font-size:12.5px;color:var(--soft);font-weight:600}.tile b{font:700 32px/1.05 var(--num);font-variant-numeric:tabular-nums}.tile small{font-size:12.5px;color:var(--soft)}
+.tile.hl b{color:var(--good)}.tile.warn b{color:var(--warn)}.tile.bad b{color:var(--bad)}
+@media (min-width:1100px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.card{background:var(--panel);border-radius:14px;padding:16px 18px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:14px}
+.chart svg{width:100%;height:160px;display:block}
+.chart .cap{font-size:12.5px;color:var(--soft);margin-top:6px;display:flex;justify-content:space-between}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--soft);font-weight:700;padding:10px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.tbl{background:var(--panel);border-radius:14px;overflow-x:auto}
+.pill{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.p-pro{background:color-mix(in srgb,var(--good) 15%,transparent);color:var(--good)}
+.p-trial{background:color-mix(in srgb,var(--D) 15%,transparent);color:var(--D)}
+.p-comp{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.p-free{background:var(--sel);color:var(--ink2)}
+.p-bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+input[type=search],input[type=text],input[type=email],input[type=date],input[type=password],textarea,select{font:inherit;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+input[type=search]{min-width:260px;flex:1;max-width:420px}
+textarea{width:100%;min-height:70px}
+.btn{border:0;border-radius:10px;padding:9px 14px;font-weight:700;background:var(--navy);color:#fff}
+.btn.sm{padding:5px 10px;font-size:13px}.btn.ghost{background:var(--sel);color:var(--ink)}.btn.red{background:var(--bad)}
+.seg{display:inline-flex;background:var(--sel);border-radius:10px;padding:3px}.seg button{border:0;background:none;padding:6px 12px;border-radius:8px;font-weight:600;color:var(--ink2)}.seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.muted{color:var(--soft);font-size:13px}
+.empty{padding:28px;text-align:center;color:var(--soft)}
+.row-actions{display:flex;gap:6px;flex-wrap:wrap}
+.toast{position:fixed;right:18px;bottom:18px;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;opacity:0;transform:translateY(8px);transition:.2s;z-index:20}.toast.on{opacity:1;transform:none}
+.login{min-height:100vh;display:grid;place-items:center;padding:16px}
+.login form{background:var(--panel);border-radius:18px;padding:28px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px}
+.login .brand{color:var(--ink);padding:0 0 8px}
+.err{color:var(--bad);font-size:13.5px;min-height:1em}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:14px}.kv span{color:var(--soft)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}.dot.ok{background:var(--good)}.dot.no{background:var(--bad)}.dot.run{background:var(--warn)}
+:focus-visible{outline:3px solid #2557a8;outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast" class="toast" role="status"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const SBURL='https://hxgckcriehvrolwnabpd.supabase.co',SBKEY='sb_publishable_jiwF5q1sFMuaGXLKg6FKAQ_3rCjcZ1J';
+const sb=supabase.createClient(SBURL,SBKEY,{auth:{persistSession:true,storageKey:'cr-admin'}});
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ord=n=>(+n||0).toLocaleString('en-US');
+const usd=c=>'$'+((c||0)/100).toLocaleString('en-US',{minimumFractionDigits:(c%100?2:0),maximumFractionDigits:2});
+const dt=s=>s?new Date(s).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+const dtt=s=>s?new Date(s).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
+const ago=s=>{if(!s)return '—';const m=(Date.now()-new Date(s))/6e4;return m<60?Math.round(m)+'m ago':m<1440?Math.round(m/60)+'h ago':Math.round(m/1440)+'d ago'};
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),2800)}
+const ST={view:'overview',me:null,cache:{},uq:'',uonly:'all',uoff:0,rfilter:'open'};
+const VIEWS=[['overview','Overview'],['people','People'],['revenue','Pro & revenue'],['reports','Mistake reports'],['corrections','Corrections'],['signups','Sign-ups'],['emails','Emails'],['system','System']];
+
+async function api(action,body={}){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session)throw new Error('sign_in');
+  const r=await fetch(SBURL+'/functions/v1/admin',{method:'POST',headers:{'Content-Type':'application/json',apikey:SBKEY,Authorization:'Bearer '+session.access_token},body:JSON.stringify({action,...body})});
+  const j=await r.json().catch(()=>({error:'Bad response'}));
+  if(!r.ok||j.error)throw new Error(j.error||('Error '+r.status));
+  return j;
+}
+
+/* ---------- sign in ---------- */
+function loginView(msg){
+  $('#root').innerHTML=`<div class="login"><form id="lf"><div class="brand"><b>Capitol</b>Receipts <em>Admin</em></div>
+   <label>Email<br><input id="le" type="email" autocomplete="username" required style="width:100%"></label>
+   <label>Password<br><input id="lp" type="password" autocomplete="current-password" required style="width:100%"></label>
+   <button class="btn" type="submit">Sign in</button><div class="err" id="lerr">${esc(msg||'')}</div>
+   <div class="muted">Use your Capitol Receipts account. Only approved admins can open this portal.</div></form></div>`;
+  $('#lf').onsubmit=async e=>{e.preventDefault();$('#lerr').textContent='';
+    const {error}=await sb.auth.signInWithPassword({email:$('#le').value.trim(),password:$('#lp').value});
+    if(error){$('#lerr').textContent=error.message;return}boot()};
+}
+async function boot(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session)return loginView();
+  try{ST.me=(await api('me')).email}catch(e){
+    if(e.message==='not_admin'){await sb.auth.signOut();return loginView('That account is not an admin.')}
+    if(e.message==='sign_in'){await sb.auth.signOut();return loginView('Please sign in again. Your email must be confirmed.')}
+    return loginView(e.message)}
+  const v=(location.hash||'').slice(1);if(VIEWS.some(x=>x[0]===v))ST.view=v;
+  shell();go(ST.view);
+}
+function shell(){
+  $('#root').innerHTML=`<nav class="rail" aria-label="Admin sections"><div class="brand"><b>Capitol</b>Receipts <em>Admin</em></div>
+   ${VIEWS.map(([k,l])=>`<button class="nav" data-v="${k}">${l}<span data-badge="${k}"></span></button>`).join('')}
+   <div class="me">${esc(ST.me)}<br><button id="so">Sign out</button></div></nav><main id="main"></main>`;
+  $('#so').onclick=async()=>{await sb.auth.signOut();loginView()};
+  document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>go(b.dataset.v));
+}
+async function go(v){
+  ST.view=v;history.replaceState(null,'','#'+v);
+  document.querySelectorAll('[data-v]').forEach(b=>b.setAttribute('aria-current',b.dataset.v===v?'page':'false'));
+  const m=$('#main');m.innerHTML=`<div class="empty">Loading…</div>`;
+  try{m.innerHTML=await R[v]()}catch(e){m.innerHTML=`<div class="card"><b>Couldn’t load this section.</b><div class="muted">${esc(e.message)}</div></div>`}
+  window.scrollTo(0,0);
+}
+const head=(t,s)=>`<h1>${t}</h1><p class="sub">${s}</p>`;
+const tile=(k,v,s,cls='')=>`<div class="tile ${cls}"><span>${k}</span><b>${v}</b>${s?`<small>${s}</small>`:''}</div>`;
+function bars(pairs,fmt,color){
+  const W=600,H=150,n=pairs.length||1,mx=Math.max(1,...pairs.map(p=>p[1])),bw=W/n;
+  return `<svg viewBox="0 0 ${W} ${H+18}" preserveAspectRatio="none" role="img">${[0.5,1].map(f=>`<line x1="0" x2="${W}" y1="${H-H*f}" y2="${H-H*f}" stroke="var(--line)"/>`).join('')}
+   ${pairs.map((p,i)=>{const h=p[1]/mx*(H-8);return `<rect x="${i*bw+2}" y="${H-h}" width="${Math.max(2,bw-4)}" height="${h}" rx="2" fill="${color}"><title>${p[0]}: ${fmt(p[1])}</title></rect>`}).join('')}
+   <line x1="0" x2="${W}" y1="${H}" y2="${H}" stroke="var(--line)"/></svg>`;
+}
+const planPill=u=>u.plan==='comp'&&u.pro?'<span class="pill p-comp">Comped Pro</span>':u.status==='trialing'&&u.pro?`<span class="pill p-trial">Free week</span>`:u.status==='past_due'?'<span class="pill p-bad">Past due</span>':u.pro?`<span class="pill p-pro">Pro · ${esc(u.plan||'')}</span>`:'<span class="pill p-free">Free</span>';
+
+const R={
+async overview(){
+  const d=await api('overview');ST.cache.ov=d;const s=d.stats,r=d.revenue||{};
+  const ro=s.reports_open;const bd=document.querySelector('[data-badge="reports"]');if(bd)bd.innerHTML=ro?`<i>${ro}</i>`:'';
+  const sig=(s.signups_by_day||[]);
+  const revDays=sig.map(([d])=>[d,(r.by_day||{})[d]||0]);
+  return head('Overview','Accounts, Pro and data health at a glance.')+
+  `<div class="tiles">${tile('Accounts',ord(s.users),`${ord(s.users_7d)} new this week · ${ord(s.users_30d)} in 30 days`)}
+   ${tile('Signed in this week',ord(s.active_7d),`${ord(s.confirmed)} confirmed emails`)}
+   ${tile('Pro now',ord(s.pro),`${ord(s.paying)} paying · ${ord(s.trialing)} in free week · ${ord(s.comp)} comped`,'hl')}
+   ${tile('Monthly revenue (MRR)',r.configured&&!r.error?usd(r.mrr):'—',r.configured&&!r.error?`${usd(r.arr)} a year at this rate`:'Stripe not reachable')}
+   ${tile('Revenue, last 30 days',r.configured&&!r.error?usd(r.revenue_30d):'—',r.charges_30d!=null?`${ord(r.charges_30d)} payments${r.failed_30d?` · ${r.failed_30d} failed`:''}`:'')}
+   ${tile('Open mistake reports',ord(s.reports_open),`${ord(s.reports_total)} total`,s.reports_open?'warn':'')}
+   ${tile('Following someone',ord(s.following_users),`${ord(s.weekly_email_on)} get the weekly email`)}
+   ${tile('Past due',ord(s.past_due),`${ord(s.canceled_30d)} cancelled in 30 days`,s.past_due?'bad':'')}</div>
+   <div class="grid2" style="margin-top:14px">
+    <div class="card chart"><b>New accounts, last 30 days</b>${bars(sig,ord,'var(--D)')}<div class="cap"><span>${sig[0]?dt(sig[0][0]):''}</span><span>Today</span></div></div>
+    <div class="card chart"><b>Revenue, last 30 days</b>${revDays.some(x=>x[1])?bars(revDays,usd,'var(--good)'):'<div class="empty">No payments in the last 30 days.</div>'}<div class="cap"><span>Stripe balance: ${r.available!=null?usd(r.available):'—'} available, ${r.pending!=null?usd(r.pending):'—'} pending</span></div></div>
+   </div>
+   <h2>Data</h2><div class="card kv"><span>Records as of</span><b>${esc(fmtAsof(s.data_asof))}</b><span>Last database refresh</span><b>${s.data_updated&&s.data_updated.at?dtt(s.data_updated.at)+' ('+ago(s.data_updated.at)+')':'—'}</b>
+    <span>Billing emails</span><b>${s.billing_emails_on?'On':'Off'}</b><span>Emails sent this week</span><b>${ord(s.alert_emails_7d)} weekly updates · ${ord(s.billing_emails_7d)} billing</b></div>
+   <h2>Daily update runs</h2>${runsTable(d.runs)}`;
+},
+async people(){
+  const d=await api('users',{q:ST.uq,only:ST.uonly,offset:ST.uoff,limit:50});
+  const rows=d.rows.map(u=>`<tr><td><b>${esc(u.email)}</b>${u.confirmed?'':' <span class="pill p-bad">Unconfirmed</span>'}<div class="muted">Joined ${dt(u.created_at)} · last seen ${ago(u.last_sign_in_at)}</div></td>
+    <td>${planPill(u)}<div class="muted">${u.status==='trialing'&&u.trial_ends?'Ends '+dt(u.trial_ends):u.period_end&&u.pro?'Through '+dt(u.period_end):''}</div></td>
+    <td>${ord(u.following)}${u.home?` <span class="muted">· ${esc(u.home)}</span>`:''}</td><td>${u.weekly_email?'Yes':'No'}<div class="muted">${u.last_alert?'Last '+dt(u.last_alert):''}</div></td>
+    <td><div class="row-actions">${u.plan==='comp'&&u.pro?`<button class="btn sm ghost" data-uncomp="${u.id}">Remove comp</button>`:!u.pro?`<button class="btn sm ghost" data-comp="${u.id}">Comp Pro</button>`:''}
+     <button class="btn sm ghost" data-reset="${u.id}">Send reset</button>${u.stripe_customer?`<a class="btn sm ghost" style="text-decoration:none" target="_blank" rel="noopener" href="https://dashboard.stripe.com/customers/${esc(u.stripe_customer)}">Stripe</a>`:''}</div></td></tr>`).join('');
+  return head('People',`${ord(d.total)} accounts${ST.uq?` matching “${esc(ST.uq)}”`:''}.`)+
+   `<div class="bar"><input type="search" id="uq" placeholder="Search by email" value="${esc(ST.uq)}" aria-label="Search people">
+    <div class="seg" role="group">${[['all','Everyone'],['pro','Pro'],['trial','Free week'],['free','Free']].map(([k,l])=>`<button data-only="${k}" aria-pressed="${ST.uonly===k}">${l}</button>`).join('')}</div>
+    <button class="btn ghost" data-csv="people">Download CSV</button></div>
+   <div class="tbl"><table><thead><tr><th>Account</th><th>Plan</th><th>Following</th><th>Weekly email</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="empty">No one matches.</td></tr>'}</tbody></table></div>
+   <div class="bar" style="margin-top:12px">${ST.uoff>0?`<button class="btn ghost" data-page="-1">Newer</button>`:''}${ST.uoff+50<d.total?`<button class="btn ghost" data-page="1">Older</button>`:''}<span class="muted">${d.total?`${ST.uoff+1}–${Math.min(ST.uoff+50,d.total)} of ${ord(d.total)}`:''}</span></div>`;
+},
+async revenue(){
+  const d=ST.cache.ov||await api('overview');ST.cache.ov=d;const r=d.revenue||{},s=d.stats;
+  if(!r.configured)return head('Pro & revenue','Stripe isn’t connected.');
+  if(r.error)return head('Pro & revenue','')+`<div class="card"><b>Stripe didn’t answer.</b><div class="muted">${esc(r.error)}</div></div>`;
+  return head('Pro & revenue','Live from Stripe. Plans are $4.99 a month or $39 a year.')+
+   `<div class="tiles">${tile('MRR',usd(r.mrr),`${usd(r.arr)} a year`,'hl')}${tile('Paying subscriptions',ord(r.active),`${ord(s.monthly)} monthly · ${ord(s.yearly)} yearly`)}
+    ${tile('In free week',ord(r.trialing),'card on file, not charged yet')}${tile('Set to cancel',ord(r.canceling),'still active until period ends',r.canceling?'warn':'')}
+    ${tile('Last 30 days',usd(r.revenue_30d),`${ord(r.charges_30d)} payments · ${usd(r.refunds_30d)} refunded`)}${tile('Failed payments',ord(r.failed_30d),'last 30 days',r.failed_30d?'bad':'')}
+    ${tile('Stripe balance',usd(r.available),usd(r.pending)+' pending')}${tile('Comped Pro',ord(s.comp),'free Pro you granted')}</div>
+   <h2>Recent payments</h2><div class="tbl"><table><thead><tr><th>Date</th><th>Customer</th><th>Amount</th><th>Note</th></tr></thead><tbody>
+   ${(r.recent||[]).map(c=>`<tr><td>${dtt(c.at*1000)}</td><td>${esc(c.email||'—')}</td><td><b>${usd(c.amount)}</b>${c.refunded?' <span class="pill p-bad">Refunded</span>':''}</td><td class="muted">${esc(c.desc)}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">No payments in the last 30 days.</td></tr>'}</tbody></table></div>
+   <p class="muted" style="margin-top:12px">Refunds, disputes and payouts: <a href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener">open Stripe</a>.</p>`;
+},
+async reports(){
+  const all=await api('reports');ST.cache.reports=all;
+  const list=all.filter(r=>ST.rfilter==='all'||r.status===ST.rfilter);
+  const cnt=k=>all.filter(r=>r.status===k).length;
+  return head('Mistake reports','What readers flagged with “Report a mistake.” Fix it, then log a correction so it shows on the public corrections page.')+
+   `<div class="bar"><div class="seg" role="group">${[['open',`Open (${cnt('open')})`],['resolved',`Fixed (${cnt('resolved')})`],['dismissed',`Dismissed (${cnt('dismissed')})`],['all','All']].map(([k,l])=>`<button data-rf="${k}" aria-pressed="${ST.rfilter===k}">${l}</button>`).join('')}</div></div>
+   ${list.length?list.map(r=>`<div class="card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>${esc(r.page||'Unknown page')}</b><span class="muted">${dtt(r.created_at)}${r.email?` · <a href="mailto:${esc(r.email)}">${esc(r.email)}</a>`:''}</span></div>
+     <p style="margin:8px 0;white-space:pre-wrap">${esc(r.message)}</p>${r.note?`<div class="muted">Note: ${esc(r.note)}</div>`:''}
+     <div class="row-actions" style="margin-top:8px">${r.status==='open'?`<button class="btn sm" data-fix="${r.id}">Log correction</button><button class="btn sm ghost" data-rs="resolved" data-id="${r.id}">Mark fixed</button><button class="btn sm ghost" data-rs="dismissed" data-id="${r.id}">Dismiss</button>`:`<span class="pill ${r.status==='resolved'?'p-pro':'p-free'}">${r.status==='resolved'?'Fixed':'Dismissed'} ${dt(r.resolved_at)}</span><button class="btn sm ghost" data-rs="open" data-id="${r.id}">Reopen</button>`}</div></div>`).join(''):'<div class="card empty">Nothing here. When readers report a mistake, it lands here.</div>'}`;
+},
+async corrections(pre){
+  const list=await api('corrections');
+  const today=new Date().toISOString().slice(0,10);
+  return head('Corrections','Public log of fixes, shown on the app’s Corrections page.')+
+   `<form class="card" id="cf" style="display:grid;gap:10px;margin-bottom:16px"><b>Log a correction</b>
+    <div style="display:grid;grid-template-columns:150px 1fr;gap:10px"><input type="date" id="cd" value="${today}" aria-label="Date fixed"><input type="text" id="cp" placeholder="Page, e.g. Rep. Lisa McClain › Stock trades" value="${esc(pre?.page||'')}" aria-label="Page"></div>
+    <textarea id="cw" placeholder="What was wrong and what we changed" aria-label="What changed">${esc(pre?.what||'')}</textarea>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><input type="text" id="cb" placeholder="Before (optional)" aria-label="Before"><input type="text" id="ca" placeholder="After (optional)" aria-label="After"></div>
+    <input type="hidden" id="crid" value="${pre?.report_id||''}"><div><button class="btn" type="submit">Publish correction</button></div></form>
+   <div class="tbl"><table><thead><tr><th>Fixed</th><th>Page</th><th>What changed</th><th></th></tr></thead><tbody>
+   ${list.map(c=>`<tr><td>${dt(c.fixed_on)}</td><td>${esc(c.page)}</td><td>${esc(c.what)}${c.before||c.after?`<div class="muted">${esc(c.before||'')} → ${esc(c.after||'')}</div>`:''}</td><td><button class="btn sm ghost" data-cdel="${c.id}">Delete</button></td></tr>`).join('')||'<tr><td colspan="4" class="empty">No corrections logged yet.</td></tr>'}</tbody></table></div>`;
+},
+async signups(){
+  const list=await api('signups');ST.cache.signups=list;
+  return head('Sign-ups','Forms from the marketing site: waitlists, newsroom and team requests.')+
+   `<div class="bar"><button class="btn ghost" data-csv="signups">Download CSV</button></div>
+   <div class="tbl"><table><thead><tr><th>Date</th><th>Type</th><th>Email</th><th>Name</th><th>Organization</th><th>Note</th></tr></thead><tbody>
+   ${list.map(s=>`<tr><td>${dt(s.created_at)}</td><td><span class="pill p-free">${esc(s.kind||'')}</span></td><td><a href="mailto:${esc(s.email)}">${esc(s.email)}</a></td><td>${esc(s.name||'')}</td><td>${esc(s.org||'')}${s.team_size?` <span class="muted">· ${esc(s.team_size)}</span>`:''}</td><td class="muted">${esc(s.note||'')}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">No sign-ups yet.</td></tr>'}</tbody></table></div>`;
+},
+async emails(){
+  const d=await api('emails');
+  return head('Emails','What the app has sent: billing emails, weekly updates, and everything Resend delivered.')+
+   `<div class="grid2"><div><h2 style="margin-top:0">Billing emails</h2><div class="tbl"><table><thead><tr><th>Sent</th><th>Type</th></tr></thead><tbody>
+    ${d.billing.map(b=>`<tr><td>${dtt(b.sent_at)}</td><td>${esc(({receipt:'Receipt',failed:'Payment failed',upcoming:'Renewal reminder',canceling:'Cancellation scheduled',ended:'Pro ended',trial_ending:'Free week ending'})[b.kind]||b.kind)}</td></tr>`).join('')||'<tr><td colspan="2" class="empty">None yet.</td></tr>'}</tbody></table></div></div>
+    <div><h2 style="margin-top:0">Weekly updates</h2><div class="tbl"><table><thead><tr><th>Last sent</th><th>Account</th></tr></thead><tbody>
+    ${d.alerts.map(a=>`<tr><td>${dtt(a.last_sent)}</td><td class="muted">${esc(a.user_id.slice(0,8))}…</td></tr>`).join('')||'<tr><td colspan="2" class="empty">None yet.</td></tr>'}</tbody></table></div></div></div>
+   <h2>Delivered through Resend</h2>${d.recent.length?`<div class="tbl"><table><thead><tr><th>When</th><th>To</th><th>Subject</th><th>Status</th></tr></thead><tbody>${d.recent.map(e=>`<tr><td>${dtt(e.at)}</td><td>${esc(e.to)}</td><td>${esc(e.subject)}</td><td><span class="pill ${/bounc|complain|fail/.test(e.status||'')?'p-bad':e.status==='delivered'?'p-pro':'p-free'}">${esc(e.status||'sent')}</span></td></tr>`).join('')}</tbody></table></div>`:`<div class="card muted">${d.resend?'No recent emails, or Resend’s list isn’t available on this plan.':'Resend isn’t connected.'} See everything at <a href="https://resend.com/emails" target="_blank" rel="noopener">resend.com/emails</a>.</div>`}`;
+},
+async system(){
+  const [d,ov]=await Promise.all([api('settings'),ST.cache.ov?Promise.resolve(ST.cache.ov):api('overview')]);ST.cache.ov=ov;
+  const flag=k=>(d.flags.find(f=>f.key===k)||{}).value;
+  const billingOn=flag('billing_emails')==='on';
+  return head('System','Switches, admins, and a log of every change made here.')+
+   `<div class="grid2"><div class="card"><b>Billing emails</b><p class="muted" style="margin:4px 0 10px">Receipts, failed payments, reminders and cancellation emails sent through Resend.</p>
+     <button class="btn ${billingOn?'red':''}" data-billing="${billingOn?0:1}">${billingOn?'Turn off':'Turn on'}</button> <span class="muted">Now ${billingOn?'on':'off'}</span></div>
+    <div class="card"><b>Admins</b><div style="margin:8px 0">${d.admins.map(a=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:4px 0">${esc(a.email)}${a.email===d.me?' <span class="muted">(you)</span>':`<button class="btn sm ghost" data-arm="${esc(a.email)}">Remove</button>`}</div>`).join('')}</div>
+     <form id="af" style="display:flex;gap:8px"><input type="email" id="ae" placeholder="Add an admin by email" required style="flex:1" aria-label="Admin email"><button class="btn" type="submit">Add</button></form><p class="muted" style="margin:6px 0 0">They sign in here with their Capitol Receipts account.</p></div></div>
+   <h2>Daily update runs</h2>${runsTable(ov.runs)}
+   <h2>Quick links</h2><div class="card" style="display:flex;gap:14px;flex-wrap:wrap"><a href="https://supabase.com/dashboard/project/hxgckcriehvrolwnabpd" target="_blank" rel="noopener">Supabase</a><a href="https://dashboard.stripe.com" target="_blank" rel="noopener">Stripe</a><a href="https://vercel.com" target="_blank" rel="noopener">Vercel</a><a href="https://resend.com/emails" target="_blank" rel="noopener">Resend</a><a href="https://github.com/Capitol-Receipts/app/actions" target="_blank" rel="noopener">GitHub runs</a><a href="https://search.google.com/search-console" target="_blank" rel="noopener">Search Console</a><a href="https://analytics.google.com" target="_blank" rel="noopener">Analytics</a></div>
+   <h2>Change log</h2><div class="tbl"><table><thead><tr><th>When</th><th>Who</th><th>What</th></tr></thead><tbody>
+   ${d.log.map(l=>`<tr><td>${dtt(l.at)}</td><td>${esc(l.admin)}</td><td>${esc(l.action.replace(/_/g,' '))} <span class="muted">${l.detail?esc(JSON.stringify(l.detail)).slice(0,120):''}</span></td></tr>`).join('')||'<tr><td colspan="3" class="empty">No changes yet.</td></tr>'}</tbody></table></div>`;
+}};
+function fmtAsof(a){if(!a)return '—';if(typeof a==='string')return a;const v=a.votes||a.money||Object.values(a)[0];return v?dt(v):'—'}
+function runsTable(runs){return `<div class="tbl"><table><thead><tr><th>Job</th><th>Result</th><th>Started</th></tr></thead><tbody>${(runs||[]).map(w=>`<tr><td><a href="${esc(w.url)}" target="_blank" rel="noopener">${esc(w.name)}</a></td><td><span class="dot ${w.status!=='completed'?'run':w.conclusion==='success'?'ok':'no'}"></span>${w.status!=='completed'?'Running':esc(w.conclusion)}</td><td>${dtt(w.at)}</td></tr>`).join('')||'<tr><td colspan="3" class="empty">Couldn’t reach GitHub.</td></tr>'}</tbody></table></div>`}
+function csv(rows,cols,name){
+  const q=v=>{v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  const blob=new Blob([[cols.join(','),...rows.map(r=>cols.map(c=>q(r[c])).join(','))].join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();
+}
+
+/* ---------- actions ---------- */
+let qT;
+document.addEventListener('input',e=>{if(e.target.id==='uq'){clearTimeout(qT);qT=setTimeout(()=>{ST.uq=e.target.value.trim();ST.uoff=0;go('people').then(()=>{const i=$('#uq');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}})},300)}});
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('button');if(!t)return;
+  const run=async(fn,ok,view)=>{t.disabled=true;try{await fn();if(ok)toast(ok);ST.cache.ov=null;await go(view||ST.view)}catch(err){toast(err.message);t.disabled=false}};
+  if(t.dataset.only){ST.uonly=t.dataset.only;ST.uoff=0;go('people')}
+  else if(t.dataset.page){ST.uoff=Math.max(0,ST.uoff+50*+t.dataset.page);go('people')}
+  else if(t.dataset.comp){const sel=document.createElement('span');sel.innerHTML=`<select aria-label="Months of Pro">${[1,3,6,12].map(n=>`<option value="${n}">${n} month${n>1?'s':''}</option>`).join('')}</select> <button class="btn sm" data-compgo="${t.dataset.comp}">Grant</button>`;t.replaceWith(sel)}
+  else if(t.dataset.compgo){const months=+t.parentElement.querySelector('select').value;run(()=>api('user_comp',{user_id:t.dataset.compgo,months}),`Pro granted for ${months} month${months>1?'s':''}.`)}
+  else if(t.dataset.uncomp)run(()=>api('user_uncomp',{user_id:t.dataset.uncomp}),'Comped Pro removed.')
+  else if(t.dataset.reset)run(()=>api('user_reset',{user_id:t.dataset.reset}),'Password reset email sent.')
+  else if(t.dataset.rf){ST.rfilter=t.dataset.rf;go('reports')}
+  else if(t.dataset.rs)run(()=>api('report_update',{id:+t.dataset.id,status:t.dataset.rs}),t.dataset.rs==='open'?'Reopened.':'Updated.')
+  else if(t.dataset.fix){const r=(ST.cache.reports||[]).find(x=>x.id==t.dataset.fix);ST.view='corrections';history.replaceState(null,'','#corrections');document.querySelectorAll('[data-v]').forEach(b=>b.setAttribute('aria-current',b.dataset.v==='corrections'?'page':'false'));$('#main').innerHTML=await R.corrections({page:r?.page,what:r?.message,report_id:r?.id})}
+  else if(t.dataset.cdel)run(()=>api('correction_delete',{id:+t.dataset.cdel}),'Correction deleted.')
+  else if(t.dataset.billing)run(()=>api('set_billing_emails',{on:t.dataset.billing==='1'}),'Saved.')
+  else if(t.dataset.arm)run(()=>api('admin_remove',{email:t.dataset.arm}),'Admin removed.')
+  else if(t.dataset.csv==='people'){t.disabled=true;try{let rows=[],off=0,tot=1;while(off<tot&&off<5000){const d=await api('users',{q:ST.uq,only:ST.uonly,offset:off,limit:200});rows=rows.concat(d.rows);tot=d.total;off+=200}
+     csv(rows,['email','created_at','last_sign_in_at','confirmed','pro','status','plan','trial_ends','period_end','following','home','weekly_email'],'capitol-receipts-people.csv')}catch(err){toast(err.message)}t.disabled=false}
+  else if(t.dataset.csv==='signups')csv(ST.cache.signups||[],['created_at','kind','email','name','org','team_size','note'],'capitol-receipts-signups.csv');
+});
+document.addEventListener('submit',async e=>{
+  if(e.target.id==='cf'){e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;
+    try{await api('correction_add',{fixed_on:$('#cd').value,page:$('#cp').value,what:$('#cw').value,before:$('#cb').value,after:$('#ca').value,report_id:+$('#crid').value||null});toast('Correction published.');go('corrections')}catch(err){toast(err.message);b.disabled=false}}
+  if(e.target.id==='af'){e.preventDefault();try{await api('admin_add',{email:$('#ae').value});toast('Admin added.');go('system')}catch(err){toast(err.message)}}
+});
+sb.auth.onAuthStateChange((ev)=>{if(ev==='SIGNED_OUT')loginView()});
+boot();
+</script>
+</body>
+</html>
