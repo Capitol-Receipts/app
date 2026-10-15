@@ -29,7 +29,7 @@ function upstream(path, range, count) {
 async function withRetry(q, range, count) {
   let r = null;
   for (let i = 0; i < 2; i++) { // one retry only, so a struggling database isn't hit with a retry storm
-    try { r = await upstream(q, range, count); } catch (e) { return r; }
+    try { r = await upstream(q.startsWith('rpc/get_light?') ? q.replace('rpc/get_light?', 'rpc/get_light_json?') : q, range, count); } catch (e) { return r; }
     if (r && r.status < 500) return r;
     await new Promise((f) => setTimeout(f, 1500));
   }
