@@ -13,7 +13,7 @@ on:
 
 jobs:
   warm:
-    if: github.event_name != 'deployment_status' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production')
+    if: github.event_name != 'deployment_status' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production – capitol-receipts')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
