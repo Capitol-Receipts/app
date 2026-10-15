@@ -1,3 +1,4 @@
+if(typeof window.track!=="function")window.track=function(){};
 const DATA=window.__DATA;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));

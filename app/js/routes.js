@@ -24,11 +24,26 @@ function routeReady(r){
   if(/^[A-Z]\d{6}$/.test(r))return !!byId[r];
   return true;
 }
+/* analytics: count each screen as a page view (Google Analytics). Runs after every other render wrapper,
+   so screens drawn by later modules (Pro, radar, elections…) are counted too. */
+let _lastRoute=null;
+function gaPageView(){
+  try{
+    const route=(S.stack.at(-1)||S.tab||'home');
+    if(route!==_lastRoute&&typeof gtag==='function'){
+      _lastRoute=route;
+      const title=(document.querySelector('#app .pnav .mid')?.textContent||document.querySelector('#app h1')?.textContent||route).trim().slice(0,90);
+      gtag('event','page_view',{page_title:title,page_location:location.origin+'/'+encodeURIComponent(route),page_path:'/'+route});
+      if(route==='pro'&&typeof PRO!=='undefined')gtag('event','view_item',{currency:'USD',value:PRO.price.y,items:[{item_id:'pro_yearly',item_name:'Capitol Receipts Pro',price:PRO.price.y}]});
+    }
+  }catch(e){}
+}
 (function(){
   try{if(new URLSearchParams(location.search).get('lang')==='es'&&S.lang!=='es'){S.lang='es';store.set('lang','es')}}catch(e){}
   const _renderRt=render;
   render=function(){
     _renderRt();
+    gaPageView();
     if(window.__HOLD)return;
     try{const p=pathFor(S.stack.at(-1));const cur=location.pathname;
       /* ?app=1 keeps a reload in the app; without it the address shows the public page on www */

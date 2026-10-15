@@ -1,7 +1,7 @@
 // Stripe tells us when someone subscribes, renews, changes plan or cancels; we keep public.subscriptions in step
 // and send our own branded billing emails through Resend (receipt, failed payment, yearly renewal reminder,
 // cancellation scheduled, Pro ended, free week ending). Emails only go out while app_meta.billing_emails = "on".
-// Needs STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET and RESEND_API_KEY.
+// Needs STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET and RESEND_API_KEY (GA_API_SECRET optional, for Google Analytics).
 // Events: checkout.session.completed, customer.subscription.created/updated/deleted, invoice.paid,
 // invoice.payment_failed, invoice.upcoming, customer.subscription.trial_will_end.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
@@ -14,6 +14,10 @@ const SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
 const RESEND = Deno.env.get("RESEND_API_KEY") || "";
 const FROM = "Capitol Receipts <billing@capitolreceipts.com>";
 const REPLY_TO = "admin@squaredawaylabs.com";
+// Google Analytics (Measurement Protocol): trial starts, purchases, renewals and cancellations, sent from here so
+// they count even when the charge happens days after the visit. Needs GA_API_SECRET; without it nothing is sent.
+const GA_ID = "G-2PVF462YXR";
+const GA_SECRET = Deno.env.get("GA_API_SECRET") || "";
 
 async function verify(body: string, header: string | null) {
   if (!header || !SECRET) return false;
@@ -155,6 +159,60 @@ async function buildEmail(db: DB, ev: any): Promise<{ kind: string; userId: stri
   return null;
 }
 
+// one Google Analytics event per Stripe event; purchases are de-duplicated by GA on transaction_id
+async function gaEventFor(db: DB, ev: any): Promise<{ sub: any; userId: string | null; name: string; params: Record<string, unknown> } | null> {
+  const o = ev.data.object;
+  const item = (sub: any, plan: M.Plan, cents: number) => ({ item_id: "pro_" + plan, item_name: "Capitol Receipts Pro", item_variant: plan, price: cents / 100, quantity: 1 });
+  if (ev.type === "checkout.session.completed") {
+    if (o.mode !== "subscription" || !o.subscription) return null;
+    const sub = await getSub(o.subscription).catch(() => null);
+    if (!sub || sub.status !== "trialing") return null; // paid right away: invoice.paid sends the purchase
+    const plan = planOfSub(sub), cents = sub.items?.data?.[0]?.price?.unit_amount || 0;
+    return { sub, userId: o.client_reference_id || await userFor(db, sub.customer, sub), name: "trial_start",
+      params: { currency: "USD", value: cents / 100, plan, items: [item(sub, plan, cents)] } };
+  }
+  if (ev.type === "invoice.paid") {
+    if (!o.amount_paid) return null; // the $0 invoice at the start of a free week
+    const subId = subIdOfInvoice(o);
+    const sub = subId ? await getSub(subId).catch(() => null) : null;
+    const line = o.lines?.data?.find((l: any) => (l.amount || 0) > 0) || o.lines?.data?.[0];
+    const plan = sub ? planOfSub(sub) : planOfLine(line);
+    const kind = o.billing_reason === "subscription_create" ? "new" : o.billing_reason === "subscription_cycle" ? "renewal" : (o.billing_reason || "other");
+    return { sub, userId: await userFor(db, o.customer, sub), name: "purchase",
+      params: { transaction_id: o.id, currency: (o.currency || "usd").toUpperCase(), value: o.amount_paid / 100, plan, purchase_type: kind, items: [item(sub, plan, o.amount_paid)] } };
+  }
+  if (ev.type === "customer.subscription.updated") {
+    const prev = ev.data.previous_attributes || {};
+    const nowCancel = !!(o.cancel_at_period_end || o.cancel_at);
+    const wasCancel = ("cancel_at_period_end" in prev || "cancel_at" in prev) ? !!(prev.cancel_at_period_end || prev.cancel_at) : nowCancel;
+    if (nowCancel && !wasCancel) return { sub: o, userId: await userFor(db, o.customer, o), name: "cancel_subscription", params: { plan: planOfSub(o), during_trial: o.status === "trialing" ? 1 : 0 } };
+    return null;
+  }
+  if (ev.type === "customer.subscription.deleted") {
+    return { sub: o, userId: await userFor(db, o.customer, o), name: "subscription_ended", params: { plan: planOfSub(o) } };
+  }
+  return null;
+}
+
+async function ga(db: DB, ev: any) {
+  if (!GA_SECRET) return "ga off";
+  try {
+    const e = await gaEventFor(db, ev);
+    if (!e) return "no ga event";
+    const md = e.sub?.metadata || ev.data.object?.metadata || {};
+    // GA needs a visitor id; if checkout didn't pass one, use a stable stand-in so the event still counts
+    const cid = md.ga_cid || (e.userId ? `cr.${e.userId}` : `cr.${ev.id}`);
+    const params: Record<string, unknown> = { ...e.params, engagement_time_msec: 1 };
+    if (md.ga_sid && e.name === "trial_start") params.session_id = md.ga_sid;
+    const body: Record<string, unknown> = { client_id: cid, timestamp_micros: (ev.created || Math.floor(Date.now() / 1000)) * 1e6, events: [{ name: e.name, params }] };
+    if (e.userId) body.user_id = e.userId;
+    const r = await fetch(`https://www.google-analytics.com/mp/collect?measurement_id=${GA_ID}&api_secret=${encodeURIComponent(GA_SECRET)}`, { method: "POST", body: JSON.stringify(body) });
+    return r.ok ? `ga ${e.name}` : `ga ${r.status}`;
+  } catch (err) {
+    return `ga error ${String((err as Error).message || err).slice(0, 80)}`; // analytics must never fail the webhook
+  }
+}
+
 async function emailsOn(db: DB) {
   const { data } = await db.from("app_meta").select("value").eq("key", "billing_emails").maybeSingle();
   return data?.value === "on";
@@ -187,7 +245,8 @@ Deno.serve(async (req) => {
   try {
     await sync(db, ev);
     const result = await send(db, ev);
-    return new Response(`ok · ${result}`);
+    const g = await ga(db, ev);
+    return new Response(`ok · ${result} · ${g}`);
   } catch (e) {
     return new Response(String((e as Error).message || e), { status: 500 });
   }

@@ -60,6 +60,11 @@ Deno.serve(async (req) => {
       success_url: back + (back.includes("?") ? "&" : "?") + "paid=1",
       cancel_url: back,
     };
+    // Google Analytics visitor ids, so the payment can be credited to the visit (and ad or post) that led to it
+    const gaCid = typeof body.ga_cid === "string" && /^[\w.\-]{1,64}$/.test(body.ga_cid) ? body.ga_cid : "";
+    const gaSid = typeof body.ga_sid === "string" && /^\d{1,20}$/.test(body.ga_sid) ? body.ga_sid : "";
+    if (gaCid) { p["subscription_data[metadata][ga_cid]"] = gaCid; p["metadata[ga_cid]"] = gaCid; }
+    if (gaSid) { p["subscription_data[metadata][ga_sid]"] = gaSid; p["metadata[ga_sid]"] = gaSid; }
     if (sub?.stripe_customer) p.customer = sub.stripe_customer; else if (user.email) p.customer_email = user.email;
     // free week: only for accounts that have never had Pro; a card is always collected, first charge after 7 days
     if (body.trial && !sub) {

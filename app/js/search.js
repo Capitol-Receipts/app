@@ -6,7 +6,7 @@ const SI={
  ...NAVI
 };
 let RECENT=store.get('recent',[]);
-const saveRecent=q=>{q=q.trim();if(q.length<2)return;RECENT=[q,...RECENT.filter(x=>x.toLowerCase()!==q.toLowerCase())].slice(0,6);store.set('recent',RECENT)};
+const saveRecent=q=>{q=q.trim();if(q.length<2)return;track('search',{search_term:q.slice(0,100)});RECENT=[q,...RECENT.filter(x=>x.toLowerCase()!==q.toLowerCase())].slice(0,6);store.set('recent',RECENT)};
 const hl=(t,q)=>fzMark(t,q);
 const SCOPES=[['All','Everything',null],['Congress','Congress','people'],['Senate','Senate','senate'],['House','House','house'],['Appointees','Appointees','badge'],['History','History','clock']];
 function searchHeader(ph){

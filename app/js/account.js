@@ -18,6 +18,7 @@ async function acctInit(){
 /* while signed out, follows and saved reps aren't shown; signing in restores the account's own */
 async function acctSet(u){
   ACCT.user=u;
+  try{gtag('set',{user_id:u?u.id:null})}catch(e){}
   if(!u){S.following=new Set();render();return}
   let row=null;
   try{const r=await ACCT.client.from('user_prefs').select('zip,home,dist,following').eq('user_id',u.id).maybeSingle();row=r.data}catch(e){console.warn(e)}
@@ -69,6 +70,7 @@ async function authSubmit(){
     if(ACCT.mode==='up'){
       const {data,error}=await ACCT.client.auth.signUp({email:em,password:pw,options:{emailRedirectTo:back}});
       if(error)throw error;
+      track('sign_up',{method:'email'});
       if(data.session){$('#sheet').hidden=true;return}
       say('Almost done. We sent a link to '+em+'. Open it to confirm your email, then sign in here.',true);
     }else if(ACCT.mode==='reset'){
@@ -78,6 +80,7 @@ async function authSubmit(){
     }else{
       const {error}=await ACCT.client.auth.signInWithPassword({email:em,password:pw});
       if(error)throw error;
+      track('login',{method:'email'});
       $('#sheet').hidden=true;
     }
   }catch(e){

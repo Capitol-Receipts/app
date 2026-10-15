@@ -9,7 +9,26 @@
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
 
-  gtag('config', 'G-2PVF462YXR');
+  gtag('config', 'G-2PVF462YXR', { linker: { domains: ['capitolreceipts.com', 'www.capitolreceipts.com', 'app.capitolreceipts.com'] } });
+  /* event helpers: track(name, params); gaIds() gives the visitor's GA ids so Stripe purchases can be credited to the right visit */
+  window.track = function (n, p) { try { gtag('event', n, p || {}); } catch (e) {} };
+  window.gaIds = function () {
+    var get = function (k) { return new Promise(function (ok) { var done = false; try { gtag('get', 'G-2PVF462YXR', k, function (v) { done = true; ok(v || ''); }); } catch (e) {} setTimeout(function () { if (!done) ok(''); }, 800); }); };
+    return Promise.all([get('client_id'), get('session_id')]).then(function (r) { return { cid: String(r[0] || ''), sid: String(r[1] || '') }; });
+  };
+  window.addEventListener('click', function (e) {
+    try {
+      var el = e.target.closest && e.target.closest('[data-follow],[data-share],[data-lang],[data-try],[data-ptype],[data-rank]');
+      if (!el) return;
+      var d = el.dataset;
+      if (d.follow) track(typeof S !== 'undefined' && S.following && S.following.has(d.follow) ? 'unfollow' : 'follow', { item_id: d.follow });
+      else if ('share' in d) track('share', { content_type: 'page', item_id: location.pathname });
+      else if (d.lang) track('change_language', { language: d.lang });
+      else if (d.try) track('search', { search_term: d.try, source: 'suggestion' });
+      else if (d.ptype) track('filter_pacs', { type: d.ptype });
+      else if (d.rank) track('view_ranking', { ranking: d.rank });
+    } catch (err) {}
+  }, true);
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Capitol Receipts: Who Funds Congress, Their Stock Trades & Votes</title>
@@ -31,10 +50,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Schibsted+Grotesk:wght@500;600;700;800&display=swap">
-<link rel="stylesheet" href="/app/css/style.css?v=202610151425">
-<link rel="stylesheet" href="/app/css/friendly.css?v=202610151425">
-<link rel="stylesheet" href="/app/css/desktop.css?v=202610151425">
-<link rel="stylesheet" href="/app/css/hdr.css?v=202610151425" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="/app/css/style.css?v=202610151845">
+<link rel="stylesheet" href="/app/css/friendly.css?v=202610151845">
+<link rel="stylesheet" href="/app/css/desktop.css?v=202610151845">
+<link rel="stylesheet" href="/app/css/hdr.css?v=202610151845" media="print" onload="this.media='all'">
 <style>
   .boot{min-height:70vh;display:grid;place-items:center;text-align:center;padding:24px;font-family:"Schibsted Grotesk",system-ui,sans-serif;color:var(--soft,#5b6069)}
   .boot b{display:block;font:800 26px "Barlow Condensed",system-ui,sans-serif;color:var(--ink,#0e1116);letter-spacing:-.01em}
@@ -77,7 +96,7 @@ SB.all=async(path,size=1000)=>{let out=[],from=0;for(;;){const rows=await SB.get
 SB.rpc=(fn,args)=>fn==='get_light'?SB.get('rpc/get_light?kind='+encodeURIComponent(args.kind)):SB.req('rpc/'+fn,{method:'POST',body:JSON.stringify(args||{})});
 SB.meta=async keys=>Object.fromEntries((await SB.get('app_meta?select=key,value&key=in.('+keys.join(',')+')')).map(r=>[r.key,r.value]));
 
-const APP_VER='202610151425'; /* bump on every release so browsers and the CDN fetch fresh files */
+const APP_VER='202610151845'; /* bump on every release so browsers and the CDN fetch fresh files */
 const APP_SCRIPTS=['fuzzy','core','party','hist','ui','nav','pages','search','leaders','linkify','pacs','elections','companies','friendly','votes','places','extras','glossary_es','es_dict','i18n','db','account','trust','pro','desktop','routes'];
 async function boot(){
   const msg=document.getElementById('bootmsg');

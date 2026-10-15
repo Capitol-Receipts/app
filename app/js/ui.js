@@ -102,6 +102,7 @@ async function setZip(v){
   let r=null;try{r=await zipLookup(v)}catch(e){if(msg)msg.textContent='Couldn’t reach the server. Check your connection and try again.';return}
   if(msg)msg.textContent='';
   if(!r){if(msg)msg.textContent='We couldn’t find that ZIP code. Check it, or pick your state below.';return}
+  track('find_my_reps',{state:r.st});
   S.home=r.st;S.dist=r.d;S.zip=v;S.zipApprox=!!r.approx;store.set('home',S.home);store.set('dist',S.dist);store.set('zip',S.zip);
   if(['home','following','search'].includes(S.tab)){render()}
 }

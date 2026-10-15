@@ -1,3 +1,16 @@
+/* Google Analytics events: sign-ups, clicks into the app, Pro interest, quiz answers */
+(function(){
+  function track(n,p){try{if(typeof gtag==='function')gtag('event',n,p||{})}catch(e){}}
+  window.crTrack=track;
+  document.addEventListener('click',function(e){
+    var a=e.target.closest&&e.target.closest('a,button');if(!a)return;
+    var href=a.getAttribute('href')||'',text=(a.textContent||'').trim().slice(0,60),page=location.pathname;
+    if(/app\.capitolreceipts\.com/.test(href)){
+      track(/go=pro|pro/i.test(href+' '+text)?'select_promotion':'open_app',{link_text:text,page:page,promotion_id:'pro'});
+    }else if(/^\/pricing/.test(href)){track('view_pricing_click',{link_text:text,page:page})}
+    else if(/receipt/i.test(text)&&a.tagName==='BUTTON'&&/quiz/.test(page)){track('quiz_answer',{page:page})}
+  },true);
+})();
 /* Sign-up forms: save to Supabase (insert only; nobody can read the list from the browser). */
 (function(){
   var URL='https://hxgckcriehvrolwnabpd.supabase.co/rest/v1/signups';
@@ -20,6 +33,7 @@
         .then(function(r){
           if(!r.ok)throw new Error(r.status);
           form.reset();
+          if(window.crTrack)window.crTrack('generate_lead',{form:form.dataset.signup});
           msg(form,form.dataset.signup==='newsroom'?'Thanks! We’ll be in touch within two business days.':'You’re on the list. Watch your inbox.',true);
         })
         .catch(function(){msg(form,'That didn’t go through. Check the email address and try again.',false)})

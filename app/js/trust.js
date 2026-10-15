@@ -117,17 +117,4 @@ nextSheet=function(){
    ['Senate ethics and inspector general reports','Adding these as they’re published in a consistent format.']
   ].map(([a,b])=>`<div class="item"><h3>${a}</h3><p>${b}</p></div>`).join('')}</div>`);
 };
-/* analytics: count each screen as a page view (Google Analytics) */
-let _lastRoute=null;
-const _renderGA=render;
-render=function(){
-  _renderGA();
-  try{
-    const route=(S.stack.at(-1)||S.tab||'home');
-    if(route!==_lastRoute&&typeof gtag==='function'){
-      _lastRoute=route;
-      const title=(document.querySelector('#app .pnav .mid')?.textContent||document.querySelector('#app h1')?.textContent||route).trim().slice(0,90);
-      gtag('event','page_view',{page_title:title,page_location:location.origin+'/'+encodeURIComponent(route),page_path:'/'+route});
-    }
-  }catch(e){}
-};
+

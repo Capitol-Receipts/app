@@ -35,7 +35,10 @@ async function billing(action,trial){
   const msg=$('#promsg');if(msg)msg.textContent='Opening secure checkout…';
   try{
     const {data:{session}}=await ACCT.client.auth.getSession();
-    const r=await fetch(SB.url+'/functions/v1/billing',{method:'POST',headers:{'Content-Type':'application/json',apikey:SB.key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({action,trial:!!trial,cycle:PRO.cycle,back:location.origin+'/?go=pro'})});
+    let ga={cid:'',sid:''};
+    if(action==='checkout'){const v=PRO.cycle==='m'?PRO.price.m:PRO.price.y;track('begin_checkout',{currency:'USD',value:v,trial:!!trial,items:[{item_id:'pro_'+(PRO.cycle==='m'?'monthly':'yearly'),item_name:'Capitol Receipts Pro',price:v,quantity:1}]});try{ga=await gaIds()}catch(e){}}
+    else track('manage_billing');
+    const r=await fetch(SB.url+'/functions/v1/billing',{method:'POST',headers:{'Content-Type':'application/json',apikey:SB.key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({action,trial:!!trial,cycle:PRO.cycle,back:location.origin+'/?go=pro',ga_cid:ga.cid,ga_sid:ga.sid})});
     const j=await r.json().catch(()=>({}));
     if(j.url){location.href=j.url;return}
     if(msg)msg.textContent=j.error==='not_configured'?'Card payments are being switched on. Try again shortly.':'Checkout didn’t open. Try again in a moment.';
@@ -55,6 +58,7 @@ function planPicker(){
 }
 function featList(){return `<div class="pfeats">${PRO_FEATS.map(([i,t,d])=>`<div class="pfeat"><span class="pfi">${PI[i]}</span><span><b>${t}</b><span>${d}</span></span></div>`).join('')}</div>`}
 function needPro(why){
+  track('view_promotion',{promotion_id:'pro',promotion_name:String(why||'').slice(0,90)});
   if(!signedIn())return authSheet('up',why+' Create a free account, then try Pro free for 7 days.');
   openSheet('Capitol Receipts Pro',`<div class="psheet"><p class="pwhy">${esc(why)}</p>${planPicker()}${featList()}<p class="pfine">Every record stays free. Pro adds the alerts and tools on top.</p></div>`);
 }
@@ -133,6 +137,7 @@ const TH=['Date traded','Member','Party','State','Chamber','Type','Ticker','Asse
 const trow=(m,t)=>[t[0],m.name,m.party,m.state,m.chamber,t[1],t[2],t[3],t[4],t[5],t[6],t[7]||''];
 function doCsv(kind){
   if(!isPro())return needPro('Downloading data is part of Pro.');
+  track('download_data',{kind:String(kind).split(':')[0]});
   const day=new Date().toISOString().slice(0,10);
   if(kind==='radar')return csvDownload('capitol-receipts-radar-'+day,['Reported','Date traded','Member','Party','State','Chamber','Type','Ticker','Asset','Low','High','Owner','Committee-linked industry'],(PRO.feed||[]).map(t=>[String(t.first_seen).slice(0,10),t.tdate,t.name,t.party,t.state,t.chamber,t.kind,t.ticker,t.asset,t.lo,t.hi,t.owner,t.comm||'']));
   if(kind.startsWith('stock:')){const tk=kind.slice(6);return csvDownload('capitol-receipts-'+tk+'-trades-'+day,TH,allTrades().filter(([m,t])=>t[2]===tk).map(([m,t])=>trow(m,t)))}
@@ -144,7 +149,7 @@ function saveStocks(){if(ACCT.user&&ACCT.client)ACCT.client.from('user_prefs').u
 function watch(t){
   t=(t||'').toUpperCase().replace(/[^A-Z.\-]/g,'').slice(0,8);if(!t)return;
   if(!isPro())return needPro('The stock watchlist is part of Pro. We’ll email you when anyone in Congress trades the stocks you pick.');
-  S.stocks=S.stocks||[];if(!S.stocks.includes(t)){S.stocks.push(t);saveStocks();toast(`Watching ${t}. You’ll get an email when a member of Congress trades it.`)}render();
+  S.stocks=S.stocks||[];if(!S.stocks.includes(t)){S.stocks.push(t);saveStocks();track('add_to_watchlist',{ticker:t});toast(`Watching ${t}. You’ll get an email when a member of Congress trades it.`)}render();
 }
 function unwatch(t){S.stocks=(S.stocks||[]).filter(x=>x!==t);saveStocks();render()}
 
