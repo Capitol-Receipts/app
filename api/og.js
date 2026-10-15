@@ -132,7 +132,7 @@ module.exports = async (req, res) => {
   const t = u.searchParams.get('t') || '', id = decodeURIComponent((u.searchParams.get('id') || '').replace(/\.png$/, ''));
   try {
     const el = BUILD[t] ? await BUILD[t](id) : null;
-    if (!el) { res.statusCode = 302; res.setHeader('Location', 'https://www.capitolreceipts.com/img/share.png'); res.setHeader('Cache-Control', 'public, max-age=3600'); return res.end(); }
+    if (!el) { res.statusCode = 302; res.setHeader('Location', 'https://www.capitolreceipts.com/img/share.png?v=20261015'); res.setHeader('Cache-Control', 'public, max-age=3600'); return res.end(); }
     const satori = (await import('satori')).default;
     const svg = await satori(el, { width: 1200, height: 630, fonts: fonts() });
     const buf = new Resvg(svg, { fitTo: { mode: 'width', value: 1200 } }).render().asPng();
@@ -142,7 +142,7 @@ module.exports = async (req, res) => {
     res.end(buf);
   } catch (e) {
     console.error('og', t, id, e);
-    res.statusCode = 302; res.setHeader('Location', 'https://www.capitolreceipts.com/img/share.png'); res.setHeader('Cache-Control', 'no-store'); res.end();
+    res.statusCode = 302; res.setHeader('Location', 'https://www.capitolreceipts.com/img/share.png?v=20261015'); res.setHeader('Cache-Control', 'no-store'); res.end();
   }
 };
 module.exports.TYPES = TYPES;

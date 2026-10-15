@@ -13,7 +13,7 @@ SITE_DIR = os.path.join(ROOT, 'site')
 SITE, APP = 'https://www.capitolreceipts.com', 'https://app.capitolreceipts.com'
 SB = 'https://hxgckcriehvrolwnabpd.supabase.co/rest/v1/'
 KEY = 'sb_publishable_jiwF5q1sFMuaGXLKg6FKAQ_3rCjcZ1J'  # public, read-only
-IMG = f'{SITE}/img/share.png'
+IMG = f'{SITE}/img/share.png?v=20261015'
 
 PAGES = {  # file -> (path, title, description, breadcrumb name)
     'index.html': ('/', 'Capitol Receipts: Who Funds Congress, Stock Trades & Votes',

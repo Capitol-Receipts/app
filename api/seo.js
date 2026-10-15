@@ -88,7 +88,7 @@ function frame(pg, mode) {
 
 function head(pg) {
   const url = abs(pg.path);
-  const img = pg.image || `${SITE}/img/share.png`;
+  const img = pg.image || `${SITE}/img/share.png?v=20261015`;
   const crumbs = [[pg.lang === 'es' ? 'Inicio' : 'Home', HOST + '/'], ...(pg.crumbs || []).map(c => [c[0], c[1] || url])];
   const ld = [...(pg.ld || []), { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c[0], item: c[1] })) }];
   const alt = pg.alt ? [`<link rel="alternate" hreflang="en" href="${esc(abs(pg.alt.en))}">`, `<link rel="alternate" hreflang="es" href="${esc(abs(pg.alt.es))}">`, `<link rel="alternate" hreflang="x-default" href="${esc(abs(pg.alt.en))}">`] : [];
