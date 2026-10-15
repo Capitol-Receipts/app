@@ -283,10 +283,10 @@ div.mphoto{cursor:default}
 .isbars .hbar{padding:7px 0}
 .lcards{display:grid;grid-template-columns:1fr;gap:8px}
 @media (min-width:1100px){.lcards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
-.lcard{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;text-align:left;border:1px solid var(--hair);background:var(--surface);border-radius:14px;padding:12px 16px;cursor:pointer;color:inherit;font:inherit}
-.lcard:hover{box-shadow:0 6px 18px rgba(16,24,40,.07)}
+.lbcard{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;text-align:left;border:1px solid var(--hair);background:var(--surface);border-radius:14px;padding:12px 16px;cursor:pointer;color:inherit;font:inherit}
+.lbcard:hover{box-shadow:0 6px 18px rgba(16,24,40,.07)}
 .lrank{font:700 15px/1 var(--stat,inherit);color:var(--soft);min-width:22px;text-align:center}
-.lmain{display:flex;flex-direction:column;gap:6px;min-width:0}.lmain b{font-size:15.5px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lbmain{display:flex;flex-direction:column;gap:6px;min-width:0}.lbmain b{font-size:15.5px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lbar{height:6px;background:var(--seg);border-radius:4px;overflow:hidden}.lbar i{display:block;height:100%;background:var(--c-influence);border-radius:4px}
 .liss{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}.liss em{font-style:normal;font-size:12px;background:var(--seg);color:var(--ink2);border-radius:999px;padding:3px 8px}.liss small{font-size:12px;color:var(--soft)}
 .lval{font:700 17px/1 var(--stat,inherit);font-variant-numeric:tabular-nums}
