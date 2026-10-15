@@ -2,7 +2,7 @@
 const CO={idx:null,loading:null,full:{},byLob:{},byPac:{},byTick:{}};
 function loadCompanies(){
   if(CO.idx||CO.loading)return CO.loading;
-  CO.loading=SB.all('companies?select=id,name,score,tickers,data->>lob,data->>pac&order=score.desc').then(rows=>{
+  CO.loading=SB.all('companies?select=id,name,score,tickers,data->>lob,data->>pac,data->>lobS,data->>pacT,data->>trN&order=score.desc').then(rows=>{
     CO.idx=rows;rows.forEach(r=>{if(r.lob)CO.byLob[r.lob]=r.id;if(r.pac)CO.byPac[r.pac]=r.id;(r.tickers||[]).forEach(t=>{if(!CO.byTick[t])CO.byTick[t]=r.id})});
     render();
   }).catch(e=>{console.warn(e);CO.loading=null});
@@ -21,7 +21,8 @@ function companiesScreen(){
    <div class="lbanner bg-old"><h1>Companies</h1><span>Everything the public record shows about a company and Congress in one place: its PAC, its lobbying, its employees' donations, who in Congress trades its stock, and its federal contracts.</span></div>
    <div class="sfield" style="margin-top:14px"><input id="cq" class="search" type="search" placeholder="Search a company or stock ticker" value="${esc(S.cq||'')}" aria-label="Search companies"></div>
    ${CO.idx?`<section class="sec"><div class="sh"><h2>${q?'Matching companies':'Most involved in Washington'}</h2><span class="cap" style="padding:0">${ord(list.length)}</span></div>
-   <div class="group">${shown.map((c,i)=>`<button class="row" data-co="${c.id}" style="grid-template-columns:auto 1fr auto"><span class="rank">${i+1}</span><span style="min-width:0"><span class="t">${esc(c.name)}</span>${(c.tickers||[]).length?`<br><span class="s">${esc(c.tickers.join(' · '))}</span>`:''}</span>${chev}</button>`).join('')||'<div class="empty">No companies match.</div>'}</div>
+   <div class="lt-head lt-rows lt-co"><span>#</span><span>Company</span><span>Stock</span><span class="r">Lobbying</span><span class="r">PAC giving</span><span class="r">Trades by Congress</span></div>
+   <div class="group tbl tco">${shown.map((c,i)=>`<button class="row" data-co="${c.id}" style="grid-template-columns:auto 1fr auto"><span class="rank">${i+1}</span><span style="min-width:0"><span class="t">${esc(c.name)}</span>${(c.tickers||[]).length?`<br><span class="s">${esc(c.tickers.join(' · '))}</span>`:''}</span><span class="tx ttick">${esc((c.tickers||[]).slice(0,2).join(' · '))}</span><span class="tx tnum">${+c.lobS?M(+c.lobS):'—'}</span><span class="tx tnum">${+c.pacT?M(+c.pacT):'—'}</span><span class="tx tnum">${+c.trN?ord(+c.trN):'—'}</span>${chev}</button>`).join('')||'<div class="empty">No companies match.</div>'}</div>
    ${list.length>shown.length?`<button class="more" data-cmore>Show more</button>`:''}
    <div class="cap">Ranked by combined lobbying spending, PAC giving and stock trades by members of Congress.</div></section>`:'<div class="calm">Loading companies…</div>'}</div>`;
 }

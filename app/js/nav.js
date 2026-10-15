@@ -119,7 +119,7 @@ function billsScreen(){
   if(q&&S.bmode!=='lobbied')list=list.filter(x=>fz(billTitle(x.k)+' '+H.bills[x.k][0],q)||bkParse(x.k).label.toLowerCase().replace(/[.\s]/g,'').includes(q.replace(/[.\s]/g,'')));
   const congs=Array.from({length:40},(_,i)=>119-i);
   const mx=S.bmode==='lobbied'?Math.max(1,...list.slice(0,1).map(x=>x.n)):1;
-  const lobExtra=x=>`<span class="blob"><span class="blobbar"><i style="width:${(x.n/mx*100).toFixed(1)}%"></i></span><b>${ord(x.n)}</b> groups lobbied on it</span>`;
+  const lobExtra=x=>`<span class="blob"><span class="blobbar"><i style="width:${(x.n/mx*100).toFixed(1)}%"></i></span><b>${ord(x.n)}</b><small> groups lobbied on it</small></span>`;
   const cards=list.slice(0,S.limit).map(x=>S.bmode==='lobbied'?(hasBill(x.k)?billCard(x.k,lobExtra(x)):`<button class="bcard" data-bill="${x.b}"><span class="bctop"><span class="bnum">${esc(x.b)}</span></span><span class="btitle">${esc(billName(x.b))}</span>${lobExtra(x)}</button>`):billCard(x.k)).join('');
   return `<header class="pnav scrolled" id="nav"><div class="in"><button data-back aria-label="Back">${ICONS.back}</button><span class="mid" style="opacity:1">Bills & laws</span><button data-menu aria-label="Menu">${MENU_ICON}</button></div></header>
    <div class="wrap" style="padding-top:calc(var(--navh) + 8px)">
@@ -129,7 +129,8 @@ function billsScreen(){
    ${list.length?billStats(list.map(x=>x.k).filter(k=>H.bills[k]),S.bmode):''}
    <input class="search" id="bq" type="search" placeholder="Search bill names or numbers" value="${esc(S.bq||'')}" aria-label="Search bills" autocomplete="off" style="margin-top:14px">
    <section class="sec wide"><div class="sh"><h2>${{lobbied:'Most-lobbied bills',new:'New laws',laws:S.bcong==='All'?'Every law since 1947':'Laws from '+congLabel(S.bcong),veto:'Vetoed bills'}[S.bmode]}</h2><span class="cap" style="padding:0">${ord(list.length)}</span></div>
-    <div class="bcards">${cards||'<div class="empty">No bills match.</div>'}</div>
+    ${cards?`<div class="lt-head lt-bills${S.bmode==='lobbied'?' ranked':''}">${S.bmode==='lobbied'?'<span class="h-rk">#</span>':''}<span class="h-num">Number</span><span class="h-title">Bill</span><span class="h-st">Status</span>${S.bmode==='lobbied'?'<span class="h-lob">Groups lobbying</span>':''}<span class="h-sp">Sponsor</span></div>`:''}
+    <div class="bcards tbl${S.bmode==='lobbied'?' ranked':''}">${cards||'<div class="empty">No bills match.</div>'}</div>
     ${list.length>S.limit?`<button class="more" data-more>Show ${Math.min(list.length-S.limit,100)} more</button>`:''}
     <div class="cap">${cap}</div></section></div>`;
 }

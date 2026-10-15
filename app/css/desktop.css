@@ -56,16 +56,62 @@
   .dcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 28px;align-items:start}
   .dcol{min-width:0}
   .dcol>.pe-card:first-child{margin-top:28px}
-  .group.biglist{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-  .group.biglist>.row::before{display:none}
-  .group.biglist>.row{border-bottom:1px solid var(--hair)}
-  .group.biglist>.row:nth-child(odd){border-right:1px solid var(--hair)}
+  .group.biglist>.row:hover{background:var(--seg)}
 }
 @media (min-width:1700px){
   .wrap{padding-left:56px;padding-right:56px}
-  .group.biglist{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .group.biglist>.row:nth-child(odd){border-right:0}
-  .group.biglist>.row:not(:nth-child(3n)){border-right:1px solid var(--hair)}
   .fgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
   .dstats.d8{grid-template-columns:repeat(8,minmax(0,1fr))!important}
+}
+
+/* ================= Long lists as ranked tables (desktop) ================= */
+.lt-head,.tbl .tx{display:none}
+@media (min-width:1024px){
+  .lt-head{display:grid;gap:14px;align-items:end;position:sticky;top:var(--navh,56px);z-index:4;background:var(--surface);padding:12px 16px 10px;margin-top:4px;border:1px solid var(--hair);border-bottom:1px solid var(--hair);border-radius:16px 16px 0 0;font:700 11.5px/1.2 var(--ui,inherit);letter-spacing:.05em;text-transform:uppercase;color:var(--soft)}
+  .lt-head .r{text-align:right}
+  .lt-head+.group.tbl,.lt-head+.bcards.tbl,.lt-head+.lcards.tbl{border-top-left-radius:0;border-top-right-radius:0;margin-top:0}
+  /* rows: PACs, companies */
+  .group.tbl{border:1px solid var(--hair);border-top:0;border-radius:0 0 16px 16px;overflow:hidden}
+  .group.tbl>.row{gap:14px;padding:11px 16px;align-items:center}
+  .group.tbl>.row::before{display:none}
+  .group.tbl>.row+.row{border-top:1px solid var(--hair)}
+  .group.tbl>.row:hover{background:var(--seg)}
+  .group.tbl>.row br,.group.tbl>.row .s{display:none}
+  .group.tbl .rank{font:700 15px var(--stat,inherit);width:auto}
+  .group.tbl .tx{display:block;min-width:0}
+  .group.tbl .val{text-align:right;font-size:17px}
+  .ttype em{font-style:normal;font-size:12.5px;font-weight:600;background:var(--seg);color:var(--ink2);border-radius:999px;padding:3px 10px;white-space:nowrap;display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+  .tbar{height:6px;border-radius:4px;background:var(--seg);overflow:hidden}.tbar i{display:block;height:100%;background:var(--c-influence,#d97706);border-radius:4px}
+  .tnum{text-align:right;font:700 15px var(--stat,inherit);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .ttick{font-size:13px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lt-rows,.group.tbl>.row{grid-template-columns:40px minmax(0,1fr) 210px 170px 110px 16px!important}
+  .lt-co,.group.tbl.tco>.row{grid-template-columns:40px minmax(0,1fr) 120px 120px 120px 150px 16px!important}
+
+  /* bills */
+  .lt-bills,.bcards.tbl{--bcols:110px minmax(0,1fr) 230px 220px;--bareas:"num title st sp"}
+  .lt-bills.ranked,.bcards.tbl.ranked{--bcols:40px 110px minmax(0,1fr) 210px 170px 200px;--bareas:"rk num title st lob sp"}
+  .lt-bills{grid-template-columns:var(--bcols);grid-template-areas:var(--bareas)}
+  .h-rk{grid-area:rk}.h-num{grid-area:num}.h-title{grid-area:title}.h-st{grid-area:st}.h-lob{grid-area:lob}.h-sp{grid-area:sp}
+  .bcards.tbl{display:block!important;background:var(--surface);border:1px solid var(--hair);border-top:0;border-radius:0 0 16px 16px;overflow:hidden;counter-reset:brk}
+  .bcards.tbl .bcard{display:grid;grid-template-columns:var(--bcols);grid-template-areas:var(--bareas);gap:14px;align-items:center;width:100%;border:0;border-radius:0;box-shadow:none;padding:12px 16px;min-height:0}
+  .bcards.tbl .bcard+.bcard{border-top:1px solid var(--hair)}
+  .bcards.tbl .bcard:hover{background:var(--seg);box-shadow:none;transform:none}
+  .bcards.tbl .bctop{display:contents}
+  .bcards.tbl .bnum{grid-area:num;justify-self:start}
+  .bcards.tbl .bst{grid-area:st}
+  .bcards.tbl .btitle{grid-area:title;font-size:15px;-webkit-line-clamp:2}
+  .bcards.tbl .blob{grid-area:lob}.bcards.tbl .blob small{display:none}.bcards.tbl .blob .blobbar{flex:1}
+  .bcards.tbl .bspon{grid-area:sp;margin:0}.bcards.tbl .bspon small{display:none}
+  .bcards.tbl.ranked .bcard::before{counter-increment:brk;content:counter(brk);grid-area:rk;font:700 15px var(--stat,inherit);color:var(--soft)}
+
+  /* lobbying groups and firms */
+  .lt-lob,.lcards.tbl .lbcard{grid-template-columns:40px minmax(0,1fr) minmax(0,1fr) 130px}
+  .lcards.tbl{display:block!important;background:var(--surface);border:1px solid var(--hair);border-top:0;border-radius:0 0 16px 16px;overflow:hidden}
+  .lcards.tbl .lbcard{display:grid;grid-template-areas:"rk n is v" "rk b is v";gap:6px 14px;align-items:center;width:100%;border:0;border-radius:0;box-shadow:none;padding:12px 16px}
+  .lcards.tbl .lbcard+.lbcard{border-top:1px solid var(--hair)}
+  .lcards.tbl .lbcard:hover{background:var(--seg);box-shadow:none}
+  .lcards.tbl .lbmain{display:contents}
+  .lcards.tbl .lrank{grid-area:rk;font:700 15px var(--stat,inherit);color:var(--soft)}
+  .lcards.tbl .lbmain>b{grid-area:n}.lcards.tbl .lbar{grid-area:b;max-width:260px}.lcards.tbl .liss{grid-area:is}
+  .lcards.tbl .lval{grid-area:v;text-align:right}
 }

@@ -41,12 +41,18 @@ function pacsScreen(){
   const mode=S.pmode||'cur',q=(S.pq||'').trim().toLowerCase();
   let list=Object.entries(H.pacs);
   if(q)list=list.filter(([,p])=>fz(p.n+' '+(p.fn||''),q));
+  const types=[...new Set(Object.values(H.pacs).map(p=>p.cat).filter(Boolean))].sort();
+  if(S.ptype&&S.ptype!=='All')list=list.filter(([,p])=>p.cat===S.ptype);
   list.sort((a,b)=>mode==='cur'?(b[1].curT||0)-(a[1].curT||0):b[1].tot-a[1].tot);
+  const total=list.length,amt=p=>mode==='cur'?(p.curT||0):p.tot,mx=list.length?Math.max(1,amt(list[0][1])):1;
   list=list.slice(0,S.limit||60);
   return `${pageHead('PACs')}<div class="wrap" style="padding-top:calc(var(--navh) + 12px)"><div class="lbanner bg-capitol pghero"><h1>PACs</h1><span>Political action committees pool money from companies, unions and interest groups and give it to candidates.</span></div>
    <div class="sfield" style="margin-bottom:12px"><input id="pq" placeholder="Search PACs" value="${esc(S.pq||'')}" aria-label="Search PACs"></div>
    <div class="seg" style="margin-bottom:12px"><button data-pmode="cur" aria-pressed="${mode==='cur'}">This cycle</button><button data-pmode="all" aria-pressed="${mode==='all'}">All time</button></div>
-   <div class="group">${list.map(([id,p],i)=>`<button class="row" data-pac="${id}" style="grid-template-columns:auto 1fr auto auto"><span class="rank">${i+1}</span><span style="min-width:0"><span class="t">${esc(p.n)}</span><br><span class="s">${esc(p.cat)}</span></span><span class="val">${M(mode==='cur'?(p.curT||0):p.tot)}</span>${chev}</button>`).join('')}</div>
+   <div class="chipsrow" style="margin-bottom:12px">${['All',...types].map(t=>`<button data-ptype="${esc(t)}" aria-pressed="${(S.ptype||'All')===t}">${t==='All'?'All types':esc(t)}</button>`).join('')}</div>
+   <div class="sh"><h2>${S.ptype&&S.ptype!=='All'?esc(S.ptype):'Biggest givers'}</h2><span class="cap" style="padding:0">${ord(total)}</span></div>
+   <div class="lt-head lt-rows"><span>#</span><span>PAC</span><span>Type</span><span></span><span class="r">${mode==='cur'?'Given this cycle':'Given since 1980'}</span></div>
+   <div class="group tbl">${list.map(([id,p],i)=>`<button class="row" data-pac="${id}" style="grid-template-columns:auto 1fr auto auto"><span class="rank">${i+1}</span><span style="min-width:0"><span class="t">${esc(p.n)}</span><br><span class="s">${esc(p.cat)}</span></span><span class="tx ttype"><em>${esc(p.cat)}</em></span><span class="tx tbar"><i style="width:${(amt(p)/mx*100).toFixed(1)}%"></i></span><span class="val">${M(amt(p))}</span>${chev}</button>`).join('')||'<div class="empty">No PACs match.</div>'}</div>
    ${list.length>=(S.limit||60)?`<button class="more" data-pmore>Show more</button>`:''}</div>`;
 }
 const _render7=render;
@@ -84,6 +90,7 @@ window.addEventListener('click',e=>{
   const g=s=>e.target.closest(s);let el;
   if(el=g('[data-pac]')){e.preventDefault();e.stopPropagation();$('#sheet').hidden=true;go('pac:'+el.dataset.pac);return}
   if(el=g('[data-pmode]')){e.preventDefault();e.stopPropagation();S.pmode=el.dataset.pmode;S.limit=60;render();return}
+  if(el=g('[data-ptype]')){e.preventDefault();e.stopPropagation();S.ptype=el.dataset.ptype;S.limit=60;render();return}
   if(el=g('[data-pmore]')){e.preventDefault();e.stopPropagation();S.limit=(S.limit||60)+60;render();return}
 },true);
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.dataset?.pac){go('pac:'+e.target.dataset.pac)}});

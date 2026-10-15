@@ -40,7 +40,7 @@ function twoColumns(){
   }
   w.classList.add('two');document.body.classList.add('two');
   // long lists that run the full width get two columns of rows
-  w.querySelectorAll('.group').forEach(g=>{if(g.closest('.dcol'))return;const rows=[...g.children].filter(r=>r.classList.contains('row')&&!r.classList.contains('kv'));if(rows.length>=8&&rows.length===g.children.length)g.classList.add('biglist')});
+  w.querySelectorAll('.group').forEach(g=>{if(g.closest('.dcol')||g.classList.contains('tbl'))return;const rows=[...g.children].filter(r=>r.classList.contains('row')&&!r.classList.contains('kv'));if(rows.length>=8&&rows.length===g.children.length)g.classList.add('biglist')});
 }
 const _renderDesk=render;
 render=function(){_renderDesk();try{railMenu();if(S.lang==='es')translateAll();twoColumns()}catch(e){console.warn(e)}};
