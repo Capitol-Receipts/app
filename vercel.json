@@ -88,6 +88,9 @@
       "includeFiles": "api/_fonts/**",
       "maxDuration": 30,
       "memory": 1024
+    },
+    "api/db.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [

@@ -59,10 +59,22 @@ SB.req=async(path,opt={},tries=3)=>{
     throw new Error(path.split('?')[0]+' '+r.status);
   }
 };
-SB.get=path=>SB.req(path);
+/* public reads go through our CDN cache (/api/db) so traffic spikes don't land on the database; falls back to direct */
+SB.PUB=/^(members|nominations|roll_calls|photos|app_meta|people|careers|appointees|bills|pacs|lobby_clients|committees|zip_districts|corrections|races|outside_groups|congress_votes|companies|member_extras|caucuses|judges|rpc\/get_light|rpc\/vote_slice)\?/;
+SB.pub=async(path,tries=3)=>{
+  for(let i=0;;i++){
+    let r;
+    try{r=await fetch('/api/db?q='+encodeURIComponent(path),{headers:{Accept:'application/json'}})}catch(e){r=null}
+    if(r&&r.ok){try{return await r.json()}catch(e){r=null}}
+    if(r&&r.status>=400&&r.status<500&&r.status!==429)throw new Error(path.split('?')[0]+' '+r.status);
+    if(i+1<tries){await new Promise(f=>setTimeout(f,600*(i+1)));continue}
+    return SB.req(path);
+  }
+};
+SB.get=path=>SB.PUB.test(path)?SB.pub(path):SB.req(path);
 /* page through tables bigger than the API's 1,000-row limit */
-SB.all=async(path,size=1000)=>{let out=[],from=0;for(;;){const rows=await SB.req(path,{headers:{Range:`${from}-${from+size-1}`,'Range-Unit':'items'}});out=out.concat(rows);if(rows.length<size)return out;from+=size}};
-SB.rpc=(fn,args)=>SB.req('rpc/'+fn,{method:'POST',body:JSON.stringify(args||{})});
+SB.all=async(path,size=1000)=>{let out=[],from=0;for(;;){const rows=await SB.get(path+`&limit=${size}&offset=${from}`);out=out.concat(rows);if(rows.length<size)return out;from+=size}};
+SB.rpc=(fn,args)=>fn==='get_light'?SB.get('rpc/get_light?kind='+encodeURIComponent(args.kind)):SB.req('rpc/'+fn,{method:'POST',body:JSON.stringify(args||{})});
 SB.meta=async keys=>Object.fromEntries((await SB.get('app_meta?select=key,value&key=in.('+keys.join(',')+')')).map(r=>[r.key,r.value]));
 
 const APP_VER='202610141717'; /* bump on every release so browsers and the CDN fetch fresh files */
