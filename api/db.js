@@ -15,7 +15,7 @@ function upstream(path, range, count) {
   if (range) { headers.Range = range; headers['Range-Unit'] = 'items'; }
   if (count) headers.Prefer = 'count=exact';
   return new Promise((resolve, reject) => {
-    const r = https.get({ host: HOST, path: '/rest/v1/' + path, headers, timeout: 55000 }, (res) => {
+    const r = https.get({ host: HOST, path: '/rest/v1/' + path, headers, timeout: 20000 }, (res) => {
       const chunks = [];
       res.on('data', (c) => chunks.push(c));
       res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: Buffer.concat(chunks) }));
@@ -28,10 +28,10 @@ function upstream(path, range, count) {
 
 async function withRetry(q, range, count) {
   let r = null;
-  for (let i = 0; i < 3; i++) {
-    try { r = await upstream(q, range, count); } catch (e) { r = null; }
+  for (let i = 0; i < 2; i++) { // one retry only, so a struggling database isn't hit with a retry storm
+    try { r = await upstream(q, range, count); } catch (e) { return r; }
     if (r && r.status < 500) return r;
-    await new Promise((f) => setTimeout(f, 500 * (i + 1)));
+    await new Promise((f) => setTimeout(f, 1500));
   }
   return r;
 }

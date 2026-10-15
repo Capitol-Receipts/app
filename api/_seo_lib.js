@@ -16,7 +16,6 @@ async function viaCache(p, opt) {
   return rows;
 }
 async function q(p, opt = {}) {
-  try { return await viaCache(p, opt); } catch (e) { /* fall through to the database */ }
   const headers = { apikey: KEY, Accept: 'application/json' };
   if (opt.range) { headers.Range = opt.range; headers['Range-Unit'] = 'items'; }
   if (opt.count) headers.Prefer = 'count=exact';
