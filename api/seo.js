@@ -53,7 +53,7 @@ const CSS = `<style id="sr-css">
 main.has-cta{padding-bottom:96px}
 .sr-cta{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:20;background:var(--n);color:#fff!important;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:999px;box-shadow:0 10px 30px rgba(14,17,22,.28);white-space:nowrap;font-size:15px}
 .sr-cta:hover{background:var(--r)}
-.sr-cite p{font-size:14px;color:var(--s)}
+.sr-cite p{font-size:14px;color:var(--s);overflow-wrap:anywhere}
 .sr-code{background:var(--b);padding:12px;border-radius:10px;font-size:12px;white-space:pre-wrap;word-break:break-all;max-width:760px}
 .sr-foot{border-top:1px solid var(--l);margin-top:36px;padding-top:16px;font-size:14px;color:var(--s);display:flex;flex-wrap:wrap;gap:8px 16px}
 .sr-foot a{color:var(--s)}
