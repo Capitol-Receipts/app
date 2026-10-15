@@ -77,7 +77,7 @@ function watchSection(){
 function proPage(){
   const pro=isPro(),p=ACCT.plan||{};
   return `${pageHead('Pro')}<div class="wrap" style="padding-top:calc(var(--navh) + 10px)">
-   <div class="phead"><span class="pkick">${PI.star} Capitol Receipts Pro</span><h1>Know the morning it’s filed.</h1><p>Every record stays free. Pro watches Congress for you and tells you what changed.</p></div>
+   <div class="phead lbanner bg-dusk"><span class="pkick">${PI.star} Capitol Receipts Pro</span><h1>Know the morning it’s filed.</h1><p>Every record stays free. Pro watches Congress for you and tells you what changed.</p></div>
    ${pro?proStatus():''}
    ${!pro||p.status==='trialing'?`<section class="sec"><div class="pcard">${planPicker()}</div></section>`:''}
    <section class="sec"><div class="sh"><h2>What you get</h2></div>${featList()}</section>
@@ -114,7 +114,7 @@ function radarPage(){
   const pro=isPro(),shown=pro?list.slice(0,S.limit||60):list.slice(0,3);
   const modes=[['all','Everything flagged'],['comm','Committee-linked'],['big','Over $250K']];
   return `${pageHead('Conflict radar')}<div class="wrap" style="padding-top:calc(var(--navh) + 10px)">
-   <div class="phead"><span class="pkick">${PI.radar} Conflict radar ${pro?'':proBadge}</span><h1>Trades worth a second look</h1><p>Newly reported trades by members of Congress in industries their own committees oversee, and every trade over $250K.</p></div>
+   <div class="phead lbanner bg-capitol"><span class="pkick">${PI.radar} Conflict radar ${pro?'':proBadge}</span><h1>Trades worth a second look</h1><p>Newly reported trades by members of Congress in industries their own committees oversee, and every trade over $250K.</p></div>
    <div class="glance rglance">${glance('Last 30 days',ord(wk),'newly flagged',false)}${glance('Committee-linked',ord(all.filter(t=>t.comm).length),'in the radar',false)}${glance('Over $250K',ord(all.filter(t=>+t.hi>=PRO.BIG).length),'in the radar',false)}</div>
    <div class="rbar"><div class="rseg" role="group">${modes.map(([k,l])=>`<button data-rmode="${k}" aria-pressed="${k===PRO.rmode}">${l}</button>`).join('')}</div><button class="rcsv" data-csv="radar">${PI.down}<span>CSV</span></button></div>
    ${PRO.feedErr?`<div class="calm">Couldn’t load the radar. Try reloading.</div>`:`<div class="group" style="margin-top:10px">${shown.map(radarRow).join('')||'<div class="empty">Nothing flagged yet.</div>'}</div>

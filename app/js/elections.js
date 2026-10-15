@@ -29,6 +29,8 @@ function raceFor(m){
 }
 function competitive(r){return pviNum(r.pvi)<=5||(r.ot||0)>=2e6}
 function candDot(c){return `<span class="cdot" style="background:${PCOL[c.p]||PCOL.I}"></span>`}
+/* candidate photos come through our own CDN (see api/cimg.js) */
+const candImg=u=>/^https:\/\/upload\.wikimedia\.org\//.test(u||'')?'/api/cimg?u='+encodeURIComponent(u):u;
 function candFace(c,size=44){
   const m=c.bg&&byId[c.bg];
   if(m)return face(m,size);
@@ -36,7 +38,7 @@ function candFace(c,size=44){
   const ini=c.n.split(/\s+/).filter(w=>/^[A-Z]/i.test(w)&&!/^(Jr\.?|Sr\.?|II|III|IV)$/.test(w)).map(w=>w[0]).filter((_,i,a)=>i===0||i===a.length-1).join('').toUpperCase();
   const fb=`<span class="face fb ring-${pr}" style="width:${size}px;height:${size}px;font-size:${Math.round(size*.36)}px">${esc(ini)}</span>`;
   if(!c.img)return fb;
-  return `<span class="cface" style="width:${size}px;height:${size}px">${fb}<img class="face ring-${pr}" style="width:${size}px;height:${size}px" src="${esc(c.img)}" alt="" decoding="async" onerror="this.remove()"></span>`;
+  return `<span class="cface" style="width:${size}px;height:${size}px">${fb}<img class="face ring-${pr}" style="width:${size}px;height:${size}px" src="${esc(candImg(c.img))}" alt="" decoding="async" onerror="this.remove()"></span>`;
 }
 const lastName=n=>n.split(' ').filter(w=>!/^(Jr\.?|Sr\.?|II|III|IV)$/.test(w)).slice(-1)[0]||n;
 const leadPair=r=>{const m=r.c.filter(c=>c.p==='D'||c.p==='R');return (m.length?m:r.c).slice(0,2)};
