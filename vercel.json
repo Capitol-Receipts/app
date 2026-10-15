@@ -92,16 +92,6 @@
   },
   "rewrites": [
     {
-      "source": "/",
-      "has": [
-        {
-          "type": "host",
-          "value": "admin.capitolreceipts.com"
-        }
-      ],
-      "destination": "/admin.html"
-    },
-    {
       "source": "/robots.txt",
       "destination": "/api/seo?t=robots"
     },
