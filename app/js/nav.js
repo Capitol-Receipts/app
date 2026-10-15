@@ -106,7 +106,7 @@ function billsScreen(){
   let list=[],cap='';
   if(S.bmode==='lobbied'){
     const rows=Object.entries(DATA.bills).sort((a,b)=>b[1].n-a[1].n);
-    list=rows.map(([b,x])=>({k:key119(b),b,n:x.n})).filter(x=>!q||(hasBill(x.k)?billTitle(x.k).toLowerCase().includes(q):x.b.toLowerCase().includes(q)));
+    list=rows.map(([b,x])=>({k:key119(b),b,n:x.n})).filter(x=>!q||(hasBill(x.k)?fz(billTitle(x.k),q):fz(x.b,q)));
     cap=`Bills named in the most lobbying reports, ${esc(DATA.lobby?.periods||'')}.`;
   }else if(S.bmode==='new'){
     list=K.filter(k=>k.startsWith('119-')&&H.bills[k][10].L).sort((a,b)=>lawDate(b).localeCompare(lawDate(a))).map(k=>({k}));cap='Bills signed into law in the current Congress, newest first.';
@@ -116,7 +116,7 @@ function billsScreen(){
   }else{
     list=K.filter(k=>H.bills[k][10].V).sort((a,b)=>(H.bills[b][10].V||'').localeCompare(H.bills[a][10].V||'')).map(k=>({k}));cap='Bills the President vetoed since 2003. "Became law" means Congress overrode the veto.';
   }
-  if(q&&S.bmode!=='lobbied')list=list.filter(x=>billTitle(x.k).toLowerCase().includes(q)||H.bills[x.k][0].toLowerCase().includes(q)||bkParse(x.k).label.toLowerCase().replace(/[.\s]/g,'').includes(q.replace(/[.\s]/g,'')));
+  if(q&&S.bmode!=='lobbied')list=list.filter(x=>fz(billTitle(x.k)+' '+H.bills[x.k][0],q)||bkParse(x.k).label.toLowerCase().replace(/[.\s]/g,'').includes(q.replace(/[.\s]/g,'')));
   const congs=Array.from({length:40},(_,i)=>119-i);
   const mx=S.bmode==='lobbied'?Math.max(1,...list.slice(0,1).map(x=>x.n)):1;
   const lobExtra=x=>`<span class="blob"><span class="blobbar"><i style="width:${(x.n/mx*100).toFixed(1)}%"></i></span><b>${ord(x.n)}</b> groups lobbied on it</span>`;

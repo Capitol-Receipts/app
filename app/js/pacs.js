@@ -40,7 +40,7 @@ function pacsScreen(){
   if(!H)return loading('PAC records');
   const mode=S.pmode||'cur',q=(S.pq||'').trim().toLowerCase();
   let list=Object.entries(H.pacs);
-  if(q)list=list.filter(([,p])=>p.n.toLowerCase().includes(q)||(p.fn||'').toLowerCase().includes(q));
+  if(q)list=list.filter(([,p])=>fz(p.n+' '+(p.fn||''),q));
   list.sort((a,b)=>mode==='cur'?(b[1].curT||0)-(a[1].curT||0):b[1].tot-a[1].tot);
   list=list.slice(0,S.limit||60);
   return `${pageHead('PACs')}<div class="wrap" style="padding-top:calc(var(--navh) + 12px)"><div class="lbanner bg-capitol pghero"><h1>PACs</h1><span>Political action committees pool money from companies, unions and interest groups and give it to candidates.</span></div>

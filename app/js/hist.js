@@ -58,6 +58,7 @@ async function loadBlobJSON(id,url){
   if(bytes[0]===0x1f&&bytes[1]===0x8b){if(!('DecompressionStream' in window))throw new Error('no gzip');return JSON.parse(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text())}
   return JSON.parse(new TextDecoder().decode(bytes));
 }
+let HBKS=null;const HBK=()=>HBKS||(HBKS=Object.keys(H.bills));
 async function loadHist(){
   try{
     const [meta,people,current,apps,bills,pacs]=await Promise.all([
@@ -436,7 +437,7 @@ function historyScreen(){
       dd('chamber','Chamber',S.hch==='All'?'Both':CO.find(o=>o[0]===S.hch)[1],S.hch!=='All',ddOpts('hch',CO,S.hch))+
       sortDD(HSORT,S.hsort,S.hdir));
     const pf=p=>S.hparty==='All'||(S.hparty==='O'?p.pc==='N':p.pc===S.hparty);
-    const list=sortList(PASTS.filter(p=>p.chambers.length&&pf(p)&&((!hyOn()&&S.hch==='All')||memberIn(p))&&(!q||p.search.includes(q))),HSORT[S.hsort],S.hdir);
+    const list=sortList(PASTS.filter(p=>p.chambers.length&&pf(p)&&((!hyOn()&&S.hch==='All')||memberIn(p))&&(!q||fzSet('h:past',PASTS,x=>x.search,q).has(p))),HSORT[S.hsort],S.hdir);
     const vf=HSORT[S.hsort][2];
     if(!q&&!act)h+=archiveCarousel();
     h+=`<div class="sec"><div class="sh"><h2>Former members of Congress</h2></div>${hSummary(list.length,'people',act)}
@@ -448,7 +449,7 @@ function historyScreen(){
     const cats=['All','Cabinet & top officials','Judges','Senate votes','Ethics filings'];
     const act=hyOn()||S.acat!=='All';
     h+=filterBar('apps',dd('type','Type',S.acat==='All'?'All':esc(S.acat),S.acat!=='All',ddOpts('acat',cats.map(c=>[c,c==='All'?'All types':c]),S.acat))+sortDD(ASORT,S.asort,S.adir));
-    let base=APPS.filter(a=>(S.acat==='All'||a.cat===S.acat)&&appIn(a)&&(!q||a.search.includes(q)));
+    let base=APPS.filter(a=>(S.acat==='All'||a.cat===S.acat)&&appIn(a)&&(!q||fzSet('h:apps',APPS,x=>x.search,q).has(a)));
     if(S.asort==='close')base=base.filter(a=>a.vote);
     const list=sortList(base,ASORT[S.asort],S.adir);const vf=ASORT[S.asort][2];
     if(!q&&!act)h+=archiveCarousel();
@@ -458,7 +459,7 @@ function historyScreen(){
      <div class="cap">Cabinet members and top officials since 1789, every federal judge, every nominee who got a recorded Senate vote, and officials who filed ethics reports since 2016.</div></div>`;
   }else{
     h+=filterBar('exec','');
-    const list=EXEC.filter(p=>execIn(p)&&(!q||p.search.includes(q)));
+    const list=EXEC.filter(p=>execIn(p)&&(!q||fz(p.search,q)));
     h+=`<div class="sec"><div class="sh"><h2>Presidents & vice presidents</h2></div>${hSummary(list.length,'people',hyOn())}<div class="group" style="margin-top:10px">${list.map(p=>{const ex=p.t.filter(t=>t[0]==='P'||t[0]==='V');const r=ex.map(t=>`${t[0]==='P'?'President':'VP'} ${t[1]}–${t[2]>2026?'now':t[2]}`);
       return `<button class="row" ${HC[p.id]?`data-p="${p.id}"`:`data-hp="${p.id}"`}>${hFace(p,44)}<span style="min-width:0"><span class="t">${esc(p.n)}</span><br><span class="s">${esc([...new Set(r)].slice(0,2).join(' · '))}${ex[0]?.[5]?' · '+esc(ex.at(-1)[5]):''}</span></span><span class="rr">${chev}</span></button>`}).join('')||'<div class="empty">No one matches these filters.</div>'}</div></div>`;
   }
@@ -481,8 +482,8 @@ function bindYearCard(){
 function pastHits(q){
   if(!H||!q)return '';
   const bh=billHits(q);
-  const pm=PASTS.filter(p=>p.chambers.length&&p.search.includes(q)).sort((a,b)=>(b.lastY||0)-(a.lastY||0)).slice(0,5);
-  const am=APPS.filter(a=>a.search.includes(q)).slice(0,5);
+  const pm=PASTS.filter(p=>p.chambers.length&&fzSet('h:past',PASTS,x=>x.search,q).has(p)).sort((a,b)=>(b.lastY||0)-(a.lastY||0)).slice(0,5);
+  const am=APPS.filter(a=>fzSet('h:apps',APPS,x=>x.search,q).has(a)).slice(0,5);
   return `${pm.length?`<div class="sec"><div class="sh"><h2>Former members</h2><button data-f="History">See all</button></div><div class="group">${pm.map(p=>pastRow(p)).join('')}</div></div>`:''}
    ${am.length?`<div class="sec"><div class="sh"><h2>Past appointees</h2><button data-hkgo="apps">See all</button></div><div class="group">${am.map(a=>appRow(a)).join('')}</div></div>`:''}${bh}`;
 }
@@ -539,7 +540,7 @@ function billHits(q){
   const m=q.replace(/[.\s]/g,'').match(/^(hr|s|hjres|sjres)(\d+)$/i);
   let ks=[];
   if(m)ks=Object.keys(H.bills).filter(k=>{const p=bkParse(k);return p.ty===m[1].toLowerCase()&&p.n===+m[2]}).sort((a,b)=>bkParse(b).c-bkParse(a).c);
-  else if(q.length>=4)ks=Object.keys(H.bills).filter(k=>(H.bills[k][1]||'').toLowerCase().includes(q)).sort((a,b)=>bkParse(b).c-bkParse(a).c);
+  else if(q.length>=4)ks=Object.keys(H.bills).filter(k=>fzSet('h:bills',HBK(),k=>H.bills[k][1]||'',q,'fallback').has(k)).sort((a,b)=>bkParse(b).c-bkParse(a).c);
   ks=ks.slice(0,5);
   return ks.length?`<div class="sec"><div class="sh"><h2>Bills</h2></div><div class="group">${ks.map(k=>billRow(k)).join('')}</div></div>`:'';
 }

@@ -128,9 +128,9 @@ function lobbyingScreen(){
    ${topIss.length?`<section class="sec wide"><div class="sh"><h2>What they lobby on</h2><span class="cap" style="padding:0">estimated spending by issue</span></div><div class="group pad isbars">${hbars(topIss.map(([k,v])=>[issueName(k),v]),M)}</div></section>`:''}`;
   const seg=`<div class="seg" role="group" style="margin-top:12px">${[['groups','Groups that pay'],['firms','Firms that get paid']].map(([k,l])=>`<button data-lmode="${k}" aria-pressed="${k===S.lmode}">${l}</button>`).join('')}</div>`;
   let list,cards;
-  if(S.lmode==='groups'){list=C.filter(c=>!q||normN(c.n).includes(q)).sort((a,b)=>b.spend-a.spend);const mx=list[0]?list[0].spend:1;
+  if(S.lmode==='groups'){list=C.filter(c=>!q||fz(c.n,S.lq)).sort((a,b)=>b.spend-a.spend);const mx=list[0]?list[0].spend:1;
     cards=list.slice(0,S.limit).map((c,i)=>`<button class="lbcard" data-lob="${c.id}"><span class="lrank">${i+1}</span><span class="lbmain"><b>${esc(c.n)}</b><span class="lbar"><i style="width:${(c.spend/mx*100).toFixed(1)}%"></i></span><span class="liss">${(c.iss||[]).slice(0,3).map(([k])=>`<em>${esc(issueName(k))}</em>`).join('')}${c.nlob?`<small>${c.nlob} lobbyists</small>`:''}</span></span><span class="lval">${M(c.spend)}</span></button>`).join('')}
-  else{list=F.filter(f=>!q||normN(f.n).includes(q)).sort((a,b)=>b.inc-a.inc);const mx=list[0]?list[0].inc:1;
+  else{list=F.filter(f=>!q||fz(f.n,S.lq)).sort((a,b)=>b.inc-a.inc);const mx=list[0]?list[0].inc:1;
     cards=list.slice(0,S.limit).map((f,i)=>`<button class="lbcard" data-firm="${f.id}"><span class="lrank">${i+1}</span><span class="lbmain"><b>${esc(f.n)}</b><span class="lbar"><i style="width:${(f.inc/mx*100).toFixed(1)}%"></i></span><span class="liss"><small>${f.ncl} clients</small></span></span><span class="lval">${M(f.inc)}</span></button>`).join('')}
   return listShell('Lobbying',`${dash}${seg}<section class="sec wide"><div class="sh"><h2>${S.lmode==='groups'?'Biggest spenders':'Biggest firms'}</h2><span class="cap" style="padding:0">${ord(list.length)}</span></div><div class="lcards">${cards||'<div class="empty">No matches.</div>'}</div>${list.length>S.limit?`<button class="more" data-more>Show more</button>`:''}<div class="cap">${S.lmode==='groups'?'Companies and organizations ranked by reported lobbying spending.':'Lobbying firms ranked by what clients paid them.'}</div></section>`,'lq',S.lmode==='groups'?'Search a company or group':'Search a lobbying firm',S.lq,'bg-dusk',`Who pays to influence Congress, how much, and on what. From lobbying disclosure reports, ${esc(DATA.lobby?.periods||'since Jul 2025')}.`);
 }
@@ -145,7 +145,7 @@ function ethicsScreen(){
   if(!G)return loading('ethics records');
   const q=(S.eq||'').toLowerCase();
   const all=G.ethics;
-  const list=all.filter(e=>(!S.est2||e.st===S.est2)&&(!q||(e.t+' '+e.who.map(w=>(byId[w]||HP[w])?.name||(HP[w]||{}).n||'').join(' ')).toLowerCase().includes(q)));
+  const list=all.filter(e=>(!S.est2||e.st===S.est2)&&(!q||fz(e.t+' '+e.who.map(w=>(byId[w]||HP[w])?.name||(HP[w]||{}).n||'').join(' '),q)));
   const yr=new Date().getFullYear();
   const recent=all.filter(e=>e.d>=`${yr-1}-01-01`);
   const named=new Set();recent.forEach(e=>e.who.forEach(w=>named.add(w)));

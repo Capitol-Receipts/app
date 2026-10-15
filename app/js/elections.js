@@ -75,7 +75,7 @@ function electionsScreen(){
   const tot=R.reduce((a,r)=>a+(r.rt||0),0),out=R.reduce((a,r)=>a+(r.ot||0),0);
   const authed=typeof signedIn==="function"&&signedIn(),mine=authed?myRaces():[];
   let list;
-  if(q)list=R.filter(r=>raceName(r).toLowerCase().includes(q)||raceShort(r).toLowerCase().includes(q)||r.c.some(c=>c.n.toLowerCase().includes(q)));
+  if(q)list=R.filter(r=>fz(raceName(r)+' '+raceShort(r)+' '+r.c.map(c=>c.n).join(' '),q));
   else if(mode==='senate')list=sen;
   else if(mode==='close')list=R.filter(competitive).sort((a,b)=>(b.ot||0)-(a.ot||0));
   else if(mode==='money')list=[...R].sort((a,b)=>(b.rt+(b.ot||0))-(a.rt+(a.ot||0)));

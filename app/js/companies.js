@@ -15,7 +15,7 @@ function loadCompany(id){
 function companiesScreen(){
   loadCompanies();
   const q=(S.cq||'').trim().toLowerCase();
-  const list=CO.idx?CO.idx.filter(c=>!q||c.name.toLowerCase().includes(q)||(c.tickers||[]).some(t=>t.toLowerCase()===q)):[];
+  const list=CO.idx?CO.idx.filter(c=>!q||fz(c.name,q)||(c.tickers||[]).some(t=>t.toLowerCase()===q)):[];
   const shown=list.slice(0,S.limit||60);
   return `${pageHead('Companies')}<div class="wrap" style="padding-top:calc(var(--navh) + 10px)">
    <div class="lbanner bg-old"><h1>Companies</h1><span>Everything the public record shows about a company and Congress in one place: its PAC, its lobbying, its employees' donations, who in Congress trades its stock, and its federal contracts.</span></div>
@@ -88,7 +88,7 @@ render=function(){
     if(S.tab==='search'&&!S.stack.length&&S.q&&S.q.trim().length>=2){
       if(!CO.idx)loadCompanies();
       const q=S.q.trim().toLowerCase();
-      const hits=(CO.idx||[]).filter(c=>c.name.toLowerCase().includes(q)||(c.tickers||[]).some(t=>t.toLowerCase()===q)).slice(0,4);
+      const hits=(CO.idx||[]).filter(c=>fz(c.name,q)||(c.tickers||[]).some(t=>t.toLowerCase()===q)).slice(0,4);
       const anchor=document.querySelector('#app #r-lob');
       if(hits.length&&anchor&&!document.querySelector('#app [data-co-hits]'))anchor.insertAdjacentHTML('beforebegin',`<section class="sec rsec" data-co-hits><div class="sh"><h2>Companies</h2><button data-go="companies" data-cqset="${esc(S.q)}">See all</button></div><div class="group">${hits.map(c=>`<button class="row plain" data-co="${c.id}" style="grid-template-columns:1fr auto"><span style="min-width:0"><span class="t">${esc(c.name)}</span>${(c.tickers||[]).length?`<br><span class="s">${esc(c.tickers.join(' · '))}</span>`:''}</span>${chev}</button>`).join('')}</div></section>`);
     }

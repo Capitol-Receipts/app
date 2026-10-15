@@ -61,7 +61,7 @@ function allTrades(){const out=[];MEM.forEach(m=>(m.trades||[]).forEach(t=>{if(t
 function stocksScreen(){
   const by={};allTrades().forEach(([m,t])=>{const k=t[2];(by[k]=by[k]||{n:0,mem:new Set(),name:t[3]}).n++;by[k].mem.add(m.id)});
   const q=(S.sq2||'').trim().toLowerCase();
-  const list=Object.entries(by).filter(([k,v])=>!q||k.toLowerCase()===q||(v.name||'').toLowerCase().includes(q)).sort((a,b)=>b[1].mem.size-a[1].mem.size||b[1].n-a[1].n);
+  const list=Object.entries(by).filter(([k,v])=>!q||k.toLowerCase()===q||fz(v.name||'',q)).sort((a,b)=>b[1].mem.size-a[1].mem.size||b[1].n-a[1].n);
   return `${pageHead('Stocks')}<div class="wrap" style="padding-top:calc(var(--navh) + 10px)">
    <div class="lbanner bg-dusk pghero"><h1>Stocks Congress trades</h1><span>Every company stock that current members reported buying or selling since January 2025, ranked by how many members traded it.</span></div>
    <div class="sfield"><input id="sq2" class="search" type="search" placeholder="Search a ticker or company" value="${esc(S.sq2||'')}" aria-label="Search stocks"></div>

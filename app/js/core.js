@@ -190,7 +190,7 @@ function explore(){
   let h=searchHeader('Name, state, party or job')+scopeHero();
   if(S.filter==='Appointees'){
     const cats=['All','Cabinet','Agency leaders','Judges','Ambassadors','Prosecutors & marshals'];
-    const list=sortList(NOM.filter(n=>(S.ncat==='All'||n.cat===S.ncat)&&(!q||n.search.includes(q))),NSORT[S.nsort],S.ndir);
+    const list=sortList(NOM.filter(n=>(S.ncat==='All'||n.cat===S.ncat)&&(!q||fz(n.search,q))),NSORT[S.nsort],S.ndir);
     const vf=NSORT[S.nsort][2];
     h+=`<div class="chipsrow">${cats.map(c=>`<button data-nc="${c}" aria-pressed="${c===S.ncat}">${c}</button>`).join('')}</div>${sortBar(NSORT,S.nsort,S.ndir,'n')}
     <div class="sec" style="margin-top:14px"><div class="sh"><h2>Confirmed by the Senate</h2><span class="cap" style="padding:0">${list.length}</span></div>
@@ -216,9 +216,9 @@ function explore(){
     h+=`<div class="sec"><div class="sh"><h2>Latest confirmations</h2><button data-f="Appointees">See all</button></div><div class="group">${NOM.slice(0,4).map(n=>nomRow(n)).join('')}</div></div>`;
   }
   const flt={All:()=>true,Congress:()=>true,Senate:m=>m.chamber==='Senate',House:m=>m.chamber==='House'}[S.filter]||(()=>true);
-  const list=sortList(MEM.filter(flt).filter(m=>S.party==='All'||m.party===S.party).filter(m=>!q||m.search.includes(q)),MSORT[S.msort],S.mdir);
+  const list=sortList(MEM.filter(flt).filter(m=>S.party==='All'||m.party===S.party).filter(m=>!q||fz(m.search,q)),MSORT[S.msort],S.mdir);
   const vf=MSORT[S.msort][2];
-  const nomHits=q?NOM.filter(n=>n.search.includes(q)).slice(0,5):[];
+  const nomHits=q?NOM.filter(n=>fz(n.search,q)).slice(0,5):[];
   if(typeof partyCompare==='function'&&S.party==='All')h+=partyCompare(list,S.filter==='Senate'?'Senate: Democrats vs Republicans':S.filter==='House'?'House: Democrats vs Republicans':q?'Democrats vs Republicans in these results':'Congress: Democrats vs Republicans');
   h+=`<div class="sec" id="listtop"><div class="sh"><h2>${q?'Members of Congress':S.filter==='All'||S.filter==='Congress'?'All of Congress':S.filter==='Senate'?'Senators':'House members'}</h2><span class="cap" style="padding:0">${list.length}</span></div>
    ${sortBar(MSORT,S.msort,S.mdir,'m')}

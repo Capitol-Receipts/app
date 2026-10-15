@@ -58,7 +58,7 @@ function memberVotesPage(bg){
   if(!d||typeof d!=='object')return loading('their votes');
   const i=memberIdx(d,bg);if(i<0)return `<div class="wrap"><div class="empty">No recorded votes found.</div></div>`;
   const q=(S.mvq||'').toLowerCase();
-  const rows=d.rc.map((r,ri)=>[r,ri]).reverse().filter(([r])=>!q||(r[7]+' '+r[2]+' '+r[3]).toLowerCase().includes(q));
+  const rows=d.rc.map((r,ri)=>[r,ri]).reverse().filter(([r])=>!q||fz(r[7]+' '+r[2]+' '+r[3],q));
   const shown=rows.slice(0,S.limit||60);
   const v=d.v[i];const cnt={Y:0,N:0,P:0,'.':0};for(const ch of v)cnt[ch]++;
   return `${pageHead(m.name)}<div class="wrap" style="padding-top:calc(var(--navh) + 10px)">

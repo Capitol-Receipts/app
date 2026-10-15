@@ -7,7 +7,7 @@ const SI={
 };
 let RECENT=store.get('recent',[]);
 const saveRecent=q=>{q=q.trim();if(q.length<2)return;RECENT=[q,...RECENT.filter(x=>x.toLowerCase()!==q.toLowerCase())].slice(0,6);store.set('recent',RECENT)};
-const hl=(t,q)=>{t=String(t??'');if(!q)return esc(t);const i=t.toLowerCase().indexOf(q);return i<0?esc(t):esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+q.length))+'</mark>'+esc(t.slice(i+q.length))};
+const hl=(t,q)=>fzMark(t,q);
 const SCOPES=[['All','Everything',null],['Congress','Congress','people'],['Senate','Senate','senate'],['House','House','house'],['Appointees','Appointees','badge'],['History','History','clock']];
 function searchHeader(ph){
   const scope=SCOPES.find(s=>s[0]===S.filter)||SCOPES[0];
@@ -38,27 +38,63 @@ function discover(){
    <section class="sec"><div class="sh"><h2>Leaderboards</h2></div><div class="rgrid">${[['trades','stocks','Stock traders'],['comm','stocks','Trades tied to committees'],['missed','votes','Missed votes'],['breaks','votes','Party rebels'],['raised','money','Top fundraisers'],['small','money','Small-donor backed'],['pac','money','PAC-funded'],['rev','influence','Ex-staff lobbying']].map(([k,c,l])=>`<button class="rk c-${c}" data-rank="${k}">${CAT[c].icon}<span>${l}</span></button>`).join('')}</div></section>
    <section class="sec"><div class="sh"><h2>Try searching</h2></div><div class="tries">${tries.map(t=>`<button data-try="${t}">${SI.search}${t}</button>`).join('')}</div></section>`;
 }
-function scoreName(name,q){const n=name.toLowerCase();if(n===q)return 100;if(n.split(/\s+/).some(w=>w===q))return 80;if(n.startsWith(q))return 70;if(n.split(/\s+/).some(w=>w.startsWith(q)))return 60;if(n.includes(q))return 40;return 0}
+function scoreName(name,q){return fzName([name],q)}
+const RCACHE={q:null,r:null,at:0};
+/* what each kind of record is searched on (weight 1 = the name itself, lower = supporting words like state or job) */
+const FZF={
+  mem:m=>[[m.name,1],[m.full,1],[m.state+' '+m.stateName+' '+m.partyName+' '+(m.chamber||''),.5]],
+  nom:n=>[[n.name,1],[n.pos+' '+(n.from_||''),.5]],
+  past:p=>[[p.n,1],[p.f,1],[p.search.replace(p.n.toLowerCase(),''),.5]],
+  apps:a=>[[a.n,1],[(a.ttl||'')+' '+(a.by||''),.45]],
+};
+const fzLists=()=>{
+  if(H&&!RCACHE.pastList)RCACHE.pastList=PASTS.filter(p=>p.chambers.length||p.isExec);
+  if(H&&!RCACHE.billKeys)RCACHE.billKeys=Object.keys(H.bills);
+  if(G&&!RCACHE.cl){RCACHE.cl=Object.values(G.clients);RCACHE.fi=Object.values(G.firms);RCACHE.co=Object.values(G.comm)}
+};
+/* build the search indexes in idle time once the data is in, so the first search is instant */
+function fzWarm(){
+  if(fzWarm.done||!H||!G)return;fzWarm.done=true;fzLists();
+  const steps=[()=>fzIndex('mem',MEM,FZF.mem),()=>fzIndex('nom',NOM,FZF.nom),()=>fzIndex('past',RCACHE.pastList,FZF.past),()=>fzIndex('apps',APPS,FZF.apps),
+    ()=>fzIndex('bills',RCACHE.billKeys,k=>[[H.bills[k][1]||H.bills[k][0],1]]),()=>fzIndex('lob',RCACHE.cl,c=>[[c.n,1]]),()=>fzIndex('firms',RCACHE.fi,f=>[[f.n,1]]),
+    ()=>fzIndex('coms',RCACHE.co,c=>[[c.short+' '+(c.jur||''),1]]),()=>fzIndex('eth',G.ethics,e=>[[e.t,1]])];
+  const idle=window.requestIdleCallback||(f=>setTimeout(f,50));
+  const next=()=>{const f=steps.shift();if(!f)return;try{f()}catch(e){console.warn(e)}idle(next)};idle(next);
+}
+setInterval(()=>{if(!fzWarm.done)fzWarm()},1500);
 function resultsFor(qRaw){
   const q=qRaw.trim().toLowerCase();
+  if(RCACHE.q===q&&RCACHE.h===!!H&&RCACHE.g===!!G)return RCACHE.r;
+  const Q=fzQuery(q);
   const stateHit=Object.entries(ST).find(([k,v])=>v.toLowerCase()===q||k.toLowerCase()===q);
-  const mem=MEM.map(m=>[m,stateHit&&m.state===stateHit[0]?65:Math.max(scoreName(m.name,q),scoreName(m.full,q),m.search.includes(q)?20:0)]).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]||(a[0].chamber==='Senate'?-1:1));
-  const noms=NOM.map(n=>[n,Math.max(scoreName(n.name,q),n.search.includes(q)?20:0)]).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]);
-  const past=H?PASTS.filter(p=>p.chambers.length||p.isExec).map(p=>[p,Math.max(scoreName(p.n,q),p.search.includes(q)?15:0)]).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]||(b[0].lastY||0)-(a[0].lastY||0)):[];
-  const apps=H?APPS.map(a=>[a,Math.max(scoreName(a.n,q),a.search.includes(q)?15:0)]).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]||(b[0].ly||0)-(a[0].ly||0)):[];
+  const billNo=q.replace(/[.\s]/g,'').match(/^(hr|s|hjres|sjres|hres|sres|hconres|sconres)(\d+)$/);
+  const byScore=(a,b)=>b[1]-a[1];
+  const people=(key,arr,fields,tie)=>billNo||!arr?[]:fzSearch(key,arr,fields,Q,'always').map(([x,v])=>[x,Math.min(100,Math.round(v*90))]).sort((a,b)=>byScore(a,b)||tie(a[0],b[0]));
+  fzLists();
+  const mem=stateHit?MEM.filter(m=>m.state===stateHit[0]).map(m=>[m,65]).sort((a,b)=>a[0].chamber==='Senate'?-1:1)
+    :people('mem',MEM,FZF.mem,(a,b)=>a.chamber==='Senate'?-1:1);
+  const noms=people('nom',NOM,FZF.nom,()=>0);
+  const past=H?people('past',RCACHE.pastList,FZF.past,(a,b)=>(b.lastY||0)-(a.lastY||0)):[];
+  const apps=H?people('apps',APPS,FZF.apps,(a,b)=>(b.ly||0)-(a.ly||0)):[];
   let bills=[];
-  if(H){const m=q.replace(/[.\s]/g,'').match(/^(hr|s|hjres|sjres)(\d+)$/);
-    if(m)bills=Object.keys(H.bills).filter(k=>{const p=bkParse(k);return p.ty===m[1]&&p.n===+m[2]}).sort((a,b)=>bkParse(b).c-bkParse(a).c);
-    else if(q.length>=3)bills=Object.keys(H.bills).filter(k=>(H.bills[k][1]||H.bills[k][0]).toLowerCase().includes(q)).sort((a,b)=>(H.bills[b][10].L?1:0)-(H.bills[a][10].L?1:0)||bkParse(b).c-bkParse(a).c);}
-  const lob=G&&q.length>=3?Object.values(G.clients).filter(c=>c.n.toLowerCase().includes(q)).sort((a,b)=>b.spend-a.spend):[];
-  const firms=G&&q.length>=3?Object.values(G.firms).filter(f=>f.n.toLowerCase().includes(q)).sort((a,b)=>b.inc-a.inc):[];
-  const coms=G&&q.length>=3?Object.values(G.comm).filter(c=>c.short.toLowerCase().includes(q)||(c.jur||'').toLowerCase().includes(q)):[];
-  const eth=G&&q.length>=3?G.ethics.filter(e=>e.t.toLowerCase().includes(q)):[];
-  return {q,mem,noms,past,apps,bills,lob,firms,coms,eth,stateHit};
+  if(H){
+    if(billNo)bills=Object.keys(H.bills).filter(k=>{const p=bkParse(k);return p.ty===billNo[1]&&p.n===+billNo[2]}).sort((a,b)=>bkParse(b).c-bkParse(a).c);
+    else if(q.length>=3)bills=fzRank(RCACHE.billKeys,k=>H.bills[k][1]||H.bills[k][0],Q,(a,b)=>((H.bills[b][10]||{}).L?1:0)-((H.bills[a][10]||{}).L?1:0)||bkParse(b).c-bkParse(a).c,'bills');
+  }
+  const text=q.length>=3&&!billNo&&G;
+  const lob=text?fzRank(RCACHE.cl,c=>c.n,Q,(a,b)=>b.spend-a.spend,'lob'):[];
+  const firms=text?fzRank(RCACHE.fi,f=>f.n,Q,(a,b)=>b.inc-a.inc,'firms'):[];
+  const coms=text?fzRank(RCACHE.co,c=>c.short+' '+(c.jur||''),Q,null,'coms'):[];
+  const eth=text?fzRank(G.ethics,e=>e.t,Q,null,'eth'):[];
+  const r={q,mem,noms,past,apps,bills,lob,firms,coms,eth,stateHit};
+  Object.assign(RCACHE,{q,r,h:!!H,g:!!G});
+  return r;
 }
-function resultSection(title,items,render,n=4,more){
+function resultSection(title,items,render,n=4){
   if(!items.length)return '';
-  return `<section class="sec rsec"><div class="sh"><h2>${title}<span class="rcount">${ord(items.length)}</span></h2>${more&&items.length>n?`<button ${more}>See all</button>`:''}</div><div class="group">${items.slice(0,n).map(render).join('')}</div></section>`;
+  if(S.rexpQ!==S.q){S.rexp={};S.rexpQ=S.q}
+  const key=String(title).replace(/<[^>]*>/g,''),shown=Math.min(items.length,(S.rexp||{})[key]||n),left=items.length-shown;
+  return `<section class="sec rsec"><div class="sh"><h2>${title}<span class="rcount">${ord(items.length)}</span></h2></div><div class="group">${items.slice(0,shown).map(render).join('')}</div>${left?`<button class="more" data-rexp="${esc(key)}" data-rn="${shown}">${left>50?`Show 50 more of ${ord(left)}`:`Show all ${ord(items.length)}`}</button>`:''}</section>`;
 }
 function topCard(r){
   const q=r.q;let t=null;
@@ -130,6 +166,7 @@ document.addEventListener('click',e=>{
   if(el=g('[data-try]')){e.stopImmediatePropagation();S.q=el.dataset.try;S.filter='All';render();return}
   if(g('[data-rclear]')){e.stopImmediatePropagation();RECENT=[];store.set('recent',[]);render();return}
   if(g('[data-sclear]')){e.stopImmediatePropagation();S.q='';S.limit=60;render();setTimeout(()=>$('#q')?.focus(),0);return}
+  if(el=g('[data-rexp]')){e.stopImmediatePropagation();S.rexp=S.rexp||{};S.rexp[el.dataset.rexp]=(+el.dataset.rn)+50;render();return}
   if(el=g('[data-rjump]')){e.stopImmediatePropagation();const t=document.getElementById(el.dataset.rjump);if(t)scrollTo({top:t.getBoundingClientRect().top+scrollY-120,behavior:'smooth'});return}
   if(el=g('[data-sall]')){e.stopImmediatePropagation();S.filter=el.dataset.sall;S.limit=60;if(S.filter==='History')S.hk='members';render();scrollTo(0,0);return}
   // remember what people searched for when they open a result

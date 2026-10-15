@@ -75,7 +75,7 @@ function judgesScreen(){
   loadJudges();const list0=Array.isArray(XT.judges)?XT.judges:null;
   const f=S.jf||'serving',q=(S.jq||'').trim().toLowerCase();
   let list=list0?list0.filter(j=>f==='all'||(f==='serving'&&j.active&&!j.senior)||(f==='senior'&&j.senior)||(f==='former'&&!j.active)):[];
-  if(q)list=list.filter(j=>(j.name+' '+j.court+' '+j.pres).toLowerCase().includes(q));
+  if(q)list=list.filter(j=>fz(j.name+' '+j.court+' '+j.pres,q));
   const byPres={};list.forEach(j=>byPres[j.pres]=(byPres[j.pres]||0)+1);
   const topP=Object.entries(byPres).sort((a,b)=>b[1]-a[1]).slice(0,6);
   return `${pageHead('Federal judges')}<div class="wrap" style="padding-top:calc(var(--navh) + 10px)">
