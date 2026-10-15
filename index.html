@@ -81,6 +81,8 @@ const APP_VER='202610151345'; /* bump on every release so browsers and the CDN f
 const APP_SCRIPTS=['core','party','hist','ui','nav','pages','search','leaders','linkify','pacs','elections','companies','friendly','votes','places','extras','glossary_es','es_dict','i18n','db','account','trust','pro','desktop','routes'];
 async function boot(){
   const msg=document.getElementById('bootmsg');
+  /* start downloading the app's code while the data loads */
+  for(const n of APP_SCRIPTS){const l=document.createElement('link');l.rel='preload';l.as='script';l.href='/app/js/'+n+'.js?v='+APP_VER;document.head.appendChild(l)}
   try{
     const [members,noms,rc,meta,photos]=await Promise.all([
       SB.all('members?select=data&order=ord'),SB.all('nominations?select=data&order=ord'),SB.all('roll_calls?select=id,data&order=ord'),
