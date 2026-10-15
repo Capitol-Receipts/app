@@ -66,7 +66,7 @@ SB.pub=async(path,tries=3)=>{
     let r;
     try{r=await fetch('/api/db?q='+encodeURIComponent(path),{headers:{Accept:'application/json'}})}catch(e){r=null}
     if(r&&r.ok){try{return await r.json()}catch(e){r=null}}
-    if(r&&r.status>=400&&r.status<500&&r.status!==429)throw new Error(path.split('?')[0]+' '+r.status);
+    if(r&&r.status>=400&&r.status<500&&r.status!==429)return SB.req(path);
     if(i+1<tries){await new Promise(f=>setTimeout(f,600*(i+1)));continue}
     return SB.req(path);
   }
