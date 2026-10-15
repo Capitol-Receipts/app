@@ -42,7 +42,8 @@ const CSS = `<style id="sr-css">
 .sr p{line-height:1.55;max-width:760px}
 .sr-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--l)}
 .sr-list li{padding:9px 2px;border-bottom:1px solid var(--l);display:flex;justify-content:space-between;gap:12px}
-.sr-list li span:last-child{color:var(--s);white-space:nowrap;text-align:right}
+.sr-list li span:first-child{min-width:0;overflow-wrap:anywhere}
+.sr-list li span:last-child{color:var(--s);text-align:right;flex:0 1 auto;max-width:60%;overflow-wrap:anywhere}
 .sr-cols{columns:3 220px;column-gap:24px;margin:0;padding:0;list-style:none}
 .sr-cols li{break-inside:avoid;padding:3px 0}
 .sr-pager{display:flex;flex-wrap:wrap;gap:6px;margin:22px 0}

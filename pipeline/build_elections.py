@@ -99,6 +99,7 @@ def parse_house(t):
         if not st: continue
         body = parts[i + 1]
         tb = body[body.find('{|'):body.find('\n|}')]
+        tb = re.sub(r'(\n\|-[^\n]*)+\n', lambda m: '\n' + m.group(0).strip('\n').split('\n')[-1] + '\n', tb)  # collapse doubled row separators
         cur = None
         for row in re.split(r'\n\|-[^\n]*\n', tb):
             m = re.search(r'\{\{ushr\|([A-Z]{2})\|([A-Za-z0-9]+)\|', row)

@@ -7,6 +7,8 @@ const PN={R:'Republican',D:'Democrat',I:'Independent'};
 const ST={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',DC:'District of Columbia',PR:'Puerto Rico',GU:'Guam',VI:'Virgin Islands',AS:'American Samoa',MP:'Northern Mariana Islands'};
 const chev='<svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5 6.5 6.5 1.5 11.5"/></svg>';
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+/* newest date any source was refreshed (votes can sit still while Congress is out) */
+const lastUpdated=()=>Object.values(DATA.asOf||{}).filter(v=>/^\d{4}-\d\d-\d\d/.test(v||'')).sort().pop();
 const fmtISO=d=>{if(!d)return '—';const[y,m,dd]=d.split('-');return `${MON[+m-1]} ${+dd}, ${y}`};
 const fmtUS=d=>{if(!d)return '—';const[m,dd,y]=d.split('/');return `${MON[+m-1]} ${+dd}, ${y}`};
 const usToISO=d=>{const[m,dd,y]=d.split('/');return `${y}-${m.padStart(2,'0')}-${dd.padStart(2,'0')}`};

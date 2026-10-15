@@ -140,6 +140,6 @@ document.addEventListener('click',e=>{
 home=function(){
   if(S.filter!=='All')S.filter='All';
   const el=typeof elHomeBlock==='function'?elHomeBlock():'';
-  const hero=`<div class="homehero bg-capfull"><header class="brandbar"><div class="logo"><span>Capitol</span>Receipts</div><span class="asof">Updated ${fmtISO(DATA.asOf.votes)}</span></header><h1 class="hello">Who's in Congress, who pays them, and how they vote.</h1><button class="langbtn notr" data-lang="${S.lang==='es'?'en':'es'}">${S.lang==='es'?'English':'Español'}</button></div>`;
+  const hero=`<div class="homehero bg-capfull"><header class="brandbar"><div class="logo"><span>Capitol</span>Receipts</div><span class="asof">Updated ${fmtISO(lastUpdated())}</span></header><h1 class="hello">Who's in Congress, who pays them, and how they vote.</h1><button class="langbtn notr" data-lang="${S.lang==='es'?'en':'es'}">${S.lang==='es'?'English':'Español'}</button></div>`;
   return `<div class="wrap home">${S.q.trim()?'':hero}${searchHeader('')}${S.q.trim()?universal():el+discover()}</div>`;
 };

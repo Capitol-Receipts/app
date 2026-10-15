@@ -147,7 +147,7 @@ function dashStats(){
     ['bills:new','ethics','New laws',laws==null?'—':ord(laws),'this Congress (2025–26)'],
     ['ncat:All','confirm','Appointees confirmed',ord(NOM.length),'by the Senate since Jan 2025'],
   ];
-  return `<section class="sec dash wide"><div class="sh"><h2>Congress at a glance</h2><span class="asof2">Updated ${fmtISO(DATA.asOf.votes)}</span></div>
+  return `<section class="sec dash wide"><div class="sh"><h2>Congress at a glance</h2><span class="asof2">Updated ${fmtISO(lastUpdated())}</span></div>
    ${balanceOfPower()}
    <div class="dstats d8">${tiles.map(([go,cat,k,v,sub])=>`<button class="dstat c-${cat}" data-go="${go}"><span class="dic">${CAT[cat].icon}</span><span class="dk">${k}</span><b class="dv">${v}</b><span class="ds">${sub}</span></button>`).join('')}</div></section>`;
 }
@@ -156,7 +156,7 @@ function home(){
   const bills=Object.entries(DATA.bills).sort((a,b)=>b[1].n-a[1].n).slice(0,5);
   const feed=FEEDTOP.slice(0,6);
   return `<div class="wrap home">
-   <div class="homehero bg-capfull"><header class="brandbar"><div class="logo"><span>Capitol</span>Receipts</div><span class="asof">Updated ${fmtISO(DATA.asOf.votes)}</span></header>
+   <div class="homehero bg-capfull"><header class="brandbar"><div class="logo"><span>Capitol</span>Receipts</div><span class="asof">Updated ${fmtISO(lastUpdated())}</span></header>
    <h1 class="hello">Who's in Congress, who pays them, and how they vote.</h1><button class="langbtn notr" data-lang="${S.lang==='es'?'en':'es'}">${S.lang==='es'?'English':'Español'}</button></div>
    <button class="fakesearch" data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search any lawmaker, bill or group</button>
    ${dashStats()}

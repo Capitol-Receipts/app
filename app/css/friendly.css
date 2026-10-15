@@ -230,7 +230,7 @@ div.mphoto{cursor:default}
 @media (max-width:520px){.pcr{grid-template-columns:auto 1fr minmax(84px,1.2fr) 1fr auto;gap:7px}.pcl{font-size:12px}.pcv{font-size:13.5px}.pcard{padding:12px 12px 8px}}
 .cface>img{background:transparent}
 @media (max-width:759px){
-  .fgrid,.elhomegrid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none}
+  .fgrid,.elhomegrid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none;scroll-padding:0 16px}
   .fgrid::-webkit-scrollbar,.elhomegrid::-webkit-scrollbar{display:none}
   .fgrid>.fcard,.elhomegrid>.fcard{flex:0 0 74%;scroll-snap-align:start}
   .elhomegrid>.elcard{flex:0 0 74%;scroll-snap-align:start;min-height:0}
@@ -293,6 +293,8 @@ div.mphoto{cursor:default}
 /* Democrats vs Republicans tiles */
 .pkey{display:flex;gap:12px;align-items:center;font-size:13px;font-weight:700}.pkey .d{color:var(--D)}.pkey .r{color:var(--R)}.pkey em{font-style:normal;font-weight:500;color:var(--soft)}
 .pkey .d::before,.pkey .r::before{content:"";display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:0;background:currentColor}
+.pcmp>.sh{flex-wrap:wrap;row-gap:6px}.pcmp>.sh h2{flex:1 1 auto;min-width:0}
+@media (max-width:520px){.pcmp>.sh h2{flex-basis:100%}.pkey{gap:10px;font-size:12px;flex-wrap:wrap}}
 .pctiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 @media (min-width:760px){.pctiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (min-width:1500px){.pctiles{grid-template-columns:repeat(7,minmax(0,1fr))}}
