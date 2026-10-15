@@ -16,6 +16,7 @@ STOP = r'\b(the|inc|incorporated|corp|corporation|company|co|plc|llc|lp|llp|ltd|
 def key(s):
     s = (s or '').lower().replace('&amp;', '&')
     s = re.sub(r'\(.*?\)', ' ', s)
+    s = re.sub(r'\s*/[a-z]{2}/?\s*$', ' ', s)   # SEC state-of-incorporation suffix: "APPLIED MATERIALS INC /DE"
     s = re.sub(r'\s[-–]\s.*$', ' ', s)
     s = re.sub(STOP, ' ', s)
     s = re.sub(r'[^a-z0-9& ]', ' ', s)

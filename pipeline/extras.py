@@ -75,6 +75,13 @@ def amt_range(lo, hi):
 def tdate(s):
     try: return datetime.datetime.strptime(s, '%m/%d/%Y').strftime('%Y-%m-%d')
     except Exception: return None
+def tradedate(s, filed):
+    # a trade can't happen after the report that discloses it: a later date is almost always a year typo in the filing
+    d = tdate(s)
+    if d and filed and d > filed:
+        prev = str(int(d[:4]) - 1) + d[4:]
+        return prev if prev <= filed else None
+    return d
 hp = json.load(open(f'{D}/ptr_parsed.json'))
 house_keys = {}
 for m in MEM.values():
@@ -96,7 +103,7 @@ for doc, r in hp.items():
             if r['paper']: paper[bg] += 1
             for t in r['trades'] or []:
                 lo, hi = amt_range(t['lo'], t['hi'])
-                addtrade(bg, [tdate(t['date']), t['type'], t['tick'], t['asset'], lo, hi, t['owner'] or 'Self', doc[-8:]], doc)
+                addtrade(bg, [tradedate(t['date'], tdate(r['date'])), t['type'], t['tick'], t['asset'], lo, hi, t['owner'] or 'Self', doc[-8:]], doc)
             break
 sp = json.load(open(f'{D}/senate_ptr.json'))
 sen = [m for m in MEM.values() if m['chamber'] == 'Senate']
@@ -112,7 +119,7 @@ for r in sp:
         rng = re.findall(r'\$[\d,]+', t['amt'])
         lo, hi = amt_range(rng[0] if rng else None, rng[1] if len(rng) > 1 else None)
         tick = t['tick'] or (re.search(r'\(([A-Z.]{1,6})\)\s*$', t['asset']).group(1) if re.search(r'\(([A-Z.]{1,6})\)\s*$', t['asset']) else None)
-        addtrade(bg, [tdate(t['date']), typ, tick, t['asset'], lo, hi, t['owner'], ''], r['url'])
+        addtrade(bg, [tradedate(t['date'], tdate(r['date'])), typ, tick, t['asset'], lo, hi, t['owner'], ''], r['url'])
 for bg, m in MEM.items():
     tl = sorted([t for t in trades.get(bg, []) if t[0]], key=lambda t: t[0], reverse=True)
     fl = sorted(filings.get(bg, []), key=lambda f: f[0] or '', reverse=True)
