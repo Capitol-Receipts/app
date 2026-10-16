@@ -26,11 +26,50 @@ def norm_tick(t):
     if not t or len(t) > 6 or not t.replace('.', '').replace('-', '').isalpha(): return None
     return t.replace('.', '-')  # BRK.B -> BRK-B on Yahoo
 
-tickers = set()
-for m in MEM:
-    for t in m.get('trades') or []:
-        if t[0] and t[0] >= '2025-01-01' and norm_tick(t[2]): tickers.add(norm_tick(t[2]))
+# every trade since 2025 (profiles only carry the latest 80, so read the full list extras.py saves)
+FULL = os.path.join(W, 'trades_full.json')
+TR = json.load(open(FULL)) if os.path.exists(FULL) else {m['id']: m.get('trades') or [] for m in MEM}
+
+# Many reports name the company but leave out the ticker ("International Business Machines"). Match those names to
+# SEC's list of listed companies; only exact or unambiguous matches count, so funds, bonds and private deals stay out.
+SECF = os.path.join(W, 'data', 'sec_tickers.json')
+if not os.path.exists(SECF) or time.time() - os.path.getmtime(SECF) > 7 * 86400:
+    try:
+        req = urllib.request.Request('https://www.sec.gov/files/company_tickers.json', headers={'User-Agent': 'CapitolReceipts data refresh admin@kopimorehospitalitygroup.com'})
+        open(SECF, 'w').write(urllib.request.urlopen(req, timeout=60).read().decode())
+    except Exception as e: print('sec tickers:', e)
+import re
+STOP = r'\b(inc|incorporated|corp|corporation|co|company|ltd|limited|plc|holdings?|group|the|class [a-z]|series [a-z]|common stock|common shares?|ordinary shares?|shares|stock|adr|ads|sponsored|n\.?v|s\.?a|ag|se|nv|sa|lp|l\.p)\b'
+def nname(x):
+    x = re.sub(r'\(.*?\)', ' ', (x or '').lower()).split(' - ')[0]
+    x = re.sub(STOP, ' ', x); x = re.sub(r'[^a-z0-9 ]', ' ', x)
+    return ' '.join(x.split())
+NAME2T, PREFIX = {}, {}
+try:
+    for v in json.load(open(SECF)).values():
+        k = nname(v['title'])
+        if k and k not in NAME2T: NAME2T[k] = v['ticker'].upper()
+except Exception: pass
+SKIP = re.compile(r'option|call|put|note|bond|bill|treas|fund|etf|trust|lp\b|llc|coupon|matures|revenue|cd\b|certificate|bitcoin|btc|crypto', re.I)
+import functools
+@functools.lru_cache(maxsize=None)
+def name_tick(asset):
+    if not asset or SKIP.search(asset): return None
+    k = nname(asset)
+    if len(k) < 4: return None
+    if k in NAME2T: return NAME2T[k]
+    hits = [t for n, t in NAME2T.items() if n.startswith(k + ' ')] if len(k.split()) >= 2 else []
+    return hits[0] if len(set(hits)) == 1 else None
+def tick_of(t): return norm_tick(t[2]) or (norm_tick(name_tick(t[3])) if NAME2T else None)
+
+tickers = set(); named = 0
+for rows in TR.values():
+    for t in rows:
+        if t[0] and t[0] >= '2025-01-01':
+            tk = tick_of(t)
+            if tk: tickers.add(tk); named += 0 if norm_tick(t[2]) else 1
 tickers.add('SPY')
+print('trades with a stock we can price:', named, 'matched by company name')
 
 cache = json.load(open(PF)) if os.path.exists(PF) else {'fetched': 0, 'p': {}}
 P = cache['p']
@@ -88,8 +127,8 @@ perf = {}
 if spy_now:
     for m in MEM:
         buys, sells = [], []
-        for t in m.get('trades') or []:
-            tk = norm_tick(t[2])
+        for t in TR.get(m['id']) or []:
+            tk = tick_of(t)
             if not t[0] or t[0] < '2025-01-01' or not tk or tk == 'SPY': continue
             kind = 'b' if t[1] == 'Buy' else 's' if str(t[1]).startswith('Sell') else None
             if not kind: continue
@@ -98,7 +137,7 @@ if spy_now:
             if not (p0 and s0 and p1): continue
             r, sr = p1 / p0 - 1, spy_now / s0 - 1
             if abs(r) > 20: continue  # bad price data (splits the source missed, ticker reuse)
-            (buys if kind == 'b' else sells).append((t[2], t[0], r, sr, mid(t)))
+            (buys if kind == 'b' else sells).append((t[2] or tk, t[0], r, sr, mid(t)))
         if not buys and not sells: continue
         rec = {}
         if buys:
@@ -123,6 +162,11 @@ if spy_now:
 out = {'asOf': asof, 'since': '2025-01-01', 'm': perf, 'priced': sum(1 for t in tickers if P.get(t))}
 json.dump(out, open(OUTF, 'w'))
 # add to the app_meta export (a second gzip member; readers see one continuous file)
+# every trade since 2025, for the full Pro download and "your stocks in Congress": {member id: [[date, type, ticker, asset, lo, hi, owner]]}
+ALL = {k: [t for t in v if t[0] and t[0] >= '2025-01-01'] for k, v in TR.items()}
+ALL = {k: [[t[0], t[1], t[2] or (name_tick(t[3]) or ''), t[3], t[4], t[5], t[6]] for t in v] for k, v in ALL.items() if v}
 with gzip.open(os.path.join(EXP, 'app_meta.jsonl.gz'), 'at', encoding='utf-8') as f:
     f.write(json.dumps({'key': 'perf', 'value': out}, separators=(',', ':')) + '\n')
+    f.write(json.dumps({'key': 'trades_all', 'value': ALL}, separators=(',', ':')) + '\n')
+print('all trades:', sum(len(v) for v in ALL.values()))
 print('perf:', len(perf), 'members scored, prices as of', asof)

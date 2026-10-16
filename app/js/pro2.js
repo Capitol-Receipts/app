@@ -5,7 +5,14 @@
 - Your stocks in Congress: for each stock you watch, who in Congress trades it.
 - Downloads: spreadsheets of members, PACs, lobbying clients, companies, bills, and a member's money and votes.
 - Alert settings: same-day or once-a-day emails, bill updates, and the weekly briefing. */
-const PRO2={perf:null,perfErr:null,perfLoading:false,psort:'ex',pch:'all'};
+const PRO2={perf:null,perfErr:null,perfLoading:false,psort:'ex',pch:'all',all:null,allLoading:false};
+/* every trade since 2025 (profiles carry only each member's latest 80), loaded when a Pro tool needs it */
+async function loadAllTrades(){
+  if(PRO2.all||PRO2.allLoading)return PRO2.all;PRO2.allLoading=true;
+  try{const r=await SB.meta(['trades_all']);const out=[];Object.entries(r.trades_all||{}).forEach(([id,ts])=>{const m=byId[id];if(m)ts.forEach(t=>out.push([m,t]))});PRO2.all=out.length?out:null}catch(e){console.warn(e)}
+  PRO2.allLoading=false;return PRO2.all;
+}
+const tradesSince2025=()=>(PRO2.all||allTrades()).filter(([m,t])=>t[0]>='2025-01-01'&&t[2]);
 S.bills=S.bills||[];
 PI.chart='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 16l5-5 4 3 6-7"/><path d="M15 7h5v5"/></svg>';
 PI.doc='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg>';
@@ -83,7 +90,8 @@ function perfCard(m){
 /* ---------- your stocks in Congress ---------- */
 function myStocksPage(){
   const pro=isPro(),mine=S.stocks||[];
-  const all=allTrades().filter(([m,t])=>t[0]>='2025-01-01');
+  if(!PRO2.all&&!PRO2.allLoading&&pro)loadAllTrades().then(()=>{if(S.stack.at(-1)==='mystocks')render()});
+  const all=tradesSince2025();
   const by={};all.forEach(([m,t])=>{(by[t[2]]=by[t[2]]||[]).push([m,t])});
   const card=tk=>{
     const ts=(by[tk]||[]).sort((a,b)=>b[1][0].localeCompare(a[1][0]));
@@ -113,7 +121,7 @@ async function doCsv2(kind){
   const d=day0(),name=s=>'capitol-receipts-'+s+'-'+d;
   if(kind==='members')return csvDownload(name('members'),['Name','Party','State','Chamber','District','In Congress since','Age','Raised 2025-26','Cash on hand','Small-donor share','PAC share','Top industry','Stock trades since 2025','Trades tied to committees','Votes missed','Voted with party','Ex-staff now lobbyists','Next election'],
     MEM.map(m=>[m.name,m.party,m.state,m.chamber,m.district||'',m.since,m.age,m.money?.rec||'',m.money?.coh??'',m.smallShare!=null?(m.smallShare*100).toFixed(1)+'%':'',m.pacShare!=null?(m.pacShare*100).toFixed(1)+'%':'',m.topInd||'',m.tradeN,m.commTrades,m.missed!=null?(m.missed*100).toFixed(1)+'%':'',m.unity!=null?(m.unity*100).toFixed(1)+'%':'',m.revN,m.next||'']));
-  if(kind==='trades')return csvDownload(name('all-trades'),TH,allTrades().map(([m,t])=>trow(m,t)));
+  if(kind==='trades'){toast('Preparing your download…');await loadAllTrades();return csvDownload(name('all-trades'),TH,(PRO2.all||allTrades()).map(([m,t])=>trow(m,t)))}
   toast('Preparing your download…');
   if(kind==='pacs'){const p=await lightKind('pacs');return csvDownload(name('pacs'),['PAC','Full name','Type','Given (all years)','To Democrats','To Republicans','To others','Recipients','Years active'],Object.values(p).map(r=>[r.n,r.fn||r.n,r.cat||'',r.tot||0,r.sp?.D||0,r.sp?.R||0,Object.entries(r.sp||{}).filter(([k])=>k!=='D'&&k!=='R').reduce((a,[,v])=>a+v,0),r.nr||'',(r.yrs||[]).join('–')]))}
   if(kind==='lobbying'){const p=await lightKind('lobby_clients');return csvDownload(name('lobbying-clients'),['Client','Lobbying spending','Lobbyists','Top issues'],Object.values(p).sort((a,b)=>(b.spend||0)-(a.spend||0)).map(r=>[r.n,r.spend||0,r.nlob||'',(r.iss||[]).map(x=>x[0]).join(' ')]))}

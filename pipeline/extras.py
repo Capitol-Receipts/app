@@ -137,6 +137,9 @@ for bg, m in MEM.items():
         m['tradeByMonth'] = [[mo, mc.get(mo, 0)] for mo in months]
         m['trades'] = [[t[0], t[1], t[2], t[3][:70], t[4], t[5], t[6]] for t in tl[:80]]
     m.pop('ptrByMonth', None)
+# every trade (profiles keep only the latest 80); used for stock-pick scores and the full download
+json.dump({bg: [[t[0], t[1], t[2], t[3][:60], t[4], t[5], t[6]] for t in sorted([t for t in trades.get(bg, []) if t[0]], key=lambda t: t[0], reverse=True)] for bg in MEM},
+          open(os.path.join(os.path.dirname(os.path.abspath(sys.argv[3])), 'trades_full.json'), 'w'), separators=(',', ':'))
 
 # ---------- lobbying ----------
 files = sorted(glob.glob(f'{D}/lda/*.json'))
