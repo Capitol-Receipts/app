@@ -23,7 +23,8 @@ jobs:
           B="https://app.capitolreceipts.com/api/db?q="
           enc() { python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1],safe="-_.!~*()"+chr(39)))' "$1"; }
           paths=(
-            "members?select=data&order=ord&limit=1000&offset=0"
+            "members?select=lite&order=ord&limit=1000&offset=0"
+            "members?select=id,missedM:data->missedM,employers:data->employers,revolving:data->revolving,pv:data->pv,pacCats:data->pacCats,recent:data->recent,ptrFiles:data->ptrFiles,tradeByMonth:data->tradeByMonth,raisedHist:data->raisedHist&order=ord&limit=1000&offset=0"
             "nominations?select=data&order=ord&limit=1000&offset=0"
             "roll_calls?select=id,data&order=ord&limit=1000&offset=0"
             "photos?select=id,img&order=id&limit=1000&offset=0"

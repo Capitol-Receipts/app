@@ -27,7 +27,7 @@ MEM.forEach(m=>{
   m.pacShare=m.money&&m.money.rec>0?m.money.pac/m.money.rec:null;
   m.missed=m.elig&&m.id!==SPEAKER?1-m.present:null;
   m.breaks=m.unity!=null&&m.unityN>=50?1-m.unity:null;
-  m.revN=(m.revolving||[]).length;
+  m.revN=m.revolving?m.revolving.length:(m.revN||0);
   m.tradeN=m.tradeN||0;m.commTrades=m.commTrades||0;m.ethN=(m.ethics||[]).length;
   m.topInd=(m.industries||[]).filter(r=>!/^(Other or not listed|Retired|Not employed|Other business|Politicians|Party committees)/.test(r[0]))[0]?.[0]||null;
   m.years=2026-m.since;

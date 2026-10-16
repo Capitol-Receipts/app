@@ -42,6 +42,11 @@ function gaPageView(){
   try{if(new URLSearchParams(location.search).get('lang')==='es'&&S.lang!=='es'){S.lang='es';store.set('lang','es')}}catch(e){}
   const _renderRt=render;
   render=function(){
+    const cur=S.stack.at(-1);
+    if(!window.__FULL&&!window.__FULLERR&&cur&&typeof byId!=='undefined'&&byId[cur]){
+      $('#app').innerHTML='<div class="wrap"><div class="empty" style="padding-top:calc(var(--navh) + 24px)">Loading…</div></div>';
+      return;
+    }
     _renderRt();
     gaPageView();
     if(window.__HOLD)return;
