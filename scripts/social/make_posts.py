@@ -67,7 +67,7 @@ post('stock-picks', 'Whose stock picks beat the market?',
      ('MEMBER', 'VS S&P 500'), [(f"{nm(MEM[i])} ({tag(MEM[i])})", f"+{e*100:.0f} pts") for e, i, r in ranked[:8]], ('BEAT THE S&P', f"{beat} of {len(ranked)}"),
      f"PURCHASES SINCE JAN 2025 · PRICES AS OF {mon(pf['asOf']).upper()}",
      f"{beat} of {len(ranked)} members of Congress with at least 5 stock purchases since January 2025 beat the S&P 500.\n\n"
-     f"{nm(MEM[ranked[0][1]])} ({tag(MEM[ranked[0][1]])}) is ahead of the index by {ranked[0][0]*100:.0f} percentage points.\n\n"
+     f"{nm(MEM[ranked[0][1]])} ({tag(MEM[ranked[0][1]])}) 's purchases beat the index by {ranked[0][0]*100:.0f} percentage points.\n\n"
      "Each purchase is measured from the day it was made to today and compared with the S&P 500 over the same days.",
      'Full ranking and method: capitolreceipts.com/rankings/stock-picks')
 
