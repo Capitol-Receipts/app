@@ -112,6 +112,7 @@ for name, (path, fname, desc) in PAGES.items():
 <meta property="og:url" content="{canon}">
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 {helmet}
 <style>img{{max-width:100%}}.cr-msg{{flex-basis:100%;margin:4px 0 0;font-weight:700}}
 .hero-phones{{display:flex;justify-content:center;align-items:center;gap:24px;padding:40px 0 72px}}
@@ -145,9 +146,7 @@ header nav>a:last-child{{margin-left:0 !important}}
 for b in sorted(used):
     shutil.copy(os.path.join(ASSETS, f'{b}.webp'), os.path.join(OUT, 'img', f'{b}.webp'))
 
-open(os.path.join(OUT, 'favicon.svg'), 'w').write(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#c8323a"/>'
-    '<text x="32" y="44" font-family="Arial,Helvetica,sans-serif" font-size="30" font-weight="800" fill="#fff" text-anchor="middle">CR</text></svg>')
+open(os.path.join(OUT, 'favicon.svg'), 'w').write(open(os.path.join(os.path.dirname(__file__), 'assets', 'favicon.svg')).read())
 open(os.path.join(OUT, 'robots.txt'), 'w').write(f'User-agent: *\nAllow: /\nSitemap: {SITE}/sitemap.xml\n')
 if False: open(os.path.join(OUT, 'sitemap.xml'), 'w').write(  # replaced by sitemaps/site.xml (seo_site.py)
 

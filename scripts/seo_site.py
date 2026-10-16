@@ -39,7 +39,7 @@ EXPLORE = [('/this-week', 'This week in Congress'), ('/rankings', 'Rankings'), (
            ('/pacs', 'PACs and who they fund'), ('/lobbying', 'Who lobbies Congress'), ('/elections', '2026 House and Senate races'), ('/companies', 'Companies members trade'),
            ('/committees', 'Committees'), ('/appointees/all', 'Appointees and nominees'), ('/judges', 'Federal judges'), ('/past-members', 'Past members since 1789'), ('/es/members', 'En español')]
 ORG = {'@context': 'https://schema.org', '@type': 'Organization', '@id': f'{SITE}/#org', 'name': 'Capitol Receipts', 'url': SITE + '/',
-       'logo': f'{SITE}/favicon.svg', 'description': 'A nonpartisan app that shows who funds Congress, what members trade, how they vote and who lobbies them, from public records.',
+       'logo': f'{SITE}/img/logo-512.png', 'description': 'A nonpartisan app that shows who funds Congress, what members trade, how they vote and who lobbies them, from public records.',
        'email': 'corrections@capitolreceipts.com'}
 
 def get(path):
