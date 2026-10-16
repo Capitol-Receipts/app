@@ -7,6 +7,10 @@ const SPEAKER = 'J000299'; // the Speaker by custom rarely votes
 const DATA = () => cached('rank-members', async () => {
   const rs = await q('members?select=id,name,party,state,chamber,district,delegate:data->delegate,rec:data->money->rec,coh:data->money->coh,pac:data->money->pac,small:data->smallShare,tradeN:data->tradeN,present:data->present,elig:data->elig,unity:data->unity,unityN:data->unityN,comm:data->commTrades,rev:data->revolving&order=ord');
   rs.forEach(m => { m.revN = Array.isArray(m.rev) ? m.rev.length : 0; delete m.rev; });
+  try { // stock picks vs the S&P 500 (pipeline/build_perf.py)
+    const pf = ((await META(['perf'])).perf || {}).m || {};
+    rs.forEach(m => { const p = pf[m.id]; if (p && p.n) { m.pn = p.n; m.pret = p.ret; m.pspx = p.spx; m.pex = p.ex; } });
+  } catch (e) { /* ranking just stays empty */ }
   return rs;
 });
 
@@ -39,6 +43,9 @@ const METRICS = {
   'former-staff-lobbying': { q: 'most former staff now lobbying', h: 'Members whose former staff became lobbyists', short: 'Most ex-staff now lobbying', col: 'Ex-staff lobbying',
     value: m => m.revN || 0, fmt: num, min: v => v > 0, unit: 'former staffers now registered lobbyists',
     how: 'Counts people listed on current lobbying registrations whose disclosed past jobs include work in the member’s office, from the “covered position” field lobbyists must fill in under the Lobbying Disclosure Act.', src: 'Senate Lobbying Disclosure Act database' },
+  'stock-picks': { q: 'best stock pickers', h: 'Members of Congress whose stock picks beat the market', short: 'Stock picks vs the S&P 500', col: 'Points above the S&P 500',
+    value: m => (m.pn || 0) >= 5 ? m.pex : null, fmt: x => `${x >= 0 ? '+' : ''}${(x * 100).toFixed(0)}`, min: () => true, unit: 'percentage points above the S&P 500 on their stock purchases',
+    how: 'For each stock purchase reported since January 2025, the return from the trade-date closing price to the latest close, weighted by the middle of the reported dollar range, minus what the S&P 500 (SPY) did over exactly the same days. Members with fewer than five purchases of priced, publicly traded stocks are left out. Past results say nothing about future ones.', src: 'House Clerk and Senate periodic transaction reports; daily closing prices' },
 };
 const VIEWS = { '': ['in Congress', m => true], senate: ['in the Senate', m => m.chamber === 'Senate'], house: ['in the House', m => m.chamber === 'House'],
   democrats: ['among Democrats', m => m.party === 'D'], republicans: ['among Republicans', m => m.party === 'R'] };

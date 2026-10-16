@@ -2,13 +2,14 @@
 const L = require('./_seo_lib');
 const H = require('./_seo_people');
 const R = require('./_seo_records');
+const STK = require('./_seo_stocks');
 const { q, all, MEMBERS, COMMITTEES, CAUCUSES, esc, P, a, ST, PN, num, money, date, clamp, title, cols, rows, facts, pager, HOST, cached } = L;
 
 const PAGES = {
   'member': H.member, 'past-member': H.pastMember, 'appointee': H.appointee, 'nominee': H.nominee, 'judge': H.judge,
   'bill': R.bill, 'vote': R.vote, 'pac': R.pac, 'lobbying': R.lobbying, 'lobbying-firm': R.lobbyingFirm, 'company': R.company,
   'committee': R.committee, 'caucus': R.caucus, 'race': R.race, 'outside-group': R.outsideGroup, 'ethics': R.ethics,
-  'state': R.state, 'district': R.district,
+  'state': R.state, 'district': R.district, 'stock': STK.stock,
 };
 
 const PER = 250;
@@ -26,6 +27,7 @@ async function paged(table, select, order, page) {
 }
 
 const HUBS = {
+  stocks: STK.stocks,
   async members() {
     const { rows: ms } = await MEMBERS();
     const byState = {}; ms.forEach(m => (byState[m.state] = byState[m.state] || []).push(m));
@@ -179,7 +181,7 @@ const SOURCES = { // sitemap name -> table, columns, how to build the URL
 const counts = () => cached('sm-counts', async () => Object.fromEntries(await Promise.all(Object.entries(SOURCES).map(async ([k, [t]]) => [k, (await q(`${t}?select=${['bills', 'vote_index'].includes(t) ? 'key' : 'id'}${SOURCES[k][2].includes('indexable') ? '&indexable=is.true' : ''}`, { range: '0-0', count: true })).total]))), 6 * 3600e3);
 const xmlEsc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 async function sitemapIndex() {
-  const c = await counts(), files = ['hubs', 'places', 'es'];
+  const c = await counts(), files = ['hubs', 'places', 'es', 'stocks'];
   const today = new Date().toISOString().slice(0, 10);
   const site = `<sitemap><loc>${HOST}/sitemaps/site.xml</loc><lastmod>${today}</lastmod></sitemap>\n`; // marketing pages (a static file on www)
   Object.keys(SOURCES).forEach(k => { const n = Math.ceil((c[k] || 0) / SM); for (let i = 1; i <= n; i++) files.push(n > 1 ? `${k}-${i}` : k); });
@@ -192,10 +194,11 @@ async function sitemapFile(name) {
     const pages = (k, path) => [[path]]; // later pages are link lists marked noindex
     const RK = require('./_seo_rank');
     const rk = [['/rankings'], ...Object.keys(RK.METRICS).flatMap(k => Object.keys(RK.VIEWS).map(v => [RK.rpath(k, v)]))];
-    return urlset([['/'], ['/members'], ['/this-week'], ...rk, ['/es/members'], ['/es/states'], ['/es/elections'], ['/states'], ...pages('votes', '/votes'), ['/committees'], ['/caucuses'], ['/elections'], ...pages('past-members', '/past-members'), ...pages('appointees', '/appointees/all'),
+    return urlset([['/'], ['/members'], ['/this-week'], ...rk, ['/es/members'], ['/es/states'], ['/es/elections'], ['/states'], ...pages('votes', '/votes'), ['/committees'], ['/caucuses'], ['/elections'], ['/stocks'], ...pages('past-members', '/past-members'), ...pages('appointees', '/appointees/all'),
       ...pages('judges', '/judges'), ...pages('bills', '/bills'), ...pages('pacs', '/pacs'), ...pages('lobbying', '/lobbying'), ...pages('lobbying-firms', '/lobbying-firms'),
       ...pages('companies', '/companies'), ...pages('outside-groups', '/outside-groups'), ...pages('ethics', '/ethics')]);
   }
+  if (name === 'stocks') return urlset([['/stocks'], ...(await STK.sitemap())]);
   if (name === 'places') {
     const { rows: ms } = await MEMBERS();
     const states = [...new Set(ms.map(m => m.state))];

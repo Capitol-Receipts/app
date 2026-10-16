@@ -1,0 +1,5 @@
+Contact: mailto:admin@squaredawaylabs.com
+Expires: 2027-10-16T00:00:00.000Z
+Preferred-Languages: en, es
+Canonical: https://www.capitolreceipts.com/.well-known/security.txt
+Policy: https://www.capitolreceipts.com/terms

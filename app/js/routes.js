@@ -6,7 +6,7 @@ The server sends that page fully rendered, so it shows instantly and search engi
 2. Moving around the app: keep the address bar on the current record's address, so copied or shared links work. */
 const ROUTE_PATH=[ // app page id prefix -> address prefix
   ['hp:','past-member'],['ha:','appointee'],['bill:','bill'],['pac:','pac'],['lob:','lobbying'],['firm:','lobbying-firm'],['com:','committee'],
-  ['caucus:','caucus'],['judge:','judge'],['co:','company'],['race:','race'],['og:','outside-group'],['eth:','ethics'],['vote:','vote'],['state:','state'],['dist:','district']];
+  ['caucus:','caucus'],['judge:','judge'],['co:','company'],['race:','race'],['og:','outside-group'],['eth:','ethics'],['vote:','vote'],['state:','state'],['dist:','district'],['stock:','stock']];
 function pathFor(id){
   if(!id)return '/';
   for(const [pre,p] of ROUTE_PATH)if(id.startsWith(pre))return `/${p}/${encodeURIComponent(id.slice(pre.length))}`;

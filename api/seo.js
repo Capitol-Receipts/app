@@ -166,12 +166,15 @@ ${leaders.filter(Boolean).join('\n')}
 - [Bills since 1947](${SITE}/bills), [every recorded vote since 1789](${SITE}/votes)
 - [PACs](${SITE}/pacs), [lobbying groups](${SITE}/lobbying), [lobbying firms](${SITE}/lobbying-firms), [outside spending](${SITE}/outside-groups), [companies](${SITE}/companies)
 - [Committees](${SITE}/committees), [caucuses](${SITE}/caucuses), [appointees and nominees](${SITE}/appointees/all), [federal judges](${SITE}/judges), [past members since 1789](${SITE}/past-members), [House ethics statements](${SITE}/ethics)
+- [2026 elections](${SITE}/elections): every House and Senate race on the November 3, 2026 ballot, with candidates, money raised and outside spending
+- [Stocks traded by members of Congress](${SITE}/stocks): one page per stock, listing every member who traded it since January 2025
 - [En español](${SITE}/es/members)
 
 ## Page addresses
 - Member: ${SITE}/member/{bioguide ID}/{name}, for example ${SITE}/member/P000197/nancy-pelosi
 - Bill: ${SITE}/bill/{congress}-{type}-{number}, for example ${SITE}/bill/119-hr-1
 - Vote: ${SITE}/vote/{congress}-{H or S}-{roll call number}, for example ${SITE}/vote/119-S-911
+- Stock: ${SITE}/stock/{ticker}, for example ${SITE}/stock/NVDA
 - Also: /pac/{FEC ID}, /state/{postal code}, /district/{state}-{number}, /race/{race ID}, /company/{name}, /committee/{code}
 
 ## Sources
@@ -183,8 +186,39 @@ ${leaders.filter(Boolean).join('\n')}
 - Method and definitions: ${SITE}/how-it-works
 
 ## Optional
+- [Every member in one file](${SITE}/llms-full.txt): key numbers for all current members of Congress, for quoting
 - [Sitemap](${SITE}/sitemap.xml)
 - [About and pricing](${SITE}/pricing)
+`;
+}
+
+async function llmsFull() {
+  const [rows, meta, stk] = await Promise.all([
+    T.q('members?select=id,name,party,state,chamber,district,rec:data->money->rec,coh:data->money->coh,pac:data->money->pac,small:data->smallShare,tradeN:data->tradeN,comm:data->commTrades,present:data->present,elig:data->elig,unity:data->unity,since:data->since,next:data->next,rev:data->revolving&order=ord'),
+    T.META(['asOf', 'perf']), require('./_seo_stocks').DATA().catch(() => ({ S: {} }))]);
+  const a = meta.asOf || {}, pf = (meta.perf || {}).m || {};
+  const pct = (x, d = 0) => x == null ? 'n/a' : (x * 100).toFixed(d) + '%';
+  const lines = rows.map(m => {
+    const seat = m.chamber === 'Senate' ? `Sen., ${m.state}` : `Rep., ${m.state}-${+m.district || 'AL'}`, p = pf[m.id];
+    const parts = [`raised ${m.rec != null ? T.money(m.rec) : 'n/a'} for 2026 (${pct(m.small)} from small donors, ${m.rec ? pct((m.pac || 0) / m.rec) : 'n/a'} from PACs)`,
+      `cash on hand ${m.coh != null ? T.money(m.coh) : 'n/a'}`, `${T.num(m.tradeN || 0)} stock trades since Jan 2025${m.comm ? ` (${T.num(m.comm)} in industries their committees oversee)` : ''}`,
+      m.elig >= 25 ? `missed ${pct(1 - m.present, 1)} of votes` : null, m.unity != null ? `voted with their party ${pct(m.unity, 1)} on party-line votes` : null,
+      Array.isArray(m.rev) && m.rev.length ? `${m.rev.length} former staff now registered lobbyists` : null,
+      p && p.n >= 5 ? `stock purchases returned ${pct(p.ret)} vs ${pct(p.spx)} for the S&P 500 over the same days (${p.n} buys)` : null,
+      m.since ? `in Congress since ${m.since}` : null, m.next ? `next election ${m.next}` : null].filter(Boolean);
+    return `- [${m.name}](${SITE}${T.P('member', m.id, m.name)}) (${m.party}, ${seat}): ${parts.join('; ')}.`;
+  });
+  const top = Object.values(stk.S || {}).sort((x, y) => y.trades.length - x.trades.length).slice(0, 50)
+    .map(s => `- [${s.name} (${s.tk})](${SITE}${T.P('stock', s.tk, s.name)}): ${T.num(s.trades.length)} trades by ${T.num(s.nm)} members since Jan 2025`);
+  return `# Capitol Receipts: every member of Congress, key numbers
+
+> One line per current member of the U.S. Congress, from public records. Each line links to the member's full profile with sources. Campaign finance as of ${a.fec || ''}; stock trade reports as of ${a.ptr || ''}; votes as of ${a.votes || ''}. Nonpartisan; every member is measured the same way. Definitions: ${SITE}/how-it-works
+
+## Members of Congress (${rows.length})
+${lines.join('\n')}
+
+## Most-traded stocks in Congress
+${top.join('\n')}
 `;
 }
 
@@ -229,6 +263,7 @@ module.exports = async (req, res) => {
       return xml ? send(res, 200, 'application/xml; charset=utf-8', xml, 86400) : send(res, 404, 'text/plain', 'Not found');
     }
     if (t === 'llms') return send(res, 200, 'text/plain; charset=utf-8', await llms(), 86400);
+    if (t === 'llms-full') return send(res, 200, 'text/plain; charset=utf-8', await llmsFull(), 86400);
     if (t === 'rankings') {
       const pg = id ? await RK.ranking(decodeURIComponent(id), slug) : await RK.index();
       return send(res, pg ? 200 : 404, 'text/html; charset=utf-8', html(pg || notFound(publicPath), 'seo'));

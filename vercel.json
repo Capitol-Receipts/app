@@ -140,11 +140,11 @@
       "destination": "/api/seo?t=:t&lang=es"
     },
     {
-      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district)/:id/:slug",
+      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district|stock)/:id/:slug",
       "destination": "/api/seo?t=:t&id=:id&slug=:slug"
     },
     {
-      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district)/:id",
+      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district|stock)/:id",
       "destination": "/api/seo?t=:t&id=:id"
     },
     {
@@ -152,7 +152,7 @@
       "destination": "/api/seo?t=appointees"
     },
     {
-      "source": "/:t(members|states|past-members|appointees|judges|bills|votes|pacs|lobbying|lobbying-firms|companies|committees|caucuses|elections|outside-groups|ethics|this-week)",
+      "source": "/:t(members|states|past-members|appointees|judges|bills|votes|pacs|lobbying|lobbying-firms|companies|committees|caucuses|elections|outside-groups|ethics|this-week|stocks)",
       "destination": "/api/seo?t=:t"
     },
     {
@@ -170,6 +170,10 @@
     {
       "source": "/llms.txt",
       "destination": "/api/seo?t=llms"
+    },
+    {
+      "source": "/llms-full.txt",
+      "destination": "/api/seo?t=llms-full"
     }
   ],
   "redirects": [
