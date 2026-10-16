@@ -21,7 +21,7 @@ function hub(o) { // o: {path, h1, sub, lead, title, desc, body, page, pages}
 }
 async function paged(table, select, order, page) {
   const from = (page - 1) * PER;
-  const r = await q(`${table}?select=${select}&order=${order}`, { range: `${from}-${from + PER - 1}`, count: true });
+  const r = await q(`${table}?select=${select}&order=${order}`, { range: `${from}-${from + PER - 1}`, count: 'estimated' }); // exact counts of 100k+ rows are slow; big lists use the planner's estimate
   return { rows: r.rows, pages: Math.max(1, Math.ceil(r.total / PER)), total: r.total };
 }
 
@@ -94,7 +94,7 @@ ${facts([['Stock trades in the last 30 days', num(trades.length)], ['Members tra
       body: rows(r.rows.map(b => [a(P('bill', b.key, b.title), `${H.billLabel(b.key)}: ${clamp(b.title, 110)}`), `${L.ord(b.congress)} Congress${b.became_law ? ' · Law' : ''}`])) });
   },
   async votes(page) {
-    const r = await paged('vote_index', 'key,chamber,voted_on,title,congress', 'congress.desc,chamber.desc,roll.desc', page);
+    const r = await paged('vote_index', 'key,chamber,voted_on,title,congress', 'congress.desc,chamber.asc,roll.desc', page);
     return hub({ path: '/votes', page, pages: r.pages, h1: 'Every vote in Congress', sub: `${num(r.total)} recorded House and Senate votes since 1789, newest first`,
       title: 'Every Vote in Congress since 1789: How Each Member Voted', desc: 'Every recorded House and Senate roll call vote since 1789: what was voted on, the result, the party split and how each member voted.',
       body: rows(r.rows.map(v => [a(P('vote', v.key, v.title), clamp(R.unshout(v.title), 120)), `${v.chamber === 'S' ? 'Senate' : 'House'} · ${esc(date(v.voted_on))}`])) });

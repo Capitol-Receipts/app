@@ -18,7 +18,7 @@ async function viaCache(p, opt) {
 async function q(p, opt = {}) {
   const headers = { apikey: KEY, Accept: 'application/json' };
   if (opt.range) { headers.Range = opt.range; headers['Range-Unit'] = 'items'; }
-  if (opt.count) headers.Prefer = 'count=exact';
+  if (opt.count) headers.Prefer = opt.count === 'estimated' ? 'count=estimated' : 'count=exact';
   for (let i = 0; ; i++) {
     let r;
     try { r = await fetch(SB + p, { headers }); } catch (e) { if (i < 2) { await new Promise(f => setTimeout(f, 400 * (i + 1))); continue; } throw e; }

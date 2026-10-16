@@ -144,7 +144,7 @@ async function pac(id) {
   const p = { ...(r.light || {}), ...(r.detail || {}) };
   const nm = p.fn || r.name || p.n;
   const cur = p.cur || [], top = p.top || [];
-  const [n, co] = await Promise.all([names([...cur.map(x => x[0]), ...top.map(x => x[0])].slice(0, 300)), one(`companies?pac=eq.${encodeURIComponent(id)}&select=id,name`).catch(() => null)]);
+  const [n, co] = await Promise.all([names([...cur.map(x => x[0]), ...top.map(x => x[0])].slice(0, 300)), one(`companies?data->>pac=eq.${encodeURIComponent(id)}&select=id,name`).catch(() => null)]);
   const sp = p.sp || {}, spT = Object.values(sp).reduce((s, v) => s + v, 0) || 1;
   const split = Object.entries(sp).sort((x, y) => y[1] - x[1]).map(([k, v]) => `${pct(v / spT)} to ${PN[k] || k}s`).join(', ');
   const yrs = p.yrs || [];
@@ -170,7 +170,7 @@ async function lobbying(id) {
   const meta = await META(['pages_issue', 'lobby']);
   const iss = meta.pages_issue || {}, periods = (meta.lobby || {}).periods || '';
   const bks = (d.bills || []).slice(0, 25).map(x => x[0]);
-  const [bills, n, co] = await Promise.all([bks.length ? q(`bills?select=key,title&key=${inList(bks)}`) : [], names((d.ex || []).map(x => x[0])), one(`companies?lob=eq.${encodeURIComponent(id)}&select=id,name`).catch(() => null)]);
+  const [bills, n, co] = await Promise.all([bks.length ? q(`bills?select=key,title&key=${inList(bks)}`) : [], names((d.ex || []).map(x => x[0])), one(`companies?data->>lob=eq.${encodeURIComponent(id)}&select=id,name`).catch(() => null)]);
   const bt = Object.fromEntries(bills.map(b => [b.key, b.title]));
   const issues = (d.iss || []).map(x => iss[x[0]] || x[0]);
   const lead = `${r.name} spent ${money(r.spend)} lobbying the federal government${periods ? ` (${periods})` : ''}${issues.length ? `, mostly on ${issues.slice(0, 3).join(', ').toLowerCase()}` : ''}.${d.nlob ? ` It used ${num(d.nlob)} lobbyists` : ''}${(d.ex || []).length ? `, including people who worked for ${num(new Set(d.ex.map(x => x[0])).size)} members of Congress` : ''}${d.nlob ? '.' : ''}`;
