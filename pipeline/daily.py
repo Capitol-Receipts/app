@@ -6,7 +6,8 @@ Exports go to <work>/export; <work>/changed.txt lists the tables whose contents 
 """
 import datetime, gzip, hashlib, json, os, re, shutil, subprocess, sys, time, urllib.request, zipfile
 
-W = os.path.abspath(sys.argv[1]); WEEKLY = '--weekly' in sys.argv or datetime.date.today().weekday() == 0
+W = os.path.abspath(sys.argv[1]); INTRADAY = os.environ.get('INTRADAY') == '1'
+WEEKLY = ('--weekly' in sys.argv or datetime.date.today().weekday() == 0) and not INTRADAY  # same-day runs skip the weekly sources
 P = os.path.dirname(os.path.abspath(__file__))
 D = os.path.join(W, 'data'); os.makedirs(D, exist_ok=True)
 UA = {'User-Agent': 'CapitolReceipts data refresh (https://capitolreceipts.com)'}
@@ -90,6 +91,8 @@ step('pacs', ['build_pacs.py', W])
 step('pages', ['build_pages.py'])
 EXP = os.path.join(W, 'export'); os.makedirs(EXP, exist_ok=True)
 step('export', ['export_db.py', W, EXP])
+try: step('stock picks vs the S&P 500', ['build_perf.py', W, EXP])
+except SystemExit as e: log('stock picks skipped:', e)
 env = dict(os.environ, EXPORT_DIR=EXP)
 el = os.path.join(W, 'el'); os.makedirs(el, exist_ok=True)
 shutil.copy(os.path.join(D, 'legislators-current.yaml'), os.path.join(el, 'legislators-current.yaml'))

@@ -657,3 +657,15 @@ mark{background:color-mix(in srgb,#f5c542 45%,transparent);color:inherit;border-
 .toast.on{opacity:1;transform:translate(-50%,0)}
 @media (min-width:900px){.pplans b{font-size:32px}.phead h1{font-size:38px}}
 .rglance{margin-top:16px !important}
+
+/* Pro tools: stock picks, your stocks */
+.pperf{display:flex;flex-direction:column;align-items:flex-end;line-height:1.2}
+.pperf b{font:700 17px var(--num,var(--ui))}.pperf small{font-size:12px;color:var(--soft);white-space:nowrap}
+.pperf.up b,.bigline b.up,.pkrow em.up{color:var(--yes)}.pperf.dn b,.bigline b.dn,.pkrow em.dn{color:var(--no)}
+.pkcols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+.pkcols h4{margin:0 0 6px;font:700 13px var(--ui);color:var(--soft);text-transform:uppercase;letter-spacing:.04em}
+.pkrow{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;padding:5px 0;font-size:14px}
+.pkrow span{color:var(--soft);font-size:12.5px}.pkrow em{font-style:normal;font-weight:700}
+.mst{margin-top:12px}.mst .msh b{font-size:17px}
+.mst .row .face{flex:none}
+@media (max-width:420px){.pkcols{grid-template-columns:1fr}}

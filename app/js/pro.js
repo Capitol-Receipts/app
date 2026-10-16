@@ -81,7 +81,7 @@ function watchSection(){
 function proPage(){
   const pro=isPro(),p=ACCT.plan||{};
   return `${pageHead('Pro')}<div class="wrap" style="padding-top:calc(var(--navh) + 10px)">
-   <div class="phead lbanner bg-dusk"><span class="pkick">${PI.star} Capitol Receipts Pro</span><h1>Know the morning it’s filed.</h1><p>Every record stays free. Pro watches Congress for you and tells you what changed.</p></div>
+   <div class="phead lbanner bg-dusk"><span class="pkick">${PI.star} Capitol Receipts Pro</span><h1>Know the day it’s filed.</h1><p>Every record stays free. Pro watches Congress for you and tells you what changed.</p></div>
    ${pro?proStatus():''}
    ${!pro||p.status==='trialing'?`<section class="sec"><div class="pcard">${planPicker()}</div></section>`:''}
    <section class="sec"><div class="sh"><h2>What you get</h2></div>${featList()}</section>
