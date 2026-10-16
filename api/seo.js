@@ -242,6 +242,35 @@ async function embedCard(res, id) {
   return send(res, 200, 'text/html; charset=utf-8', body);
 }
 
+
+/* app screens with no public page of their own (/go/<screen>): the app itself, with a title and preview that name the screen */
+const GO_SCREENS = {
+  industries: ['Money by industry', 'Which industries fund each member of Congress, from FEC records.'],
+  ind: ['Money by industry', 'How much one industry gives to members of Congress, from FEC records.'],
+  radar: ['Conflict radar', 'Stock trades, donors and lobbying that touch the same companies, from public records.'],
+  compare: ['Compare members of Congress', 'Put two members of Congress side by side: money, votes, stock trades and lobbying.'],
+  mystocks: ['Your stocks in Congress', 'See which members of Congress trade the stocks you own.'],
+  perf: ['Stock picks vs the market', 'How each member of Congress’s stock purchases did against the S&P 500.'],
+  rank: ['Rankings', 'Members of Congress ranked by stock trades, missed votes, fundraising and more, from public records.'],
+  hist: ['Congress history', 'Past members of Congress, past appointees and presidents, from public records.'],
+  corrections: ['Corrections', 'Every correction Capitol Receipts has made, and how to report one.'],
+  following: ['Following', 'Members of Congress you follow on Capitol Receipts.'],
+};
+function goScreen(res, id) {
+  const k = String(id || '').split(':')[0];
+  const g = GO_SCREENS[id] || GO_SCREENS[k] || ['Capitol Receipts', 'Who funds Congress, what they trade and how they vote, from public records.'];
+  const title = g[0] === 'Capitol Receipts' ? g[0] : `${g[0]} · Capitol Receipts`, url = `https://app.capitolreceipts.com/go/${encodeURIComponent(id)}`;
+  let h = shell();
+  h = h.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`)
+    .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${esc(g[1])}">`)
+    .replace(/(<meta property="og:title" content=")[^"]*/, `$1${esc(title)}`).replace(/(<meta name="twitter:title" content=")[^"]*/, `$1${esc(title)}`)
+    .replace(/(<meta property="og:description" content=")[^"]*/, `$1${esc(g[1])}`).replace(/(<meta name="twitter:description" content=")[^"]*/, `$1${esc(g[1])}`)
+    .replace(/(<meta property="og:url" content=")[^"]*/, `$1${esc(url)}`)
+    .replace(/<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${esc(url)}">`)
+    .replace('</head>', '<meta name="robots" content="noindex">\n</head>');
+  return send(res, 200, 'text/html; charset=utf-8', h, 3600);
+}
+
 module.exports = async (req, res) => {
   const u = new URL(req.url, HOST);
   const t = u.searchParams.get('t') || '', id = u.searchParams.get('id') || '', slug = u.searchParams.get('slug') || '';
@@ -255,6 +284,7 @@ module.exports = async (req, res) => {
   const publicPath = t === 'sitemap' ? '/sitemap.xml' : t === 'sitemaps' ? `/sitemaps/${id}` : id ? asked : `${pre}/${t === 'appointees' ? 'appointees/all' : t}${page > 1 ? `?page=${page}` : ''}`;
   try {
     if (t === 'embed') return embedCard(res, id);
+    if (t === 'go') return goScreen(res, id);
     if (t === 'robots') return send(res, 200, 'text/plain; charset=utf-8', `User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${SITE}/sitemap.xml\n`, 86400);
     // the app's domain is for using the app; every public page lives on www.capitolreceipts.com
     if (onApp && !appMode && u.searchParams.get('via') !== 'www') return redirect(res, SITE + publicPath);

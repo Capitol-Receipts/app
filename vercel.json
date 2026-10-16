@@ -108,6 +108,10 @@
   },
   "rewrites": [
     {
+      "source": "/go/:id",
+      "destination": "/api/seo?t=go&id=:id"
+    },
+    {
       "source": "/robots.txt",
       "destination": "/api/seo?t=robots"
     },

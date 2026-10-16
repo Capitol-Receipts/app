@@ -211,10 +211,10 @@ window.addEventListener('click',e=>{
   if(g('[data-bills-go]')){e.preventDefault();e.stopImmediatePropagation();navGo('bills:search');return}
   if(g('[data-bills-lobbied]')){e.preventDefault();e.stopImmediatePropagation();navGo('bills:lobbied');return}
 },true);
-/* email links: ?go=perf, ?go=mystocks */
+/* links that reopen a screen: ?go=perf, ?go=mystocks, ?go=industries ... */
 (function(){
-  let q=null;try{q=new URLSearchParams(location.search).get('go')}catch(e){}
-  if(q!=='perf'&&q!=='mystocks')return;
-  try{const u=new URL(location.href);u.searchParams.delete('go');history.replaceState(null,'',u.pathname+u.search+u.hash)}catch(e){}
-  const t0=Date.now(),iv=setInterval(()=>{if((typeof byId!=='undefined'&&byId&&Object.keys(byId).length&&!window.__HOLD)||Date.now()-t0>20000){clearInterval(iv);S.stack=[];S.tab='more';go(q)}},150);
+  let q=null;try{q=new URLSearchParams(location.search).get('go');const pm=/^\/go\/([^/]+)/.exec(location.pathname);if(pm)q=decodeURIComponent(pm[1])}catch(e){}
+  if(!q||!/^[a-z]+(:[\w.:%-]*)?$/i.test(q))return; /* any app screen (shared links use ?go=<screen>) */
+  try{const u=new URL(location.href);u.searchParams.delete('go');if(!/^\/go\//.test(u.pathname))history.replaceState(null,'',u.pathname+u.search+u.hash)}catch(e){}
+  const t0=Date.now(),iv=setInterval(()=>{if((typeof byId!=='undefined'&&byId&&Object.keys(byId).length&&!window.__HOLD)||Date.now()-t0>20000){clearInterval(iv);if(/^(rank|f|hist|lobbying|committees|bills|party):/.test(q)&&typeof navGo==='function'){navGo(q);return}S.stack=[];S.tab='more';go(q)}},150);
 })();

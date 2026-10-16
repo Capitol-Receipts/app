@@ -48,12 +48,17 @@ function gaPageView(){
       return;
     }
     _renderRt();
+    /* a share button on every screen that has a top bar */
+    try{const pn=document.querySelector('#app .pnav .in');if(pn&&!pn.querySelector('[data-share]')){const b=document.createElement('button');b.setAttribute('data-share','');b.setAttribute('aria-label','Share');b.innerHTML=ICONS.share;const r=pn.querySelector('.pright');if(r)r.prepend(b);else pn.append(b)}}catch(e){}
     gaPageView();
     if(window.__HOLD)return;
     try{const p=pathFor(S.stack.at(-1));const cur=location.pathname;
       /* ?app=1 keeps a reload in the app; without it the address shows the public page on www */
       const want=p==='/'?'/':p;
-      if(!(p!=='/'&&cur.startsWith(p+'/'))&&cur!==want)history.replaceState(null,'',want+(want==='/'?'':'?app=1')+location.hash);
+      /* screens without a record address (lists, tools) get /go/<screen>, so the address bar and copied links reopen them */
+      const sid=S.stack.at(-1);
+      if(p==='/'){const tgt=sid?'/go/'+encodeURIComponent(sid).replace(/%3A/g,':'):(S.tab==='search'&&typeof RK!=='undefined'&&RK[S.msort]&&S.filter==='Congress'?'/go/rank:'+S.msort:'/');if(location.pathname+location.search!==tgt)history.replaceState(null,'',tgt+location.hash)}
+      else if(!(p!=='/'&&cur.startsWith(p+'/'))&&cur!==want)history.replaceState(null,'',want+(want==='/'?'':'?app=1')+location.hash);
       else if(want!=='/'&&!/[?&]app=1/.test(location.search))history.replaceState(null,'',location.pathname+'?app=1'+location.hash)}catch(e){}
   };
   if(window.__HOLD&&window.__ROUTE){
@@ -62,3 +67,52 @@ function gaPageView(){
     const t=setInterval(()=>{if(routeReady(r)||Date.now()-t0>25000){clearInterval(t);open()}},120);
   }else render();
 })();
+
+/* ================= Sharing =================
+Every screen shares its own link. Records and lists that have a public page on www share that page (it has its own
+title, description and preview image); anything else shares an app link that reopens the same screen. */
+const SHARE_HUB={stocks:'/stocks',pacs:'/pacs',companies:'/companies',judges:'/judges',caucuses:'/caucuses',elections:'/elections',
+  ogroups:'/outside-groups',ethics:'/ethics',bills:'/bills',perf:'/rankings/stock-picks',pro:'/pricing',committees:'/committees',lobbying:'/lobbying'};
+const RK={breaks:'breaks-with-party',comm:'committee-tied-trades',missed:'most-missed-votes',pac:'pac-funded',raised:'top-fundraisers',rev:'former-staff-lobbying',small:'small-donors',trades:'most-stock-trades'};
+function shareUrl(){
+  const W='https://www.capitolreceipts.com',id=S.stack.at(-1);
+  if(!id){
+    if(S.tab==='leaders')return W+'/rankings';
+    if(S.tab==='search'&&RK[S.msort])return W+'/rankings/'+RK[S.msort]; /* a ranking (the member list sorted by one measure) */
+    return W+'/';
+  }
+  const p=pathFor(id);if(p!=='/')return W+p;
+  let m;
+  if(SHARE_HUB[id])return W+SHARE_HUB[id];
+  if((m=/^mvotes:(.+)$/.exec(id))&&typeof byId!=='undefined'&&byId[m[1]])return W+pathFor(m[1]);
+  if(/^party:/.test(id))return W+'/parties';
+  if((m=/^rank:(\w+)/.exec(id))&&RK[m[1]])return W+'/rankings/'+RK[m[1]];
+  if((m=/^(bills|committees|lobbying):/.exec(id))&&SHARE_HUB[m[1]])return W+SHARE_HUB[m[1]];
+  return 'https://app.capitolreceipts.com/go/'+encodeURIComponent(id).replace(/%3A/g,':');
+}
+function shareTitle(){
+  const t=(document.querySelector('#app .pnav .mid')?.textContent||document.querySelector('#app h1')?.textContent||'').trim();
+  return t?t+' · Capitol Receipts':'Capitol Receipts';
+}
+function copyText(t,ok){
+  const done=()=>toast(ok||'Link copied');
+  try{navigator.clipboard.writeText(t).then(done,()=>{prompt('Copy this link:',t)})}catch(e){prompt('Copy this link:',t)}
+}
+function shareLink(){
+  const url=shareUrl(),title=shareTitle();
+  try{if(typeof gtag==='function')gtag('event','share',{method:navigator.share?'native':'copy',content_type:(S.stack.at(-1)||S.tab||'home').split(':')[0],item_id:url})}catch(e){}
+  if(navigator.share){navigator.share({title,url}).catch(()=>{});return}
+  copyText(url);
+}
+const _shareCard=shareSheet;
+shareSheet=function(){
+  const id=S.stack.at(-1);
+  const card=id&&((typeof byId!=='undefined'&&byId[id])||(typeof nomById!=='undefined'&&nomById[id]));
+  if(!card){shareLink();return}
+  _shareCard();
+  const url=shareUrl(),cap=$('#capline');
+  if(cap&&!cap.textContent.includes(url))cap.textContent=cap.textContent+' '+url;
+  const c=$('#copy');
+  if(c)c.insertAdjacentHTML('beforebegin',`<button class="btn" id="sharelink">${navigator.share?'Share link':'Copy link'}</button><div class="note" style="word-break:break-all">${esc(url)}</div>`);
+};
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('#sharelink')){e.preventDefault();$('#sheet').hidden=true;shareLink()}});
