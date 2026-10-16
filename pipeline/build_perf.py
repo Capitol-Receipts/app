@@ -46,7 +46,7 @@ def yahoo(tk, rng):
                 if not res: return {}
                 res = res[0]; ts = res.get('timestamp') or []
                 adj = ((res.get('indicators') or {}).get('adjclose') or [{}])[0].get('adjclose') or (res.get('indicators') or {}).get('quote', [{}])[0].get('close') or []
-                return {datetime.datetime.utcfromtimestamp(t).strftime('%Y-%m-%d'): round(c, 4) for t, c in zip(ts, adj) if c}
+                return {datetime.datetime.fromtimestamp(t, datetime.timezone.utc).strftime('%Y-%m-%d'): round(c, 4) for t, c in zip(ts, adj) if c}
             except urllib.error.HTTPError as e:
                 if e.code == 404: return {}
                 time.sleep(2 * (i + 1))
@@ -104,9 +104,17 @@ if spy_now:
         if buys:
             w = sum(b[4] for b in buys)
             ret = sum(b[2] * b[4] for b in buys) / w; spx = sum(b[3] * b[4] for b in buys) / w
+            def uniq(seq):  # one entry per stock, so three buys of the same stock don't fill the list
+                seen, out = set(), []
+                for x in seq:
+                    if x[0] in seen: continue
+                    seen.add(x[0]); out.append([x[0], x[1], round(x[2], 3)])
+                    if len(out) == 3: break
+                return out
             byr = sorted(buys, key=lambda b: b[2])
+            best = uniq(byr[::-1]); worst = [w for w in uniq(byr) if w[0] not in {x[0] for x in best}] if len(byr) > 3 else []
             rec.update(n=len(buys), ret=round(ret, 4), spx=round(spx, 4), ex=round(ret - spx, 4), beat=round(sum(1 for b in buys if b[2] > b[3]) / len(buys), 3),
-                       best=[[b[0], b[1], round(b[2], 3)] for b in byr[::-1][:3]], worst=[[b[0], b[1], round(b[2], 3)] for b in byr[:3]])
+                       best=best, worst=worst)
         if sells:
             w = sum(s[4] for s in sells)
             after = sum(s[2] * s[4] for s in sells) / w; spx = sum(s[3] * s[4] for s in sells) / w

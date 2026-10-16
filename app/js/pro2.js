@@ -73,7 +73,7 @@ function perfCard(m){
   const pro=isPro();
   const pick=x=>`<span class="pkrow"><b>${esc(x[0])}</b><span>${fmtISO(x[1])}</span><em class="${x[2]>=0?'up':'dn'}">${pctS(x[2])}</em></span>`;
   const body=r.n?`<div class="bigline"><b class="${r.ex>=0?'up':'dn'}">${pctS(r.ret)}</b><span>average return on ${r.n} purchase${r.n===1?'':'s'}, vs ${pctS(r.spx)} for the S&amp;P 500 over the same days. ${r.beat!=null?`${pct(r.beat)} of the picks beat the index.`:''}</span></div>`:'';
-  const detail=pro?`${r.best?.length?`<div class="pkcols"><div><h4>Best picks</h4>${r.best.map(pick).join('')}</div><div><h4>Worst picks</h4>${r.worst.map(pick).join('')}</div></div>`:''}
+  const detail=pro?`${(r.best||[]).length?`<div class="pkcols"><div><h4>Best picks</h4>${r.best.map(pick).join('')}</div><div><h4>Worst picks</h4>${(r.worst||[]).length?r.worst.map(pick).join(''):'<span class="s">—</span>'}</div></div>`:''}
     ${r.sn?`<p class="s" style="margin:12px 0 0;color:var(--soft)">After their ${r.sn} sale${r.sn===1?'':'s'}, those stocks moved ${pctS(r.sret)} on average (the S&amp;P 500 moved ${pctS(r.sspx)}). ${r.sret<r.sspx?'They mostly sold before the stocks lagged the market.':'The stocks they sold mostly kept up with or beat the market.'}</p>`:''}`
     :`<button class="row plain" data-gopro style="grid-template-columns:1fr auto;margin-top:6px"><span><span class="t">See their best and worst picks</span><br><span class="s">And how their sales timed the market</span></span>${proBadge}</button>`;
   return `<section class="sec" data-perfcard><div class="sh"><h2>Stock picks vs the S&amp;P 500</h2><button data-goperf>All members</button></div><div class="group pad">${body}${detail}</div>
