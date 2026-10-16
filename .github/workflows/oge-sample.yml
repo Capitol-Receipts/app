@@ -1,0 +1,30 @@
+name: OGE trade report sample (temporary)
+on: workflow_dispatch
+jobs:
+  get:
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Download posted 278-T reports and convert to text
+        run: |
+          mkdir out
+          curl -s "https://hxgckcriehvrolwnabpd.supabase.co/rest/v1/appointees?select=id,name,detail->oge,light->oge&or=(detail->oge.not.is.null,light->oge.not.is.null)" \
+            -H "apikey: sb_publishable_jiwF5q1sFMuaGXLKg6FKAQ_3rCjcZ1J" -H "Range: 0-20000" > all.json
+          python3 - <<'P'
+          import json,urllib.request,subprocess,re,os
+          rows=json.load(open('all.json'));n=0
+          for r in rows:
+              for v in (r.get('oge') or []):
+                  if '278 Transaction' in str(v[1]) and len(v)>3 and v[3] and v[0]>='2025-01-01':
+                      fn=f"out/{r['id']}_{v[0]}_{n}.pdf";n+=1
+                      try:
+                          data=urllib.request.urlopen(urllib.request.Request(v[3],headers={'User-Agent':'Mozilla/5.0 CapitolReceipts'}),timeout=60).read()
+                          open(fn,'wb').write(data)
+                          subprocess.run(['pdftotext','-layout',fn,fn[:-4]+'.txt'])
+                          print(fn,len(data),os.path.getsize(fn[:-4]+'.txt'))
+                      except Exception as e: print('fail',v[3],e)
+          P
+      - uses: actions/upload-artifact@v4
+        with:
+          name: oge-ptr
+          path: out/
