@@ -48,6 +48,7 @@ function gaPageView(){
       return;
     }
     _renderRt();
+    deadRows(document.getElementById('app'));
     /* a share button on every screen that has a top bar */
     try{const pn=document.querySelector('#app .pnav .in');if(pn&&!pn.querySelector('[data-share]')){const b=document.createElement('button');b.setAttribute('data-share','');b.setAttribute('aria-label','Share');b.innerHTML=ICONS.share;const r=pn.querySelector('.pright');if(r)r.prepend(b);else pn.append(b)}}catch(e){}
     gaPageView();
@@ -116,3 +117,15 @@ shareSheet=function(){
   if(c)c.insertAdjacentHTML('beforebegin',`<button class="btn" id="sharelink">${navigator.share?'Share link':'Copy link'}</button><div class="note" style="word-break:break-all">${esc(url)}</div>`);
 };
 document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('#sharelink')){e.preventDefault();$('#sheet').hidden=true;shareLink()}});
+
+/* rows drawn as buttons that lead nowhere (no record to open) become plain rows, so nothing looks tappable that isn't */
+function deadRows(root){
+  if(!root)return;
+  root.querySelectorAll('button.row,button.lcard,button.lbcard').forEach(b=>{
+    if(b.id||b.type==='submit'||[...b.attributes].some(a=>a.name.startsWith('data-')||a.name==='onclick'||a.name.startsWith('aria-expanded')))return;
+    const d=document.createElement('div');for(const a of b.attributes)d.setAttribute(a.name,a.value);
+    d.innerHTML=b.innerHTML;d.style.cursor='default';const c=d.querySelector(':scope > svg.chev');if(c)c.replaceWith(document.createElement('span'));
+    b.replaceWith(d);
+  });
+}
+try{const sh=document.getElementById('sheet');if(sh)new MutationObserver(()=>{if(!sh.hidden)deadRows(sh)}).observe(sh,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']})}catch(e){}

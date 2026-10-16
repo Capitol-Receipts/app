@@ -3,6 +3,8 @@ const LEAD_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 const ageOf=b=>{if(!b)return null;const y=+String(b).slice(0,4);return 2026-y-((b.length>4&&b.slice(5)>'10-11')?1:0)};
 const yrsSince=d=>d?Math.max(0,Math.floor((new Date('2026-10-11')-new Date(d))/31557600000)):0;
 function leaderCard(o){
+  /* cards with nowhere to go are plain text, not buttons */
+  if(!o.attr)return `<div class="lcard ${o.cls||''}">${o.face}<span class="lcb"><span class="lck">${esc(o.kick)}</span><b>${esc(o.name)}</b><span class="lcs">${o.sub}</span></span></div>`;
   return `<button class="lcard ${o.cls||''}" ${o.attr||''}>${o.face}<span class="lcb"><span class="lck">${esc(o.kick)}</span><b>${esc(o.name)}</b><span class="lcs">${o.sub}</span></span>${chev}</button>`;
 }
 function whiteHouse(L){
