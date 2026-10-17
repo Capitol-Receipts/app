@@ -357,14 +357,42 @@ async function district(key) {
   const races = await q(`races?select=id,data&id=in.(${rid},${rid}-SP)`);
   const name = distName(st, dn), code = `${st}-${dn ? String(dn).padStart(2, '0') : 'AL'}`;
   const r = races[0] && races[0].data;
-  const lead = `${name} (${code}) is represented by ${rep.name} (${PN[rep.party] || rep.party})${rep.rec ? `, who has raised ${money(+rep.rec)} for 2026` : ''}.${r && (r.c || []).length ? ` 2026 candidates: ${r.c.slice(0, 4).map(c => `${c.n} (${c.p})`).join(', ')}.` : ''}`;
+  // the representative's record, the state's senators, and the ZIP codes the district covers
+  const [lr, zips] = await Promise.all([one(`members?id=eq.${rep.id}&select=lite`), q(`zip_districts?state=eq.${st}&districts=cs.%7B${dn}%7D&select=zip&order=zip&limit=2000`).catch(e => { console.warn('zips', e.message); return []; })]);
+  const x = (lr && lr.lite) || {}, mo = x.money || {};
+  const house = mem.filter(m => m.chamber === 'House' && m.present != null).map(m => 1 - +m.present).sort((p, q2) => p - q2);
+  const medMiss = house.length ? house[house.length >> 1] : null, miss = x.present != null ? 1 - x.present : null;
+  const sens = mem.filter(m => m.chamber === 'Senate' && m.state === st);
+  const who = `Rep. ${rep.name}`;
+  const lead = `${name} (${code}) is represented by ${rep.name} (${PN[rep.party] || rep.party})${x.since ? `, in Congress since ${x.since}` : ''}.` +
+    `${mo.rec ? ` ${rep.last || rep.name} has raised ${money(+mo.rec)} for 2026` : ''}${miss != null ? `${mo.rec ? ' and' : ''} has missed ${pct(miss, 1)} of House votes this Congress` : ''}${mo.rec || miss != null ? '.' : ''}` +
+    `${r && (r.c || []).length ? ` 2026 candidates: ${r.c.slice(0, 4).map(c => `${c.n} (${c.p})`).join(', ')}.` : ''}`;
+  const comms = (x.committees || []).map(c => Array.isArray(c) ? c[0] : c).filter(Boolean);
+  const inds = (x.industries || []).filter(i => !/^(Not employed|Retired|Other|Other business|Other or not listed)$/.test(i[0])).map(i => [i[0], (i[1] || 0) + (i[2] || 0)]).sort((p, q2) => q2[1] - p[1]).slice(0, 6);
+  const zipList = zips.map(z => z.zip);
+  const faq = [[`Who represents ${name}?`, `${who} (${PN[rep.party] || rep.party}) represents ${code} in the U.S. House${x.since ? ` and has served in Congress since ${x.since}` : ''}.`],
+    sens.length ? [`Who are ${ST[st]}'s senators?`, `${ST[st]}'s U.S. senators are ${sens.map(m => `${m.name} (${PN[m.party] || m.party})`).join(' and ')}.`] : null,
+    zipList.length ? [`Which ZIP codes are in ${code}?`, `${num(zipList.length)} ZIP codes fall at least partly in ${code}, including ${zipList.slice(0, 12).join(', ')}. Some ZIP codes are split between districts.`] : null,
+    x.tradeN != null ? [`Does ${rep.name} trade stocks?`, x.tradeN ? `${rep.name} reported ${num(x.tradeN)} trades since January 2025${x.commTrades ? `, ${num(x.commTrades)} of them in industries their committees oversee` : ''}. Trading is legal; members must report trades within 45 days.` : `${rep.name} has not reported any individual stock trades since January 2025.`] : null,
+  ].filter(Boolean);
   const body = `<h1>${esc(name)}</h1><p class="sr-sub">${esc(code)} · U.S. House district</p><p class="sr-lead">${esc(lead)}</p>
-${sec('Representative', `<p>${a(P('member', rep.id, rep.name), rep.name)} (${esc(PN[rep.party] || rep.party)})</p>`)}
-${sec('2026 election', races.length ? cols(races.map(x => a(P('race', x.id, '2026 ' + raceName(x.data)), '2026 ' + raceName(x.data)))) : '')}
-${sec('More', cols([a(P('state', st, ST[st]), `All of ${ST[st]}'s members of Congress`), a('/states', 'All states')]))}`;
+${sec('Representative', `<p>${a(P('member', rep.id, rep.name), rep.name)} (${esc(PN[rep.party] || rep.party)})${x.next ? ` · Next election ${esc(x.next)}` : ''}</p>` +
+  facts([['In Congress since', x.since || null], ['Votes missed', miss != null ? `${pct(miss, 1)}${medMiss != null ? ` (typical member ${pct(medMiss, 1)})` : ''}` : null],
+    ['Votes with own party', x.unity != null ? pct(x.unity) : null], ['Raised for 2026', mo.rec ? money(+mo.rec) : null], ['From PACs', mo.pac ? money(+mo.pac) : null],
+    ['From small donors', mo.small ? money(+mo.small) : null], ['Cash on hand', mo.coh ? money(+mo.coh) : null], ['Stock trades since 2025', x.tradeN != null ? num(x.tradeN) : null],
+    ['Trades tied to their committees', x.commTrades ? num(x.commTrades) : null], ['Former staff now lobbying', x.revN ? num(x.revN) : null]]))}
+${sec('Committees', comms.length ? cols(comms.map(c => esc(c))) : '')}
+${sec('Biggest PAC donors', (x.pacs || []).length ? rows(x.pacs.slice(0, 6).map(p => [esc(L.unshout ? L.unshout(p[0]) : p[0]), money(+p[1])])) : '')}
+${sec('Money by industry', inds.length ? rows(inds.map(([k, v]) => [esc(k), money(v)])) + '<p>Donations from people who work in each industry plus PAC money, 2026 election cycle.</p>' : '')}
+${sec(`${ST[st]}'s senators`, sens.length ? cols(sens.map(m => a(P('member', m.id, m.name), `Sen. ${m.name} (${m.party})`))) : '')}
+${sec('2026 election', races.length ? cols(races.map(rr => a(P('race', rr.id, '2026 ' + raceName(rr.data)), '2026 ' + raceName(rr.data)))) : '')}
+${sec('ZIP codes in this district', zipList.length ? `<p>${esc(zipList.join(', '))}</p><p>Some ZIP codes are split between two or more districts.</p>` : '')}
+${sec('Common questions', faq.map(([qq, aa]) => `<h3>${esc(qq)}</h3><p>${esc(aa)}</p>`).join(''))}
+${sec('More', cols([a(P('member', rep.id, rep.name), `${rep.name}'s full record`), a(P('state', st, ST[st]), `All of ${ST[st]}'s members of Congress`), a('/states', 'All states')]))}`;
   return { title: title(`${name} (${code}): Representative & 2026 Race`), desc: clamp(lead, 158), path: P('district', `${st}-${dn}`, name), route: 'dist:' + `${st}-${dn}`,
     crumbs: [['States', L.abs('/states')], [ST[st], L.abs(P('state', st, ST[st]))], [code, null]],
-    ld: [{ '@context': 'https://schema.org', '@type': 'AdministrativeArea', name: `${name} (${code})`, containedInPlace: { '@type': 'State', name: ST[st] } }], body };
+    ld: [{ '@context': 'https://schema.org', '@type': 'AdministrativeArea', name: `${name} (${code})`, containedInPlace: { '@type': 'State', name: ST[st] } },
+      { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map(([qq, aa]) => ({ '@type': 'Question', name: qq, acceptedAnswer: { '@type': 'Answer', text: aa } })) }], body };
 }
 
 module.exports = { unshout, bill, vote, pac, lobbying, lobbyingFirm, company, committee, caucus, race, outsideGroup, ethics, state, district, raceName, billStatus };
