@@ -110,6 +110,54 @@ ${note('Datos de los resúmenes de candidatos y gastos independientes de la FEC.
     crumbs: [['Elecciones 2026', L.abs('/es/elections')], [nm, null]], ld: [], body };
 }
 
+const STK = require('./_seo_stocks');
+const EXD = require('./_seo_exec');
+const quien = m => `${m.chamber === 'Senate' ? 'Sen.' : (m.delegate ? 'Del.' : 'Rep.')} ${m.name}`;
+const tipoEs = k => k === 'Buy' ? 'Compra' : /^Sell/.test(k || '') ? 'Venta' : k === 'Exchange' ? 'Intercambio' : esc(k || '');
+const dueno = o => o === 'SP' ? ' (cónyuge)' : o === 'JT' ? ' (conjunta)' : o === 'DC' ? ' (hijo/a dependiente)' : '';
+const pl = (n, s, p) => `${num(n)} ${n === 1 ? s : p}`;
+
+async function stock(id) {
+  const tk = String(id || '').toUpperCase();
+  const { S, asOf } = await STK.DATA();
+  const s = S[tk]; if (!s) return null;
+  const top = Object.entries(s.members).sort((x, y) => y[1] - x[1]);
+  const { by: mem } = await MEMBERS();
+  const par = { D: 0, R: 0, I: 0 }; top.forEach(([mid]) => { const p = mem[mid]?.party; if (p in par) par[p]++; });
+  const h1 = `Miembros del Congreso que operan ${s.name} (${tk})`;
+  const lead = `${pl(s.nm, 'miembro', 'miembros')} del Congreso ${s.nm === 1 ? 'reportó' : 'reportaron'} ${pl(s.trades.length, 'operación', 'operaciones')} con ${s.name} (${tk}) desde enero de 2025: ${pl(s.buys, 'compra', 'compras')} y ${pl(s.sells, 'venta', 'ventas')}, por un valor total de ${money(s.lo)} a ${money(s.hi)}.` +
+    (top[0] ? ` ${quien(mem[top[0][0]])} fue quien más lo operó, ${pl(top[0][1], 'vez', 'veces')}.` : '');
+  const path = ES(P('stock', tk, s.name));
+  const body = `<p class="sr-sub">Acción · ${esc(tk)}</p><h1>${esc(h1)}</h1><p class="sr-lead">${esc(lead)}</p>
+${facts([['Miembros que la operaron', num(s.nm)], ['Operaciones desde 2025', num(s.trades.length)], ['Compras', num(s.buys)], ['Ventas', num(s.sells)], ['Valor reportado', `${money(s.lo)}–${money(s.hi)}`], ['Demócratas / republicanos', `${par.D} / ${par.R}`]])}
+${sec('Quién en el Congreso la opera', rows(top.slice(0, 60).map(([mid, n]) => { const m = mem[mid]; return [`${a(ES(P('member', mid, m.name)), quien(m))} <small>${esc(seatEs(m))}</small>`, pl(n, 'operación', 'operaciones')]; })))}
+${sec('Operaciones recientes', rows(s.trades.slice(0, 40).map(([m, t]) => [`${a(ES(P('member', m.id, m.name)), quien(m))} · ${tipoEs(t[1])}${dueno(t[6])}`, `${esc(fecha(t[0]))} · ${money(+t[4] || 0)}–${money(+t[5] || +t[4] || 0)}`])))}
+${sec('Sobre estas cifras', `<p>Los miembros del Congreso deben reportar las operaciones bursátiles propias, de su cónyuge y de sus hijos dependientes en un plazo de 45 días, en rangos de dólares y no en montos exactos. Operar acciones es legal. Datos al ${esc(fecha(asOf) || 'último informe')}.</p>`)}
+${sec('Más', cols([a('/stocks', 'Acciones más operadas (en inglés)'), a('/es/members', 'Miembros del Congreso'), a(P('stock', tk, s.name), 'Ver esta página en inglés')]))}
+${note('Datos de los informes de transacciones de la Cámara y el Senado.')}`;
+  return { lang: 'es', title: titulo(`${s.name} (${tk}): operaciones de miembros del Congreso`), desc: clamp(lead, 158), path, route: 'stock:' + tk, noindex: s.trades.length < 3, ogType: 'article',
+    crumbs: [['Miembros del Congreso', L.abs('/es/members')], [`${s.name} (${tk})`, null]],
+    ld: [{ '@context': 'https://schema.org', '@type': 'Dataset', name: h1, description: lead, url: L.abs(path), inLanguage: 'es', isAccessibleForFree: true, about: { '@type': 'Corporation', name: s.name, tickerSymbol: tk } }], body };
+}
+
+async function officialTrades(id) {
+  const v = await EXD.DATA();
+  const f = v.filers.find(x => x.slug === String(id || '').toLowerCase()); if (!f) return null;
+  const path = ES(P('official-trades', f.slug, ''));
+  const lead = `${f.display} (${f.title}${f.agency ? ', ' + f.agency : ''}) reportó ${pl(f.n, 'operación', 'operaciones')} con acciones y bonos desde enero de 2025: ${pl(f.buys, 'compra', 'compras')} y ${pl(f.sells, 'venta', 'ventas')}, por un valor total de ${money(f.lo)} a ${money(f.hi)}, según los formularios OGE 278-T publicados por la Oficina de Ética Gubernamental.`;
+  const rep = f.reports.map(r => [`${a(r[1], `Informe publicado el ${fecha(r[0])}`)}`, r[2] ? `${pl(r[2], 'operación', 'operaciones')}${r[4] != null ? ` · ${money(r[6] || 0)}–${money(r[7] || 0)}` : ''}` : (r[3] ? 'Imagen escaneada' : 'Sin operaciones')]);
+  const body = `<p class="sr-sub">Poder Ejecutivo · ${esc(f.title)}</p><h1>${esc(`Operaciones bursátiles de ${f.display}`)}</h1><p class="sr-lead">${esc(lead)}</p>
+${facts([['Operaciones desde 2025', num(f.n)], ['Compras', num(f.buys)], ['Ventas', num(f.sells)], ['Valor reportado', `${money(f.lo)}–${money(f.hi)}`]])}
+${f.scan ? `<p>Estos informes se presentaron en papel y se escanearon. Las cifras se leyeron de los escaneos y se ajustaron a los rangos oficiales. Cada informe enlaza al original.</p>` :
+  sec('Operaciones', rows(f.trades.slice(0, 100).map(t => [`${t[2] ? `<b>${esc(t[2])}</b> · ` : ''}${esc(t[3])}`, `${tipoEs(t[1])} · ${esc(t[0] ? (t[0].length === 7 ? t[0] : fecha(t[0])) : 'fecha no clara')} · ${t[4] ? (t[5] ? `${money(t[4])}–${money(t[5])}` : `Más de ${money(t[4] - 1)}`) : 'monto no claro'}`])))}
+${sec('Informes originales', rows(rep))}
+${sec('Más', cols([a('/official-trades', 'Todos los funcionarios (en inglés)'), a(P('official-trades', f.slug, ''), 'Ver esta página en inglés')]))}
+${note('Fuente: formularios OGE 278-T publicados por la Oficina de Ética Gubernamental de EE. UU.')}`;
+  return { lang: 'es', title: titulo(`Operaciones bursátiles de ${f.display} (${f.title})`), desc: clamp(lead, 158), path, route: 'xtr:' + f.slug, ogType: 'article',
+    crumbs: [['Funcionarios', L.abs('/official-trades')], [f.display, null]],
+    ld: [{ '@context': 'https://schema.org', '@type': 'Dataset', name: `Operaciones bursátiles de ${f.display}`, description: lead, url: L.abs(path), inLanguage: 'es', isAccessibleForFree: true }], body };
+}
+
 function hub(o) {
   return { lang: 'es', title: titulo(o.title), desc: clamp(o.desc, 158), path: o.path, route: null, crumbs: [[o.h1, null]],
     ld: [{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: o.h1, inLanguage: 'es', url: HOST + o.path }], body: `<h1>${esc(o.h1)}</h1><p class="sr-sub">${esc(o.sub)}</p>${o.body}` };
@@ -137,4 +185,4 @@ const HUBS = {
   },
 };
 
-module.exports = { PAGES: { member, state, district, race }, HUBS, ST_ES };
+module.exports = { PAGES: { member, state, district, race, stock, 'official-trades': officialTrades }, HUBS, ST_ES };

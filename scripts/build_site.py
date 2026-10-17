@@ -162,3 +162,6 @@ import subprocess; subprocess.run([sys.executable, os.path.join(os.path.dirname(
 # iPhone and Android apps: mark as coming soon on every page
 import subprocess
 subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "app_soon.py")], check=False)
+
+# "Explore the data" links in every footer
+subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "site_explore.py")], check=False)

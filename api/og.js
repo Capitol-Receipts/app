@@ -118,6 +118,24 @@ const BUILD = {
       accent: PCOL[r.party] || NAVY, photo: !!photo, initials: initialsOf(r.name), stats: [['Raised for 2026', r.rec ? money(+r.rec) : '—'], ['Stock trades', num(+r.tradeN || 0)]] });
     return photo ? withPhoto(el, photo) : el;
   },
+  async stock(id) {
+    const { S } = await require('./_seo_stocks').DATA();
+    const s = S[String(id).toUpperCase()]; if (!s) return null;
+    const pc = { D: 0, R: 0 }, seen = new Set(); s.trades.forEach(([m]) => { if (!seen.has(m.id)) { seen.add(m.id); if (m.party in pc) pc[m.party]++; } });
+    return card({ kicker: `Stock · ${s.tk}`, title: `Congress trading ${s.name}`, sub: s.industry || 'Trades by members of Congress since 2025',
+      stats: [['Members who traded it', num(s.nm)], ['Trades since 2025', num(s.trades.length)], ['Democrats / Republicans', `${pc.D} / ${pc.R}`]] });
+  },
+  async 'official-trades'(id) {
+    const v = await require('./_seo_exec').DATA();
+    const f = v.filers.find(x => x.slug === String(id).toLowerCase()); if (!f) return null;
+    return card({ kicker: 'Executive branch trades', title: `${f.display}’s stock trades`, sub: `${f.title}${f.agency && f.agency !== 'White House Office' ? ' · ' + f.agency : ''}`, initials: initialsOf(f.display),
+      stats: [['Trades since 2025', num(f.n)], ['Purchases / sales', `${num(f.buys)} / ${num(f.sells)}`], ['Reported value', `${money(f.lo)}–${money(f.hi)}`]] });
+  },
+  async reports(id) {
+    const r = await require('./_seo_reports').month(id).catch(() => null); if (!r || !r.stats) return null;
+    return card({ kicker: 'Monthly report', title: `Congress stock trades in ${r.label}`, sub: `${num(r.stats.members)} members of Congress reported trades made this month`,
+      stats: [['Trades', num(r.stats.trades)], ['Purchases / sales', `${num(r.stats.buys)} / ${num(r.stats.sells)}`], ['Reported value', `${money(r.stats.lo)}–${money(r.stats.hi)}`]] });
+  },
   async nominee(id) {
     const r = await one(`nominations?id=eq.${encodeURIComponent(id)}&select=name,position,confirmed_on,data->y,data->n`);
     if (!r) return null;

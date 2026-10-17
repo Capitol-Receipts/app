@@ -4,13 +4,15 @@ const H = require('./_seo_people');
 const R = require('./_seo_records');
 const STK = require('./_seo_stocks');
 const EX = require('./_seo_exec');
+const RP = require('./_seo_reports');
+const GD = require('./_seo_guides');
 const { q, all, MEMBERS, COMMITTEES, CAUCUSES, esc, P, a, ST, PN, num, money, date, clamp, title, cols, rows, facts, pager, HOST, cached } = L;
 
 const PAGES = {
   'member': H.member, 'past-member': H.pastMember, 'appointee': H.appointee, 'nominee': H.nominee, 'judge': H.judge,
   'bill': R.bill, 'vote': R.vote, 'pac': R.pac, 'lobbying': R.lobbying, 'lobbying-firm': R.lobbyingFirm, 'company': R.company,
   'committee': R.committee, 'caucus': R.caucus, 'race': R.race, 'outside-group': R.outsideGroup, 'ethics': R.ethics,
-  'state': R.state, 'district': R.district, 'stock': STK.stock, 'official-trades': EX.page,
+  'state': R.state, 'district': R.district, 'stock': STK.stock, 'official-trades': EX.page, 'reports': RP.page, 'guides': GD.page,
 };
 
 const PER = 250;
@@ -30,6 +32,8 @@ async function paged(table, select, order, page) {
 const HUBS = {
   stocks: STK.stocks,
   'official-trades': EX.hub,
+  reports: RP.hub,
+  guides: GD.hub,
   async members() {
     const { rows: ms } = await MEMBERS();
     const byState = {}; ms.forEach(m => (byState[m.state] = byState[m.state] || []).push(m));
@@ -200,7 +204,7 @@ async function sitemapFile(name) {
       ...pages('judges', '/judges'), ...pages('bills', '/bills'), ...pages('pacs', '/pacs'), ...pages('lobbying', '/lobbying'), ...pages('lobbying-firms', '/lobbying-firms'),
       ...pages('companies', '/companies'), ...pages('outside-groups', '/outside-groups'), ...pages('ethics', '/ethics')]);
   }
-  if (name === 'stocks') return urlset([['/stocks'], ...(await STK.sitemap()), ...(await EX.sitemap().catch(() => []))]);
+  if (name === 'stocks') return urlset([['/stocks'], ...(await STK.sitemap()), ...(await EX.sitemap().catch(() => [])), ...(await RP.sitemap().catch(() => [])), ...(await GD.sitemap())]);
   if (name === 'places') {
     const { rows: ms } = await MEMBERS();
     const states = [...new Set(ms.map(m => m.state))];

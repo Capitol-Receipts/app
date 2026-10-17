@@ -10,7 +10,7 @@ const fs = require('fs'), path = require('path');
 const T = require('./_seo_types');
 const ESP = require('./_seo_es');
 const RK = require('./_seo_rank');
-const ES_TYPES = new Set(['member', 'state', 'district', 'race']), ES_HUBS = new Set(['members', 'states', 'elections']);
+const ES_TYPES = new Set(['member', 'state', 'district', 'race', 'stock', 'official-trades']), ES_HUBS = new Set(['members', 'states', 'elections']);
 const { HOST, SITE, esc, abs, q, notFound } = T;
 
 let SHELL = null;
@@ -61,11 +61,11 @@ main.has-cta{padding-bottom:96px}
 @media (prefers-color-scheme:dark){.sr{--i:#e9ecf2;--s:#a3abb9;--l:#2a3140;--b:#171c26;background:#0e1219}.sr a{color:#9db6ff}.sr-crumbs a,.sr-foot a{color:var(--s)}.sr-pager b{background:#2c4c9a}}
 </style>`;
 
-const NAV = [['/members', 'Members'], ['/bills', 'Bills'], ['/pacs', 'PACs'], ['/lobbying', 'Lobbying'], ['/elections', '2026 races'], ['/states', 'States'], ['/rankings', 'Rankings'], ['/this-week', 'This week']];
+const NAV = [['/members', 'Members'], ['/bills', 'Bills'], ['/pacs', 'PACs'], ['/lobbying', 'Lobbying'], ['/elections', '2026 races'], ['/states', 'States'], ['/rankings', 'Rankings'], ['/stocks', 'Stocks'], ['/reports', 'Reports'], ['/guides', 'Guides'], ['/this-week', 'This week']];
 const NAV_ES = [['/es/members', 'Miembros'], ['/es/states', 'Estados'], ['/es/elections', 'Elecciones 2026'], ['/members', 'English']];
-const FOOT = [['/members', 'Members of Congress'], ['/past-members', 'Past members'], ['/appointees/all', 'Appointees'], ['/judges', 'Federal judges'], ['/committees', 'Committees'], ['/caucuses', 'Caucuses'], ['/votes', 'Votes'], ['/bills', 'Bills'], ['/pacs', 'PACs'], ['/lobbying', 'Lobbying groups'], ['/lobbying-firms', 'Lobbying firms'], ['/outside-groups', 'Outside spending'], ['/ethics', 'Ethics statements'], ['/companies', 'Companies'], ['/elections', '2026 elections'], ['/states', 'States'], ['/this-week', 'This week in Congress'], ['/rankings', 'Rankings'], ['/es/members', 'En español']];
+const FOOT = [['/members', 'Members of Congress'], ['/past-members', 'Past members'], ['/appointees/all', 'Appointees'], ['/judges', 'Federal judges'], ['/committees', 'Committees'], ['/caucuses', 'Caucuses'], ['/votes', 'Votes'], ['/bills', 'Bills'], ['/pacs', 'PACs'], ['/lobbying', 'Lobbying groups'], ['/lobbying-firms', 'Lobbying firms'], ['/outside-groups', 'Outside spending'], ['/ethics', 'Ethics statements'], ['/companies', 'Companies'], ['/elections', '2026 elections'], ['/states', 'States'], ['/this-week', 'This week in Congress'], ['/rankings', 'Rankings'], ['/stocks', 'Stocks in Congress'], ['/official-trades', 'Officials’ stock trades'], ['/reports', 'Monthly reports'], ['/guides', 'Guides'], ['/es/members', 'En español']];
 const APP = 'https://app.capitolreceipts.com';
-const OG_TYPES = new Set(['member', 'past-member', 'bill', 'vote', 'pac', 'lobbying', 'company', 'race', 'state', 'district', 'nominee']);
+const OG_TYPES = new Set(['member', 'past-member', 'bill', 'vote', 'pac', 'lobbying', 'company', 'race', 'state', 'district', 'nominee', 'stock', 'official-trades', 'reports']);
 
 function citeBox(pg) {
   const es = pg.lang === 'es', url = abs(pg.path), name = pg.title.replace(/ \| Capitol Receipts$/, '');
@@ -171,6 +171,8 @@ ${leaders.filter(Boolean).join('\n')}
 - [2026 elections](${SITE}/elections): every House and Senate race on the November 3, 2026 ballot, with candidates, money raised and outside spending
 - [Stocks traded by members of Congress](${SITE}/stocks): one page per stock, listing every member who traded it since January 2025
 - [Stock trades by the President and cabinet officials](${SITE}/official-trades): OGE Form 278-T reports posted since January 2025, one page per official
+- [Monthly reports](${SITE}/reports): Congress stock trades month by month, with top traders, top stocks and the biggest trades
+- [Guides](${SITE}/guides): plain-English answers on the STOCK Act, PAC limits and how to look up trades
 - [En español](${SITE}/es/members)
 
 ## Page addresses
