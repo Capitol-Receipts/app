@@ -170,6 +170,7 @@ ${leaders.filter(Boolean).join('\n')}
 - [Committees](${SITE}/committees), [caucuses](${SITE}/caucuses), [appointees and nominees](${SITE}/appointees/all), [federal judges](${SITE}/judges), [past members since 1789](${SITE}/past-members), [House ethics statements](${SITE}/ethics)
 - [2026 elections](${SITE}/elections): every House and Senate race on the November 3, 2026 ballot, with candidates, money raised and outside spending
 - [Stocks traded by members of Congress](${SITE}/stocks): one page per stock, listing every member who traded it since January 2025
+- [Stock trades by the President and cabinet officials](${SITE}/official-trades): OGE Form 278-T reports posted since January 2025, one page per official
 - [En español](${SITE}/es/members)
 
 ## Page addresses
