@@ -362,5 +362,12 @@ document.addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#sheet').hidden=true});
 MEM.forEach(m=>{const nm=(m.name||'').split(' ')[0];m.her=null});
 render();
-loadHist();
+/* history and lobbying data (several MB) load once the first screen is up and the phone is idle, or as soon as the
+   reader taps anything, so they never compete with the first screen */
+function later(f){let done=false;const run=()=>{if(done)return;done=true;f()};
+  if(window.__ROUTE||location.pathname.startsWith('/go/')||/[?&]go=/.test(location.search)){run();return}
+  ['pointerdown','keydown'].forEach(ev=>window.addEventListener(ev,run,{once:true,capture:true,passive:true}));
+  const idle=()=>('requestIdleCallback' in window?requestIdleCallback(run,{timeout:4000}):run());
+  const wait=()=>{if(window.__FULL||window.__FULLERR)setTimeout(idle,1500);else setTimeout(wait,200)};wait()}
+later(loadHist);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.hpop){S.hpop=null;document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'))}});

@@ -216,4 +216,4 @@ drawerHtml=function(){
    navGroup('ethics',NAVI.info,'Ethics',[['ethics','House Ethics reviews',G?G.ethics.length:'']])+
    `<div class="dgroup ${S.dopen.apps?'open':''}"><button class="dhead" data-dtoggle="apps"`);
 };
-loadPages();
+later(loadPages);

@@ -59,7 +59,11 @@ function translateAll(){
   if(S.lang!=='es')return;
   ['#app','#panel','#tabbar','#drawer','aside.railmenu'].forEach(s=>{const el=$(s);if(el)translateRoot(el)});
 }
-function setLang(l){S.lang=l;store.set('lang',l);const d=$('#drawer');const wasOpen=d&&!d.hidden;render();if(wasOpen){const pn=d.querySelector('.dpanel');pn.innerHTML=drawerHtml()}}
+/* the Spanish dictionary only downloads for readers who switch to Spanish */
+function ensureEs(cb){if(typeof ES_DICT!=='undefined'){cb();return}
+  if(!window.__esLoading)window.__esLoading=Promise.all(['glossary_es','es_dict'].map(n=>new Promise(ok=>{const s=document.createElement('script');s.src='/app/js/'+n+'.js?v='+APP_VER;s.onload=ok;s.onerror=ok;document.body.appendChild(s)}))).then(()=>{I18N_EXACT=null;I18N_RX=null});
+  window.__esLoading.then(cb)}
+function setLang(l){if(l==='es'&&typeof ES_DICT==='undefined'){ensureEs(()=>setLang(l));return}S.lang=l;store.set('lang',l);const d=$('#drawer');const wasOpen=d&&!d.hidden;render();if(wasOpen){const pn=d.querySelector('.dpanel');pn.innerHTML=drawerHtml()}}
 window.addEventListener('click',e=>{const b=e.target.closest('[data-lang]');if(!b)return;e.preventDefault();e.stopPropagation();setLang(b.dataset.lang)},true);
 /* run last: translate, then add plain-language term explanations in the active language */
 const _render6=render;
@@ -68,3 +72,5 @@ const _openSheet3=openSheet;
 openSheet=function(t,h){_openSheet3(t,h);try{if(S.lang==='es'){translateRoot($('#panel'));glossify($('#panel'))}}catch(e){console.warn(e)}};
 const _drawerHtmlEN=drawerHtml;
 drawerHtml=function(){const s=_drawerHtmlEN();if(S.lang!=='es')return s;const t=document.createElement('div');t.innerHTML=s;try{translateRoot(t)}catch(e){}return t.innerHTML};
+
+if(S.lang==='es'&&typeof ES_DICT==='undefined')ensureEs(()=>render());

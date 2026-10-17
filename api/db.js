@@ -55,6 +55,26 @@ async function shared(key, load) {
   return r;
 }
 
+// The database sends lightly gzipped bytes. Re-pack each answer once per copy kept: brotli for browsers that take it
+// (about half the size), maximum gzip otherwise. The CDN keeps each version, so this runs a few times per URL per day.
+const Q = zlib.constants.BROTLI_PARAM_QUALITY, HINT = zlib.constants.BROTLI_PARAM_SIZE_HINT;
+function encoded(r, ae) {
+  try {
+    if (!r._raw) r._raw = r.headers['content-encoding'] === 'gzip' ? zlib.gunzipSync(r.body) : r.body;
+    if (/\bbr\b/.test(ae)) {
+      if (!r._br) r._br = zlib.brotliCompressSync(r._raw, { params: { [Q]: r._raw.length > 2.5e6 ? 6 : 9, [HINT]: r._raw.length } });
+      return { enc: 'br', body: r._br };
+    }
+    if (/\bgzip\b/.test(ae)) {
+      if (!r._gz) r._gz = zlib.gzipSync(r._raw, { level: 9 });
+      return { enc: 'gzip', body: r._gz };
+    }
+    return { enc: null, body: r._raw };
+  } catch (e) {
+    return { enc: r.headers['content-encoding'] || null, body: r.body };
+  }
+}
+
 module.exports = async (req, res) => {
   const send = (status, body, cc) => { res.statusCode = status; res.setHeader('Cache-Control', cc); res.setHeader('Content-Type', 'application/json'); res.end(body); };
   if (req.method !== 'GET' && req.method !== 'HEAD') return send(405, '{"error":"GET only"}', 'no-store');
@@ -74,8 +94,10 @@ module.exports = async (req, res) => {
 
   res.statusCode = 200;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  if (r.headers['content-encoding']) res.setHeader('Content-Encoding', r.headers['content-encoding']);
+  res.setHeader('Vary', 'Accept-Encoding');
+  const out = encoded(r, String(req.headers['accept-encoding'] || ''));
+  if (out.enc) res.setHeader('Content-Encoding', out.enc);
   res.setHeader('Cache-Control', OK_CC);
   res.setHeader('CDN-Cache-Control', OK_CC);
-  res.end(r.body);
+  res.end(out.body);
 };

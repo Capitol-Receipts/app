@@ -129,6 +129,7 @@ function html(pg, mode) {
     // search pages are plain, fast pages: no app download, nothing that moves after it loads
     h = h.replace(/<nav class="tabbar"[\s\S]*?<\/nav>\n?/, '').replace(/<div id="sheet"[\s\S]*?<\/div><\/div>\n?/, '');
     h = h.replace(/<script>\n\/\* Supabase[\s\S]*?<\/script>/, '');
+    h = h.replace(/<script>\/\* boot-prefetch[\s\S]*?<\/script>\n?/, '');
     h = h.replace(/<link rel="stylesheet" href="\/app\/css\/[^"]*"[^>]*>\n?/g, '').replace(/<link rel="preconnect" href="https:\/\/hxgckcriehvrolwnabpd[^>]*>\n?/, '');
   }
   return h;
