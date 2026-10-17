@@ -90,11 +90,13 @@ for m in MEM.values():
         house_keys[m['id']] = ({f"{m['state']}{dist:02d}", f"{m['state']}AL", f"{m['state']}00"}, norm(m['last']))
 trades = collections.defaultdict(list); paper = collections.Counter(); filings = collections.defaultdict(list)
 seenT = collections.defaultdict(dict)
-def addtrade(bg, row, src):
+FILED, AMENDS = {}, collections.defaultdict(list)
+def addtrade(bg, row, src, filed=None, status=None):
     key = (row[0], row[1], row[2] or row[3][:30], row[4], row[5], row[6])
     prev = seenT[bg].get(key)
     if prev is not None and prev != src: return  # same trade repeated in an amended report
-    seenT[bg][key] = src; trades[bg].append(row)
+    seenT[bg][key] = src; trades[bg].append(row); FILED[id(row)] = filed
+    if status == 'Amended': AMENDS[bg].append(row)
 for doc, r in hp.items():
     for bg, (sds, ln) in house_keys.items():
         rl = norm(r['last'])
@@ -103,7 +105,7 @@ for doc, r in hp.items():
             if r['paper']: paper[bg] += 1
             for t in r['trades'] or []:
                 lo, hi = amt_range(t['lo'], t['hi'])
-                addtrade(bg, [tradedate(t['date'], tdate(r['date'])), t['type'], t['tick'], t['asset'], lo, hi, t['owner'] or 'Self', doc[-8:]], doc)
+                addtrade(bg, [tradedate(t['date'], tdate(r['date'])), t['type'], t['tick'], t['asset'], lo, hi, t['owner'] or 'Self', doc[-8:]], doc, tdate(r['date']), t.get('status'))
             break
 sp = json.load(open(f'{D}/senate_ptr.json'))
 sen = [m for m in MEM.values() if m['chamber'] == 'Senate']
@@ -120,8 +122,32 @@ for r in sp:
         lo, hi = amt_range(rng[0] if rng else None, rng[1] if len(rng) > 1 else None)
         tick = t['tick'] or (re.search(r'\(([A-Z.]{1,6})\)\s*$', t['asset']).group(1) if re.search(r'\(([A-Z.]{1,6})\)\s*$', t['asset']) else None)
         addtrade(bg, [tradedate(t['date'], tdate(r['date'])), typ, tick, t['asset'], lo, hi, t['owner'], ''], r['url'])
+# An amended House report corrects trades the member already reported (a wrong amount or date). Each amended trade
+# replaces the earlier-filed trade it corrects: same asset, same kind of trade, dated within 120 days. Without this both
+# versions would count (e.g. one award reported first as $5M-$25M, then corrected to $100K-$250K).
+def _akey(r): return (r[2] or '').upper() or re.sub(r'[^a-z0-9]', '', (r[3] or '').lower())[:24]
+def _fam(k): return 'Sell' if str(k).startswith('Sell') else k
+superseded = 0
+for bg, alist in AMENDS.items():
+    gone = set()
+    for a in alist:
+        fa, best = FILED.get(id(a)), None
+        if not fa or not a[0]: continue
+        for r in trades[bg]:
+            if r is a or id(r) in gone or not r[0]: continue
+            fr = FILED.get(id(r))
+            if not fr or fr >= fa or _akey(r) != _akey(a) or _fam(r[1]) != _fam(a[1]): continue
+            dd = abs((datetime.date.fromisoformat(r[0]) - datetime.date.fromisoformat(a[0])).days)
+            if dd <= 120 and (best is None or dd < best[0]): best = (dd, r)
+        if best: gone.add(id(best[1]))
+    if gone:
+        superseded += len(gone); trades[bg] = [r for r in trades[bg] if id(r) not in gone]
+print('amended trades that replaced an earlier version:', superseded, 'of', sum(len(v) for v in AMENDS.values()), 'marked amended')
+# One definition everywhere (profiles, rankings, stock pages, downloads): trades made on or after January 1, 2025.
+# Reports filed in 2025 can include trades from late 2024; those are left out so every "since 2025" count matches.
+SINCE = '2025-01-01'
 for bg, m in MEM.items():
-    tl = sorted([t for t in trades.get(bg, []) if t[0]], key=lambda t: t[0], reverse=True)
+    tl = sorted([t for t in trades.get(bg, []) if t[0] and t[0] >= SINCE], key=lambda t: t[0], reverse=True)
     fl = sorted(filings.get(bg, []), key=lambda f: f[0] or '', reverse=True)
     m['ptr'] = len(fl); m['ptrLast'] = (lambda d: d and datetime.datetime.strptime(d, '%Y-%m-%d').strftime('%-m/%-d/%Y'))(fl[0][0]) if fl else None
     m['ptrPaper'] = paper.get(bg, 0)
@@ -138,7 +164,7 @@ for bg, m in MEM.items():
         m['trades'] = [[t[0], t[1], t[2], t[3][:70], t[4], t[5], t[6]] for t in tl[:80]]
     m.pop('ptrByMonth', None)
 # every trade (profiles keep only the latest 80); used for stock-pick scores and the full download
-json.dump({bg: [[t[0], t[1], t[2], t[3][:60], t[4], t[5], t[6]] for t in sorted([t for t in trades.get(bg, []) if t[0]], key=lambda t: t[0], reverse=True)] for bg in MEM},
+json.dump({bg: [[t[0], t[1], t[2], t[3][:60], t[4], t[5], t[6]] for t in sorted([t for t in trades.get(bg, []) if t[0] and t[0] >= SINCE], key=lambda t: t[0], reverse=True)] for bg in MEM},
           open(os.path.join(os.path.dirname(os.path.abspath(sys.argv[3])), 'trades_full.json'), 'w'), separators=(',', ':'))
 
 # ---------- lobbying ----------
@@ -266,6 +292,7 @@ for m in MEM.values():
     # count over all trades, not just the stored ones
     tot = 0
     for t in trades.get(m['id'], []):
+        if not t[0] or t[0] < SINCE: continue
         ts = tick_sector.get((t[2] or '').upper())
         if ts and ts[0] in over: tot += 1
     m['commTrades'] = tot

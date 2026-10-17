@@ -20,6 +20,12 @@ def dl(r):
             except Exception: pass
     return fn
 
+# Parser version 2 reads each trade's filing status (New / Amended). Reports parsed by an older version are read again
+# once, from the copies already downloaded, so amended trades can replace the ones they correct.
+PV = 2
+for d, r in PREV.items():
+    if r.get('pv') != PV and not r.get('paper'):
+        rows.append({k: r[k] for k in ('year', 'doc', 'last', 'first', 'sd', 'date') if k in r})
 with cf.ThreadPoolExecutor(8) as ex: list(ex.map(dl, rows))
 
 LINE = re.compile(r'^(?P<pre>.*?)\s(?P<type>P|S|S \(partial\)|E)\s+(?P<d1>\d\d/\d\d/\d{4})\s+(?P<d2>\d\d/\d\d/\d{4})\s+(?P<amt>.*)$')
@@ -32,7 +38,7 @@ def parse(fn):
     for i, ln in enumerate(lines):
         m = LINE.match(ln)
         if not m: continue
-        pre = m.group('pre').strip()
+        pre = re.sub(r'^\d{6,}\s+', '', m.group('pre').strip())  # some reports start each row with the filer's own ID number
         owner = None
         mo = re.match(r'^(SP|JT|DC)\s+(.*)$', pre)
         if mo: owner, pre = mo.group(1), mo.group(2)
@@ -53,7 +59,12 @@ def parse(fn):
         code = re.search(r'\[([A-Z]{2})\]', asset)
         tick = re.search(r'\(([A-Z][A-Z.\-]{0,6})\)', asset)
         name = re.sub(r'\s*\[[A-Z]{2}\]', '', asset)
-        out.append(dict(owner=owner, asset=name[:120], code=code.group(1) if code else None, tick=tick.group(1) if tick else None,
+        status = None  # "Filing status: Amended" (pdftotext prints it as "F   S   : Amended") under the trade
+        for j in range(i + 1, min(i + 6, len(lines))):
+            if LINE.match(lines[j]): break
+            ms = re.match(r'^\s*F(?:iling)?\s+S(?:tatus)?\s*:\s*(New|Amended|Deleted)', lines[j], re.I)
+            if ms: status = ms.group(1).capitalize(); break
+        out.append(dict(owner=owner, asset=name[:120], code=code.group(1) if code else None, tick=tick.group(1) if tick else None, status=status,
                         type={'P': 'Buy', 'S': 'Sell', 'S (partial)': 'Sell (partial)', 'E': 'Exchange'}[m.group('type')],
                         date=m.group('d1'), notified=m.group('d2'), lo=lo, hi=hi))
     return out
@@ -61,7 +72,7 @@ def parse(fn):
 res = dict(PREV)
 for r in rows:
     trades = parse(f"{OUT}/{r['doc']}.pdf")
-    res[r['doc']] = dict(r, trades=trades, paper=trades is None)
+    res[r['doc']] = dict(r, trades=trades, paper=trades is None, pv=PV)
 json.dump(res, open(f'{D}/ptr_parsed.json', 'w'))
 n = sum(len(v['trades'] or []) for v in res.values())
 print('new filings', len(rows), 'total', len(res), 'paper', sum(v['paper'] for v in res.values()), 'trades', n, 'empty', sum(1 for v in res.values() if v['trades'] == []))
