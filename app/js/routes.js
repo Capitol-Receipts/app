@@ -6,7 +6,7 @@ The server sends that page fully rendered, so it shows instantly and search engi
 2. Moving around the app: keep the address bar on the current record's address, so copied or shared links work. */
 const ROUTE_PATH=[ // app page id prefix -> address prefix
   ['hp:','past-member'],['ha:','appointee'],['bill:','bill'],['pac:','pac'],['lob:','lobbying'],['firm:','lobbying-firm'],['com:','committee'],
-  ['caucus:','caucus'],['judge:','judge'],['co:','company'],['race:','race'],['og:','outside-group'],['eth:','ethics'],['vote:','vote'],['state:','state'],['dist:','district'],['stock:','stock']];
+  ['caucus:','caucus'],['judge:','judge'],['co:','company'],['race:','race'],['og:','outside-group'],['eth:','ethics'],['vote:','vote'],['state:','state'],['dist:','district'],['stock:','stock'],['xtr:','official-trades']];
 function pathFor(id){
   if(!id)return '/';
   for(const [pre,p] of ROUTE_PATH)if(id.startsWith(pre))return `/${p}/${encodeURIComponent(id.slice(pre.length))}`;
@@ -73,7 +73,7 @@ function gaPageView(){
 Every screen shares its own link. Records and lists that have a public page on www share that page (it has its own
 title, description and preview image); anything else shares an app link that reopens the same screen. */
 const SHARE_HUB={stocks:'/stocks',pacs:'/pacs',companies:'/companies',judges:'/judges',caucuses:'/caucuses',elections:'/elections',
-  ogroups:'/outside-groups',ethics:'/ethics',bills:'/bills',perf:'/rankings/stock-picks',pro:'/pricing',committees:'/committees',lobbying:'/lobbying'};
+  ogroups:'/outside-groups',ethics:'/ethics',bills:'/bills',perf:'/rankings/stock-picks',xtr:'/official-trades',pro:'/pricing',committees:'/committees',lobbying:'/lobbying'};
 const RK={breaks:'breaks-with-party',comm:'committee-tied-trades',missed:'most-missed-votes',pac:'pac-funded',raised:'top-fundraisers',rev:'former-staff-lobbying',small:'small-donors',trades:'most-stock-trades'};
 function shareUrl(){
   const W='https://www.capitolreceipts.com',id=S.stack.at(-1);

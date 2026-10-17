@@ -93,6 +93,10 @@ EXP = os.path.join(W, 'export'); os.makedirs(EXP, exist_ok=True)
 step('export', ['export_db.py', W, EXP])
 try: step('stock picks vs the S&P 500', ['build_perf.py', W, EXP])
 except SystemExit as e: log('stock picks skipped:', e)
+if not INTRADAY:
+    # trades by the President and Senate-confirmed officials (posted OGE 278-T reports); once a day is plenty
+    try: step('executive branch trades', ['fetch_exec_trades.py', D, EXP])
+    except SystemExit as e: log('executive branch trades skipped:', e)
 env = dict(os.environ, EXPORT_DIR=EXP)
 el = os.path.join(W, 'el'); os.makedirs(el, exist_ok=True)
 shutil.copy(os.path.join(D, 'legislators-current.yaml'), os.path.join(el, 'legislators-current.yaml'))
