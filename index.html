@@ -54,10 +54,10 @@ window.__PRE={};['members?select=lite&order=ord&limit=1000&offset=0','nomination
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Schibsted+Grotesk:wght@500;600;700;800&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="/app/css/style.css?v=202610171547">
-<link rel="stylesheet" href="/app/css/friendly.css?v=202610171547">
-<link rel="stylesheet" href="/app/css/desktop.css?v=202610171547">
-<link rel="stylesheet" href="/app/css/hdr.css?v=202610171547" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="/app/css/style.css?v=202610171620">
+<link rel="stylesheet" href="/app/css/friendly.css?v=202610171620">
+<link rel="stylesheet" href="/app/css/desktop.css?v=202610171620">
+<link rel="stylesheet" href="/app/css/hdr.css?v=202610171620" media="print" onload="this.media='all'">
 <style>
   .boot{min-height:70vh;display:grid;place-items:center;text-align:center;padding:24px;font-family:"Schibsted Grotesk",system-ui,sans-serif;color:var(--soft,#5b6069)}
   .boot b{display:block;font:800 26px "Barlow Condensed",system-ui,sans-serif;color:var(--ink,#0e1116);letter-spacing:-.01em}
@@ -101,7 +101,7 @@ SB.all=async(path,size=1000)=>{let out=[],from=0;for(;;){const rows=await SB.get
 SB.rpc=(fn,args)=>fn==='get_light'?SB.get('rpc/get_light?kind='+encodeURIComponent(args.kind)):SB.req('rpc/'+fn,{method:'POST',body:JSON.stringify(args||{})});
 SB.meta=async keys=>Object.fromEntries((await SB.get('app_meta?select=key,value&key=in.('+keys.join(',')+')')).map(r=>[r.key,r.value]));
 
-const APP_VER='202610171547'; /* bump on every release so browsers and the CDN fetch fresh files */
+const APP_VER='202610171620'; /* bump on every release so browsers and the CDN fetch fresh files */
 const APP_SCRIPTS=['fuzzy','core','party','hist','ui','nav','pages','search','leaders','linkify','pacs','elections','companies','friendly','votes','places','extras','glossary_es','es_dict','i18n','db','account','trust','pro','pro2','desktop','routes'];
 async function boot(){
   const msg=document.getElementById('bootmsg');
@@ -109,7 +109,7 @@ async function boot(){
   const esPre=(()=>{try{return JSON.parse(localStorage.getItem('pt_lang'))==='es'}catch(e){return false}})()||/[?&]lang=es/.test(location.search);
   for(const n of APP_SCRIPTS){if(!esPre&&(n==='es_dict'||n==='glossary_es'))continue;const l=document.createElement('link');l.rel='preload';l.as='script';l.href='/app/js/'+n+'.js?v='+APP_VER;document.head.appendChild(l)}
   try{
-    /* portraits (about 850 KB) load after the data the first screen needs; faces show initials until they arrive */
+    /* portraits load one by one as faces appear on screen; faces show initials until the list of portraits arrives */
     window.__PHOTOS={};
     const [members,noms,rc,meta]=await Promise.all([
       SB.all('members?select=lite&order=ord'),SB.all('nominations?select=data&order=ord'),SB.all('roll_calls?select=id,data&order=ord'),
@@ -123,8 +123,9 @@ async function boot(){
         window.__FULL=true;
         if(typeof render==='function'&&typeof S!=='undefined'&&!window.__HOLD&&!/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'')){const y=scrollY;render();scrollTo(0,y)}};go();
     }).catch(e=>{console.warn('detail',e);window.__FULLERR=true;if(typeof render==='function')render()});
-    SB.all('photos?select=id,img&order=id').then(rows=>{
-      for(const r of rows)window.__PHOTOS[r.id]=r.img;
+    /* which members have a portrait (a few KB); each face then loads as its own image only when it's on screen */
+    SB.all('photos?select=id&order=id').then(rows=>{
+      for(const r of rows)window.__PHOTOS[r.id]=1;
       const draw=()=>{const typing=/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'');if(typeof render==='function'&&typeof S!=='undefined'&&!window.__HOLD&&!typing){const y=scrollY;render();scrollTo(0,y)}else setTimeout(draw,typing?1500:200)};draw();
     }).catch(e=>console.warn('photos',e));
     window.__DATA={asOf:meta.asOf,months:meta.months,members:members.map(r=>r.lite),rc:Object.fromEntries(rc.map(r=>[r.id,r.data])),

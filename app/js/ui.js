@@ -11,9 +11,11 @@ const CAT={
 const share=(arr,v)=>arr.length?arr.filter(x=>x<v).length/arr.length:0;
 const chamberWord=m=>m.chamber==='Senate'?'the Senate':'the House';
 const ord=n=>n.toLocaleString();
+/* a portrait is its own small image file, cached by the browser and the CDN (older data may still hold the picture inline) */
+const faceSrc=(id,v)=>typeof v==='string'&&v.length>40?'data:image/webp;base64,'+v:'/face/'+id+'.webp?v=1';
 function face(m,size=44,ring=true){
   const src=PHOTOS[m.id];
-  return src?`<img class="face ${ring?'ring-'+m.party:''}" style="width:${size}px;height:${size}px" src="data:image/webp;base64,${src}" alt="">`:`<span class="face fb ring-${m.party}" style="width:${size}px;height:${size}px;font-size:${Math.round(size*.36)}px">${m.initials}</span>`;
+  return src?`<img class="face ${ring?'ring-'+m.party:''}" style="width:${size}px;height:${size}px" src="${faceSrc(m.id,src)}" loading="lazy" decoding="async" alt="">`:`<span class="face fb ring-${m.party}" style="width:${size}px;height:${size}px;font-size:${Math.round(size*.36)}px">${m.initials}</span>`;
 }
 const nomFace=(n,size=44)=>`<span class="face fb nomf" style="width:${size}px;height:${size}px;font-size:${Math.round(size*.34)}px">${esc(n.initials)}</span>`;
 const partyLine=m=>`${m.partyName} · ${m.chamber==='Senate'?'Senator':m.delegate?'Delegate':'Rep.'} · ${m.chamber==='Senate'?m.stateName:m.state+(m.district?'-'+m.district:'')}`;

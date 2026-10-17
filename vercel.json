@@ -108,6 +108,10 @@
   },
   "rewrites": [
     {
+      "source": "/face/:id.webp",
+      "destination": "/api/face?id=:id"
+    },
+    {
       "source": "/go/:id",
       "destination": "/api/seo?t=go&id=:id"
     },
