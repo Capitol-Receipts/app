@@ -289,6 +289,13 @@ module.exports = async (req, res) => {
   try {
     if (t === 'embed') return embedCard(res, id);
     if (t === 'go') return goScreen(res, id);
+    if (t === 'pulse') { res.setHeader('Access-Control-Allow-Origin', '*'); return send(res, 200, 'application/json; charset=utf-8', JSON.stringify(await require('./_seo_pulse').pulse()), 3600); }
+    if (t === 'quizscore') { // a shared quiz score: its own preview card, then on to the quiz
+      const n = Math.max(0, Math.min(9, parseInt(id, 10) || 0));
+      return send(res, 200, 'text/html; charset=utf-8', html({ title: `I got ${n} of 9 on the Congress quiz | Capitol Receipts`, desc: 'Nine questions about stock trades, campaign money and votes in Congress, each answered from public records. How many can you get?',
+        path: `/quiz/score/${n}`, noindex: true, route: null, image: `${APP}/og/quiz/${n}.png`,
+        body: `<h1>I got ${n} of 9 on the Congress quiz</h1><p class="sr-lead">Nine questions about stock trades, campaign money and votes, each answered from public records.</p><p><a href="/quiz">Take the quiz</a></p><script>location.replace('/quiz?from=score')</script>` }, 'seo'), 604800);
+    }
     if (t === 'robots') return send(res, 200, 'text/plain; charset=utf-8', `User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${SITE}/sitemap.xml\n`, 86400);
     // the app's domain is for using the app; every public page lives on www.capitolreceipts.com
     if (onApp && !appMode && u.searchParams.get('via') !== 'www') return redirect(res, SITE + publicPath);

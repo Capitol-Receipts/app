@@ -72,6 +72,14 @@
   ],
   "rewrites": [
     {
+      "source": "/pulse.json",
+      "destination": "https://app.capitolreceipts.com/api/seo?t=pulse&via=www"
+    },
+    {
+      "source": "/quiz/score/:n",
+      "destination": "https://app.capitolreceipts.com/api/seo?t=quizscore&id=:n&via=www"
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "https://app.capitolreceipts.com/api/seo?t=sitemap&via=www"
     },

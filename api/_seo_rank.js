@@ -35,8 +35,8 @@ const METRICS = {
     value: m => (+m.rec || 0) >= 50000 ? (+m.pac || 0) / +m.rec : null, fmt: x => pct(x), min: () => true, unit: 'of campaign money from political action committees',
     how: 'Share of 2025–26 campaign receipts that came from political action committees, which are funded by companies, unions and interest groups. Members who raised under $50,000 are left out.', src: 'FEC candidate summaries' },
   'most-missed-votes': { q: 'most missed votes', h: 'Members of Congress who missed the most votes', short: 'Most missed votes', col: 'Votes missed',
-    value: m => m.id !== SPEAKER && (+m.elig || 0) >= 50 ? 1 - (+m.present || 0) : null, fmt: x => pct(x, 1), min: () => true, unit: 'of recorded votes missed',
-    how: 'Share of the recorded roll call votes a member was eligible for in the current Congress where they did not vote (neither yes, no nor present). Members eligible for fewer than 50 votes are left out, and so is the Speaker, who by custom rarely votes.', src: 'Voteview roll call records' },
+    value: m => m.id !== SPEAKER && !m.delegate && (+m.elig || 0) >= 50 ? 1 - (+m.present || 0) : null, fmt: x => pct(x, 1), min: () => true, unit: 'of recorded votes missed',
+    how: 'Share of the recorded roll call votes a member was eligible for in the current Congress where they did not vote (neither yes, no nor present). Members eligible for fewer than 50 votes are left out, and so are the Speaker, who by custom rarely votes, and the delegates from D.C. and the territories, who can vote only in limited cases.', src: 'Voteview roll call records' },
   'breaks-with-party': { q: 'most likely to break with their party', h: 'Members of Congress who break with their party most', short: 'Break with their party most', col: 'Voted against party',
     value: m => (+m.unityN || 0) >= 50 && m.unity != null ? 1 - +m.unity : null, fmt: x => pct(x, 1), min: () => true, unit: 'of party-line votes cast against their own party',
     how: 'On votes where most Democrats and most Republicans took opposite sides, the share of the time a member voted with the other party. Only members with at least 50 such votes are ranked.', src: 'Voteview roll call records' },
@@ -99,4 +99,4 @@ async function index() {
     body: `<h1>Congress rankings</h1><p class="sr-lead">Who trades the most stock, raises the most money, misses the most votes and breaks with their party most. Every list covers all ${num(all.length)} current members, measured the same way from public records, and can be narrowed to the Senate, House, Democrats or Republicans.</p><ul class="sr-list">${lines.join('')}</ul>` };
 }
 
-module.exports = { METRICS, VIEWS, ranking, index, rpath };
+module.exports = { METRICS, VIEWS, ranking, index, rpath, DATA };

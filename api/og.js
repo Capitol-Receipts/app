@@ -136,6 +136,11 @@ const BUILD = {
     return card({ kicker: 'Monthly report', title: `Congress stock trades in ${r.label}`, sub: `${num(r.stats.members)} members of Congress reported trades made this month`,
       stats: [['Trades', num(r.stats.trades)], ['Purchases / sales', `${num(r.stats.buys)} / ${num(r.stats.sells)}`], ['Reported value', `${money(r.stats.lo)}–${money(r.stats.hi)}`]] });
   },
+  async quiz(id) {
+    const n = Math.max(0, Math.min(9, parseInt(id, 10) || 0));
+    return card({ kicker: 'Congress quiz', title: `I got ${n} of 9 on the Congress quiz`, sub: 'How many can you get? capitolreceipts.com/quiz',
+      stats: [['My score', `${n} of 9`], ['Topics', 'Trades, money, votes']], accent: n >= 7 ? '#2557a8' : NAVY });
+  },
   async nominee(id) {
     const r = await one(`nominations?id=eq.${encodeURIComponent(id)}&select=name,position,confirmed_on,data->y,data->n`);
     if (!r) return null;
