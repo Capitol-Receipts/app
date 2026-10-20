@@ -172,7 +172,7 @@ def about():
     s = re.sub(r'<script type="application/ld\+json" data-seo>(?!\{"@context": "https://schema.org", "@type": "Organization").*?</script>\n?', '', s, flags=re.S)
     ld = [{'@context': 'https://schema.org', '@type': 'AboutPage', 'name': title, 'url': SITE + '/about', 'description': desc, 'about': {'@id': SITE + '/#org'},
            'mainEntity': {'@type': 'Organization', '@id': SITE + '/#org', 'name': 'Capitol Receipts', 'url': SITE + '/', 'email': 'admin@squaredawaylabs.com',
-                          'parentOrganization': {'@type': 'Organization', 'name': 'Squared Away Labs LLC', 'url': 'https://www.squaredawaylabs.com'}}},
+                          'parentOrganization': {'@type': 'Organization', 'name': 'Squared Away Labs LLC', 'url': 'https://www.squaredawaylabs.com', 'address': {'@type': 'PostalAddress', 'addressLocality': 'Wilkes-Barre', 'addressRegion': 'PA', 'addressCountry': 'US'}}}},
           {'@context': 'https://schema.org', '@type': 'BreadcrumbList', 'itemListElement': [{'@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': SITE + '/'}, {'@type': 'ListItem', 'position': 2, 'name': 'About', 'item': SITE + '/about'}]}]
     s = s.replace('</head>', ''.join(f'<script type="application/ld+json" data-seo>{json.dumps(x, ensure_ascii=False)}</script>\n' for x in ld) + '</head>', 1)
     H = lambda t: f'<h2 style="font-size:22px;margin:40px 0 10px;letter-spacing:-.01em">{t}</h2>'
@@ -181,7 +181,7 @@ def about():
     n = NUMS
     body = ('<main style="max-width:760px;margin:0 auto;padding:64px 24px 96px">\n<h1 class="disp" style="font-size:64px;margin:0;color:#14274e">About Capitol Receipts</h1>\n'
         + Pp('Capitol Receipts shows who funds every member of Congress, what stocks they trade, how they vote and who lobbies them, in plain English. It’s free to use and built entirely from public records.').replace('margin:0', 'margin:18px 0 0') + '\n'
-        + H('Who we are') + Pp(f'Capitol Receipts is made by {a("https://www.squaredawaylabs.com", "Squared Away Labs LLC")}, a small independent software studio. We build and run the site, the app and the daily data updates ourselves.') + '\n'
+        + H('Who we are') + Pp(f'Capitol Receipts is made by {a("https://www.squaredawaylabs.com", "Squared Away Labs LLC")}, a small independent software studio based in Wilkes-Barre, Pennsylvania. We build and run the site, the app and the daily data updates ourselves.') + '\n'
         + H('Why we built it') + Pp('The records that show how Congress is paid, how it trades and how it votes are public, but they are spread across a dozen government sites in formats few people have time to read. We put them in one place, match them to each member and write them up so anyone can check their own representatives in a minute.') + '\n'
         + H('Nonpartisan by design') + Pp('Both parties appear on every list, and every member is measured the same way. We don’t endorse candidates or tell you what to think of a number. A high number doesn’t mean someone broke a rule: trading stock is legal, and missing a vote can have good reasons. We show the record so you can decide what to ask.') + '\n'
         + H('How we’re funded') + Pp(f'By subscribers to {a("/pricing", "Pro")} and by {a("/newsrooms", "newsroom plans")}. We take no money from parties, campaigns, PACs or lobbyists, and we don’t sell your data. See our {a("/privacy", "privacy policy")}.') + '\n'
