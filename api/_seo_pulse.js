@@ -34,6 +34,9 @@ const pulse = () => cached('pulse', async () => {
   nums['top-missed'] = missed[0] ? pct(missed[0][1], 1) : '—';
   nums['top-raised'] = funds[0] ? money(+funds[0].rec) : '—';
   nums.updated = date(asOf);
+  nums.raised = money(raised);
+  nums.comm = num(cur.reduce((v, m) => v + (+m.comm || 0), 0));
+  nums.period = `JAN 2025 – ${new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'America/New_York' }).toUpperCase()}`;
   // quiz receipts: refreshed only while the answer itself still holds
   const nm = m => `${short(m, mem)} (${m.party}-${m.state})`;
   if (traders[0] && traders[0].id === 'C001123' && traders[1]) nums.q1 = `${num(+traders[0].tradeN)} disclosed trades since January 2025. ${nm(traders[1])} is second at ${num(+traders[1].tradeN)}.${traders.slice(0, 10).some(m => m.id === 'P000197') ? '' : ' Nancy Pelosi isn’t in the top 10.'}`;
@@ -42,7 +45,7 @@ const pulse = () => cached('pulse', async () => {
 
   // homepage: four big numbers
   const stat = (n, l, href) => `<a href="${href}" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:6px;padding:22px 24px;background:#ffffff;border-radius:22px;border:2px solid #e3e7ef"><span class="disp" style="font-size:56px;line-height:1;color:#14274e">${n}</span><span style="font-size:16px;color:#3d4452">${l}</span></a>`;
-  blocks['home-stats'] = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+  blocks['home-stats'] = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:16px">
 ${stat(num(allTrades), 'stock trades by members of Congress since January 2025', '/reports')}
 ${stat(`${num(traders.length)} of ${num(cur.length)}`, 'current members who reported a trade', '/rankings/most-stock-trades')}
 ${stat(money(raised), 'raised by current members for the 2026 elections', '/rankings/top-fundraisers')}
@@ -58,12 +61,12 @@ ${stat(num(execN), 'trades reported by the President and Senate-confirmed offici
   const lastFull = [...rp.keys].reverse().find(k => k < thisMonth);
   const lf = lastFull && rp.months[lastFull];
   const tag = m => `<span style="display:inline-block;font-size:13px;font-weight:700;padding:2px 8px;border-radius:999px;color:#fff;background:${PC[m.party] || '#14274e'}">${esc(seat(m))}</span>`;
-  blocks['home-week'] = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+  blocks['home-week'] = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:16px">
 ${recent.slice(0, 3).map(([m, t]) => `<div style="background:#ffffff;border:2px solid #e3e7ef;border-radius:22px;padding:22px 24px;display:flex;flex-direction:column;gap:8px"><span class="mono" style="font-size:13px;color:#5b6374">${esc(date(t[0]))} · ${/^Sell/.test(t[1]) ? 'SALE' : t[1] === 'Buy' ? 'PURCHASE' : esc(String(t[1] || '').toUpperCase())}</span><span class="disp" style="font-size:40px;line-height:1;color:#14274e">${money(+t[4] || 0)}–${money(+t[5] || +t[4] || 0)}</span><div style="font-weight:700;font-size:18px">${link(m, mem)} ${tag(m)}</div><div style="color:#3d4452">${esc(verb(t[1]))} ${esc(String(t[3] || '').slice(0, 80))}${t[2] ? ` <a class="rlink" href="${P('stock', t[2], '')}">(${esc(t[2])})</a>` : ''}</div></div>`).join('\n')}
 </div>
 <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:22px">
 <a href="/this-week" style="background:#14274e;color:#fff;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:999px">This week in Congress ›</a>
-${lf ? `<a href="/reports/${lastFull}" style="background:#ffffff;color:#14274e;border:2px solid #14274e;text-decoration:none;font-weight:700;padding:10px 18px;border-radius:999px">${esc(RP.label(lastFull))} report: ${num(lf.stats.trades)} trades ›</a>` : ''}
+${lf ? `<a href="/reports/${lastFull}" style="background:#ffffff;color:#14274e;border:2px solid #14274e;text-decoration:none;font-weight:700;padding:10px 18px;border-radius:999px">${esc(RP.label(lastFull))} report ›</a>` : ''}
 <a href="/guides" style="color:#14274e;font-weight:700;padding:12px 6px">Guides ›</a>
 </div>`;
 

@@ -24,7 +24,7 @@ const CSS = `<style id="sr-css">
 .sr-logo{font:800 22px "Barlow Condensed",system-ui,sans-serif;color:#fff!important;text-decoration:none;letter-spacing:-.01em;margin-right:auto}
 .sr-logo::before{content:"";display:inline-block;width:1.48em;height:1.4em;margin-right:.36em;vertical-align:-.32em;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%2222%2011%20156%20147%22%3E%3Cpath%20d%3D%22M95%2016a5%205%200%201%200%2010%200a5%205%200%201%200-10%200ZM97%2018h6v16h-6ZM88%2034h24v20H88ZM58%20104C58%2072%2078%2050%20100%2050S142%2072%20142%20104ZM50%20104h100v8H50ZM57%20112h6v26h-6ZM67%20112h6v26h-6ZM77%20112h6v26h-6ZM87%20112h6v26h-6ZM97%20112h6v26h-6ZM107%20112h6v26h-6ZM117%20112h6v26h-6ZM127%20112h6v26h-6ZM137%20112h6v26h-6ZM46%20138h108v8H46ZM22%20146h156v12H22Z%22%2F%3E%3C%2Fsvg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%2222%2011%20156%20147%22%3E%3Cpath%20d%3D%22M95%2016a5%205%200%201%200%2010%200a5%205%200%201%200-10%200ZM97%2018h6v16h-6ZM88%2034h24v20H88ZM58%20104C58%2072%2078%2050%20100%2050S142%2072%20142%20104ZM50%20104h100v8H50ZM57%20112h6v26h-6ZM67%20112h6v26h-6ZM77%20112h6v26h-6ZM87%20112h6v26h-6ZM97%20112h6v26h-6ZM107%20112h6v26h-6ZM117%20112h6v26h-6ZM127%20112h6v26h-6ZM137%20112h6v26h-6ZM46%20138h108v8H46ZM22%20146h156v12H22Z%22%2F%3E%3C%2Fsvg%3E") center/contain no-repeat}
 .sr-logo span{background:var(--r);padding:1px 7px 2px;border-radius:5px;margin-right:3px}
-.sr-top nav a{color:#dfe5f1;text-decoration:none;font-weight:600;font-size:14px}
+.sr-top nav a{color:#dfe5f1;text-decoration:none;font-weight:600;font-size:14px;display:inline-block;padding:6px 0}
 .sr-top nav a:hover{color:#fff;text-decoration:underline}
 .sr-main{max-width:980px;margin:0 auto;padding:16px 16px 48px}
 .sr-crumbs{font-size:13px;color:var(--s);margin:0 0 14px;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:4px}
@@ -44,7 +44,9 @@ const CSS = `<style id="sr-css">
 .sr-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--l)}
 .sr-list li{padding:9px 2px;border-bottom:1px solid var(--l);display:flex;justify-content:space-between;gap:12px}
 .sr-list li span:first-child{min-width:0;overflow-wrap:anywhere}
-.sr-list li span:last-child{color:var(--s);text-align:right;flex:0 1 auto;max-width:60%;overflow-wrap:anywhere}
+.sr-list li span:first-child{flex:1 1 auto}
+.sr-list li span:last-child{color:var(--s);text-align:right;flex:0 1 auto;max-width:52%;overflow-wrap:normal;word-break:normal}
+.sr-list li span.nw{white-space:nowrap;flex:0 0 auto;max-width:none}
 .sr-cols{columns:3 220px;column-gap:24px;margin:0;padding:0;list-style:none}
 .sr-cols li{break-inside:avoid;padding:3px 0}
 .sr-pager{display:flex;flex-wrap:wrap;gap:6px;margin:22px 0}
@@ -57,7 +59,7 @@ main.has-cta{padding-bottom:96px}
 .sr-cite p{font-size:14px;color:var(--s);overflow-wrap:anywhere}
 .sr-code{background:var(--b);padding:12px;border-radius:10px;font-size:12px;white-space:pre-wrap;word-break:break-all;max-width:760px}
 .sr-foot{border-top:1px solid var(--l);margin-top:36px;padding-top:16px;font-size:14px;color:var(--s);display:flex;flex-wrap:wrap;gap:8px 16px}
-.sr-foot a{color:var(--s)}
+.sr-foot a{color:var(--s);display:inline-block;padding:4px 0}
 @media (prefers-color-scheme:dark){.sr{--i:#e9ecf2;--s:#a3abb9;--l:#2a3140;--b:#171c26;background:#0e1219}.sr a{color:#9db6ff}.sr-crumbs a,.sr-foot a{color:var(--s)}.sr-pager b{background:#2c4c9a}}
 </style>`;
 

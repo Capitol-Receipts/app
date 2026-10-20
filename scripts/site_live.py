@@ -27,7 +27,7 @@ def block(name, attrs=''):
     return f'<div data-live-block="{name}"{attrs}>{BLOCKS.get(name, "")}</div><!--/{name}-->'
 def fill(s):
     s = re.sub(r'(<div data-live-block="([\w-]+)"[^>]*>)(.*?)(</div><!--/\2-->)', lambda m: m.group(1) + (BLOCKS.get(m.group(2)) or m.group(3)) + m.group(4), s, flags=re.S)
-    s = re.sub(r'(<(span|div)[^>]*data-live="([\w-]+)"[^>]*>)([^<]*)(</\2>)', lambda m: m.group(1) + html.escape(NUMS.get(m.group(3)) or html.unescape(m.group(4)), quote=False) + m.group(5), s)
+    s = re.sub(r'(<(span|div|b)[^>]*data-live="([\w-]+)"[^>]*>)([^<]*)(</\2>)', lambda m: m.group(1) + html.escape(NUMS.get(m.group(3)) or html.unescape(m.group(4)), quote=False) + m.group(5), s)
     return s
 def script(s, name):
     tag = f'<script src="/js/{name}" defer></script>'
@@ -98,6 +98,26 @@ QUIZ_BOX = ('<div id="quiz-score" hidden style="max-width: 1240px; margin: 32px 
             '<a data-fb href="#" target="_blank" rel="noopener" style="color: #ffffff; text-decoration: none; font-weight: 700; padding: 13px 20px; border-radius: 14px; box-shadow: inset 0 0 0 2px #ffffff">Facebook</a>'
             '</div></div>')
 
+MOBILE_CSS = ('<style data-mobile>@media (max-width:760px){'
+  '[style*="grid-template-columns: repeat(auto-fit, minmax("]{grid-template-columns:minmax(0,1fr) !important}'
+  '[style*="padding: 56px 44px"]{padding:36px 22px !important}'
+  '[style*="padding: 80px 40px 90px"]{padding:56px 24px 60px !important}'
+  '.card[style*="1fr 200px 1fr"]{grid-template-columns:1fr 1fr !important;gap:8px 14px !important;padding:16px 18px !important}'
+  '.card[style*="1fr 200px 1fr"]>div:nth-child(2){grid-column:1/-1;order:-1;text-align:left !important}'
+  '.card[style*="1fr 200px 1fr"] .bar{max-width:90px !important}'
+  'section span[style*="letter-spacing: .1em"]:not([style*="background"]){font-size:12px !important}'
+  'footer a{display:inline-block;padding:5px 0}'
+  '.cr-faq summary{font-size:17px}'
+  '[style*="grid-template-columns: 1.4fr 2fr 1fr"]{grid-template-columns:1fr auto !important;gap:4px 12px !important}'
+  '[style*="grid-template-columns: 1.4fr 2fr 1fr"]>span:nth-child(1){font-weight:700}'
+  '[style*="grid-template-columns: 1.4fr 2fr 1fr"]>span:nth-child(2){grid-column:1/-1;order:3;color:#5b6374}'
+  '[style*="padding: 36px 40px"]{padding:26px 22px !important}[style*="min-width: 260px"]{min-width:0 !important;flex-basis:100% !important}'
+  'h1,h2,h3{overflow-wrap:break-word}p a,main a{overflow-wrap:anywhere}'
+  '}</style>')
+def mobile(s):
+    s = re.sub(r'<style data-mobile>.*?</style>\n?', '', s, flags=re.S)
+    return s.replace('</head>', MOBILE_CSS + '\n</head>', 1)
+
 def footer_about(s):
     if 'href="/about" style="color: #c9d1e3' in s: return s
     return s.replace('<a href="/pricing" style="color: #c9d1e3; text-decoration: none">Pricing</a>',
@@ -115,11 +135,20 @@ def home(s):
                '  <h2 class="disp sec-h" style="margin: 4px 0 22px; font-size: 64px; color: #14274e">Biggest trades in the last 30 days</h2>\n  ' + block('home-week') + '\n </div>\n</section>\n')
         s = section_before(s, 'Standouts from the filings', sec)
     s = re.sub(r'All (?:<span data-live="trades">)?([\d,]+)(?:</span>)? stock trades\.', r'All <span data-live="trades">\1</span> stock trades.', s)
+    # older fixed numbers in the designed sections
+    s = re.sub(r'\(D-CA\): (?:<span data-live="top-trades">)?([\d,]+)(?:</span>)? stock trades since Jan 2025', r'(D-CA): <span data-live="top-trades">\1</span> stock trades since Jan 2025', s)
+    for label, key in [('Raised for 2026 races', 'raised'), ('Stock trades reported', 'trades'), ('Members who traded', 'traders'), ('Trades tied to own committees', 'comm')]:
+        s = re.sub(rf'(<span>{re.escape(label)}</span><b)(?: data-live="[\w-]+")?([^>]*)>', rf'\1 data-live="{key}"\2>', s, count=1)
+    s = re.sub(r'U\.S\. CONGRESS · 119TH SESSION<br>(?:<span data-live="period">)?([^<]*)(?:</span>)?</div>', r'U.S. CONGRESS · 119TH SESSION<br><span data-live="period">\1</span></div>', s, count=1)
+    s = re.sub(r'(?:<span data-live="trades">)?12,917(?:</span>)? trades from House and Senate', lambda m: '<span data-live="trades">12,917</span> trades from House and Senate', s)
+    s = re.sub(r'<span class="disp" style="font-size: 84px"(?: data-live="top-trades")?>([\d,]+)</span>(\s*<span style="font-size: 16px">trades since Jan 2025, the most)', r'<span class="disp" style="font-size: 84px" data-live="top-trades">\1</span>\2', s)
+    s = re.sub(r'<span class="disp" style="font-size: 84px"(?: data-live="top-missed")?>([\d.]+%)</span>(\s*<span style="font-size: 16px">of roll-call votes missed)', r'<span class="disp" style="font-size: 84px" data-live="top-missed">\1</span>\2', s)
     return faq(s, HOME_FAQ)
 
 def receipts(s):
     for label, key in [('Most trades', 'top-trades'), ('Most votes missed', 'top-missed'), ('Biggest haul', 'top-raised')]:
         s = re.sub(rf'(<span>{label}</span>)<span>([^<]*)</span>', rf'\1<span data-live="{key}">\2</span>', s)
+    s = re.sub(r'(?:<span data-live="comm">)?([\d,]+)(?:</span>)? across Congress\.', r'<span data-live="comm">\1</span> across Congress.', s, count=1)
     if 'data-live-block="board-trades"' not in s:
         s = re.sub(r'(Most stock trades</h2>\n)(.*?)(\n  </div>\n  <div style="display: flex; justify-content: center)',
                    lambda m: m.group(1) + '   ' + block('board-trades', ' style="display: flex; flex-direction: column; gap: 10px"') + m.group(3), s, count=1, flags=re.S)
@@ -204,7 +233,7 @@ s = s.replace('<section id="contact"', CITE + '<section id="contact"', 1)
 wr('newsrooms.html', faq(s, NEWS_FAQ))
 wr('about.html', fill(about()))
 for f in os.listdir(S):
-    if f.endswith('.html'): wr(f, footer_about(rd(f)))
+    if f.endswith('.html'): wr(f, mobile(footer_about(rd(f))))
 sm = os.path.join(S, 'sitemaps', 'site.xml')
 if os.path.exists(sm):
     x = open(sm).read()

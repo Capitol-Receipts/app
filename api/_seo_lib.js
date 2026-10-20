@@ -141,7 +141,7 @@ async function context(c, iso) {
 
 // small HTML builders
 const facts = list => `<dl class="sr-facts">${list.filter(f => f && f[1] != null && f[1] !== '' && f[1] !== '—').map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`;
-const rows = list => list.length ? `<ul class="sr-list">${list.map(([l, r]) => `<li><span>${l}</span><span>${r == null ? '' : r}</span></li>`).join('')}</ul>` : '';
+const rows = list => list.length ? `<ul class="sr-list">${list.map(([l, r]) => `<li><span>${l}</span><span${String(r == null ? '' : r).replace(/<[^>]+>/g, '').length <= 16 ? ' class="nw"' : ''}>${r == null ? '' : r}</span></li>`).join('')}</ul>` : ''; // short values never wrap mid-number
 const sec = (h, inner) => inner ? `<section><h2>${esc(h)}</h2>${inner}</section>` : '';
 const cols = items => items.length ? `<ul class="sr-cols">${items.map(x => `<li>${x}</li>`).join('')}</ul>` : '';
 function pager(base, page, pages) {
