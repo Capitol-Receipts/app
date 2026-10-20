@@ -52,7 +52,7 @@ function navGo(g){
   else if(k==='f'){toSearch();S.filter=v;S.party='All';S.msort='name';S.mdir=null}
   else if(k==='party'){S.stack=[];S.tab='search';go('party:'+v);return}
   else if(k==='compare'){S.stack=[];S.tab='search';go('compare');return}
-  else if(k==='rank'){toSearch();S.filter='Congress';S.party='All';S.msort=v;S.mdir=null}
+  else if(k==='rank'){toSearch();S.filter='Congress';S.party='All';S.msort=MSORT[v]?v:'name';S.mdir=null}
   else if(k==='ncat'){toSearch();S.filter='Appointees';S.ncat=v}
   else if(k==='hist'){toSearch();S.filter='History';S.hk=v==='archive'?'members':v}
   else if(k==='bills'){S.stack=[];S.tab='search';S.bmode=v==='search'?'laws':v;S.bq='';S.limit=60;go('bills');if(v==='search')setTimeout(()=>$('#bq')?.focus(),50);return}

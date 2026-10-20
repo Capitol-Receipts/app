@@ -78,6 +78,7 @@ const MSORT={
 };
 const NSORT={waivers:['Conflict waivers',n=>n.waivers,n=>n.waivers+(n.waivers===1?' waiver':' waivers'),-1],newest:['Newest',n=>n.d,null,-1],oldest:['Oldest',n=>n.d,null,1],close:['Closest vote',n=>n.margin,n=>`${n.y}–${n.n}`,1],cross:['Most crossovers',n=>n.crossN,n=>n.crossN+' crossed',-1],name:['Name',n=>n.name.split(' ').pop(),null,1]};
 function sortList(list,spec,dir){
+  if(!spec)return list;
   const [,f,,def]=spec,d=dir??def;
   return [...list].sort((a,b)=>{const x=f(a),y=f(b);if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return -1;return (typeof x==='string'?x.localeCompare(y):x-y)*d});
 }
@@ -172,6 +173,7 @@ function board(title,list,valFn,note,key){
    <span style="min-width:0"><span class="t">${esc(m.full)}</span><br><span class="s"><span class="pty ${m.party}">${m.party}</span>${esc(m.stateName)}</span></span><span class="val">${valFn(m)}</span></button>`).join('')}</div>${note?`<div class="cap">${note}</div>`:''}</div>`;
 }
 function sortBar(specs,cur,dir,kind){
+  if(!specs[cur])cur=Object.keys(specs)[0];
   const d=dir??specs[cur][3];
   return `<div class="sortbar"><label class="sortsel">${ICONS.sort}<select id="${kind}sort" aria-label="Sort by">${Object.entries(specs).map(([k,v])=>`<option value="${k}" ${k===cur?'selected':''}>${v[0]}</option>`).join('')}</select></label>
    <button class="dirbtn" data-dir="${kind}" aria-label="Reverse order">${d===1?'Low to high':'High to low'}</button></div>`;
