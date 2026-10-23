@@ -25,12 +25,17 @@ def fetch(url, dest, min_bytes=500):
             log('  retry', url, e); time.sleep(10 * (i + 1))
     log('  FAILED', url); return False
 
-def step(name, args, cwd=W):
-    t = time.time()
-    r = subprocess.run([sys.executable] + args, cwd=cwd, capture_output=True, text=True)
-    tail = (r.stdout + r.stderr).strip().splitlines()[-3:]
-    log(f'{name}: {"ok" if r.returncode == 0 else "FAILED"} ({time.time() - t:.0f}s)', *tail)
-    if r.returncode != 0: raise SystemExit(f'{name} failed')
+def step(name, args, cwd=W, tries=1, optional=False):
+    for i in range(tries):
+        t = time.time()
+        r = subprocess.run([sys.executable] + args, cwd=cwd, capture_output=True, text=True)
+        tail = (r.stdout + r.stderr).strip().splitlines()[-3:]
+        log(f'{name}: {"ok" if r.returncode == 0 else "FAILED"} ({time.time() - t:.0f}s)', *tail)
+        if r.returncode == 0: return True
+        if i + 1 < tries: time.sleep(60 * (i + 1))
+    if optional:  # keep the last good data for this source and carry on with the rest of the update
+        log(f'{name}: skipped this run, keeping the previous data'); return False
+    raise SystemExit(f'{name} failed')
 
 # ---------- 1. fresh public records ----------
 GH = 'https://raw.githubusercontent.com/unitedstates/congress-legislators/main/'
@@ -59,7 +64,7 @@ for y in ('2025', '2026'):
 for f in os.listdir(P):
     if f.endswith('.py'): shutil.copy(os.path.join(P, f), os.path.join(W, f))
 step('house trades', ['daily_trades.py', D])
-step('senate trades', ['daily_senate.py', D])
+step('senate trades', ['daily_senate.py', D], tries=3, optional=True)  # the Senate site sometimes refuses requests for a while
 if WEEKLY:
     try:
         step('ethics statements', ['fetch_ethics.py', D])
