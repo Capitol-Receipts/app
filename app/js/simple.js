@@ -128,7 +128,7 @@ function smProfile(){
 function smSummary(w){
   const st=w.querySelector('.stories'),sec=st&&st.closest('section'),pe=w.querySelector('.pe-card');
   if(!st||!sec||sec.classList.contains('smhide'))return;
-  const gv=((w.querySelector('.glance')||{}).textContent||'').split(/\s+/).filter(Boolean); // the numbers already shown up top
+  const gv=[...w.querySelectorAll('.glance b, .glance .gs')].flatMap(e=>e.textContent.split(/\s+/)).filter(Boolean); // the numbers already shown up top
   const keep=[...st.querySelectorAll('.story')].filter(c=>{const big=((c.querySelector('.sbig')||{}).textContent||'').trim();return big&&!gv.includes(big)});
   const lines=keep.map(c=>`<li><b>${esc(((c.querySelector('.sbig')||{}).textContent||'').trim())}</b> ${(c.querySelector('p')||{}).innerHTML||''}</li>`).join('');
   const cmp=sec.querySelector('[data-topic="compare"]')?'<button class="link pcmp" data-topic="compare">How they compare with everyone else ›</button>':'';
