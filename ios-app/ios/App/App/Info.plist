@@ -51,6 +51,18 @@
 	<array>
 		<string>arm64</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>Google Sign-In</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- the iOS client ID reversed, from Google Cloud: com.googleusercontent.apps.123-abc -->
+				<string>com.googleusercontent.apps.REPLACE-WITH-IOS-CLIENT-ID</string>
+			</array>
+		</dict>
+	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>WKAppBoundDomains</key>

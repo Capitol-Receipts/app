@@ -45,5 +45,42 @@ products `com.capitolreceipts.pro.monthly` and `com.capitolreceipts.pro.yearly`.
 `https://hxgckcriehvrolwnabpd.supabase.co/functions/v1/appstore-webhook`. Purchases made in TestFlight and by Apple's
 reviewers are sandbox purchases; they unlock Pro for the account that made them, so Apple can test it.
 
+## Sign in with Apple and Google
+
+The code is in `app/js/social.js`. It works on the website and in the app. Each button stays hidden until that
+provider is turned on in Supabase, so nothing breaks before setup.
+
+1. **Apple Developer › Identifiers**
+   - On the App ID `com.capitolreceipts.app`, turn on Sign in with Apple. The entitlement is already in the project.
+   - Create a **Services ID** for the website, `com.capitolreceipts.web`.
+     - Domains: `hxgckcriehvrolwnabpd.supabase.co`.
+     - Return URL: `https://hxgckcriehvrolwnabpd.supabase.co/auth/v1/callback`.
+   - Create a **Key** with Sign in with Apple enabled and download the .p8 file.
+2. **Supabase › Authentication › Providers › Apple**
+   - Turn it on.
+   - Client IDs: `com.capitolreceipts.web,com.capitolreceipts.app`.
+   - Secret: generate it from the .p8 file. Supabase's Apple page links to the generator. The secret expires after 6 months, so set a reminder to renew it.
+3. **Supabase Edge Function secrets** (these let "Delete my account" revoke Apple sign-in):
+   - `APPLE_TEAM_ID`
+   - `APPLE_SIWA_KEY_ID`
+   - `APPLE_SIWA_KEY` (the whole .p8 text)
+4. **Google Cloud › APIs & Services › Credentials**
+   - Set up the OAuth consent screen with the app name, logo, privacy URL and terms URL.
+   - Create a **Web** OAuth client with the redirect URI `https://hxgckcriehvrolwnabpd.supabase.co/auth/v1/callback`.
+   - Create an **iOS** OAuth client with bundle id `com.capitolreceipts.app`.
+5. **Supabase › Authentication › Providers › Google**
+   - Turn it on.
+   - Paste the Web client ID and secret.
+   - Authorized Client IDs: add the iOS client ID.
+   - Turn on "Skip nonce checks" (Google's iOS SDK doesn't pass the nonce through).
+6. **Supabase › Authentication › URL Configuration**
+   - Redirect URLs must include `https://app.capitolreceipts.com/**` and `https://www.capitolreceipts.com/**`.
+7. **Code**
+   - Put the two Google client IDs in `GOOGLE_WEB_CLIENT_ID` and `GOOGLE_IOS_CLIENT_ID` in `app/js/social.js`.
+   - In `ios/App/App/Info.plist`, replace `REPLACE-WITH-IOS-CLIENT-ID` with the iOS client ID's reversed form, the part before `.apps.googleusercontent.com`.
+
+In the app, Google only appears next to Apple, because the App Store requires Apple sign-in whenever another
+sign-in service is offered.
+
 App Store listing text, privacy answers and review notes: `store/listing.md`. Screenshots (6.9" iPhone, 1290×2796):
 `store/screenshots/`.
