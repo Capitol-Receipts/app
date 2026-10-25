@@ -110,9 +110,9 @@ function smProfile(){
     let more=w.querySelector('#moredet');
     if(!more){kids[last].insertAdjacentHTML('afterend',`<section class="sec" id="moredet"><div class="sh"><h2>More about ${esc(first)}</h2></div><div class="mgroup"></div></section>`);more=w.querySelector('#moredet')}
     const mg=more.querySelector('.mgroup');
-    [...w.children].forEach(e=>{if(e!==more&&[...w.children].indexOf(e)>[...w.children].indexOf(more)&&e.querySelector&&e.querySelector('.topic'))more.before(e)});
+    [...w.children].forEach(e=>{if(e!==more&&!e.contains(more)&&[...w.children].indexOf(e)>[...w.children].indexOf(more)&&e.querySelector&&e.querySelector('.topic'))more.before(e)});
     [...w.children].forEach(e=>{
-      if(e===more||e.classList.contains('note')||e.hasAttribute('data-placelinks')||e.classList.contains('smjump'))return;
+      if(e===more||e.contains(more)||e.classList.contains('note')||e.hasAttribute('data-placelinks')||e.classList.contains('smjump'))return;
       if([...w.children].indexOf(e)<=[...w.children].indexOf(more))return;
       const h=e.querySelector(':scope > .sh h2');
       const title=h?h.textContent.trim():e.hasAttribute('data-csvrow')?'Download the data':'';

@@ -54,10 +54,10 @@ window.__PRE={};['members?select=lite&order=ord&limit=1000&offset=0','nomination
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Schibsted+Grotesk:wght@500;600;700;800&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="/app/css/style.css?v=202610250827">
-<link rel="stylesheet" href="/app/css/friendly.css?v=202610250827">
-<link rel="stylesheet" href="/app/css/desktop.css?v=202610250827">
-<link rel="stylesheet" href="/app/css/hdr.css?v=202610250827" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="/app/css/style.css?v=202610250839">
+<link rel="stylesheet" href="/app/css/friendly.css?v=202610250839">
+<link rel="stylesheet" href="/app/css/desktop.css?v=202610250839">
+<link rel="stylesheet" href="/app/css/hdr.css?v=202610250839" media="print" onload="this.media='all'">
 <style>
   .boot{min-height:70vh;display:grid;place-items:center;text-align:center;padding:24px;font-family:"Schibsted Grotesk",system-ui,sans-serif;color:var(--soft,#5b6069)}
   .boot b{display:block;font:800 26px "Barlow Condensed",system-ui,sans-serif;color:var(--ink,#0e1116);letter-spacing:-.01em}
@@ -101,7 +101,7 @@ SB.all=async(path,size=1000)=>{let out=[],from=0;for(;;){const rows=await SB.get
 SB.rpc=(fn,args)=>fn==='get_light'?SB.get('rpc/get_light?kind='+encodeURIComponent(args.kind)):SB.req('rpc/'+fn,{method:'POST',body:JSON.stringify(args||{})});
 SB.meta=async keys=>Object.fromEntries((await SB.get('app_meta?select=key,value&key=in.('+keys.join(',')+')')).map(r=>[r.key,r.value]));
 
-const APP_VER='202610250827'; /* bump on every release so browsers and the CDN fetch fresh files */
+const APP_VER='202610250839'; /* bump on every release so browsers and the CDN fetch fresh files */
 const APP_SCRIPTS=['fuzzy','core','party','hist','ui','nav','pages','search','leaders','linkify','pacs','elections','companies','friendly','votes','places','extras','glossary_es','es_dict','i18n','db','account','trust','pro','pro2','exec','simple','desktop','routes'];
 async function boot(){
   const msg=document.getElementById('bootmsg');
