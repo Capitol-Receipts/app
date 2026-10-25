@@ -163,8 +163,6 @@ import subprocess; subprocess.run([sys.executable, os.path.join(os.path.dirname(
 import subprocess
 subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "app_soon.py")], check=False)
 
-# "Explore the data" links in every footer
-subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "site_explore.py")], check=False)
 
 # live numbers, FAQs, cite block, quiz scoring and the About page
 subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "site_live.py")], check=False)

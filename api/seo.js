@@ -35,6 +35,8 @@ const CSS = `<style id="sr-css">
 .sr h1{font:800 clamp(30px,5vw,44px)/1.04 "Barlow Condensed",system-ui,sans-serif;margin:0 0 6px;letter-spacing:-.01em}
 .sr-sub{color:var(--s);font-weight:600;margin:0}
 .sr-lead{font-size:18px;line-height:1.5;margin:16px 0 20px;max-width:720px}
+.sr-jump{display:flex;flex-wrap:wrap;gap:8px;margin:-6px 0 22px}.sr-jump a{font-size:14px;font-weight:600;text-decoration:none;padding:7px 12px;border-radius:999px;background:var(--b);color:var(--i)}
+.sr-more summary{cursor:pointer;font-weight:700;padding:12px 2px;text-decoration:underline;text-underline-offset:3px}.sr-more[open] summary{display:none}
 .sr-facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin:0 0 26px;padding:0}
 .sr-facts div{background:var(--b);border-radius:12px;padding:12px 14px}
 .sr-facts dt{font-size:13px;color:var(--s);font-weight:600}
@@ -63,7 +65,7 @@ main.has-cta{padding-bottom:96px}
 @media (prefers-color-scheme:dark){.sr{--i:#e9ecf2;--s:#a3abb9;--l:#2a3140;--b:#171c26;background:#0e1219}.sr a{color:#9db6ff}.sr-crumbs a,.sr-foot a{color:var(--s)}.sr-pager b{background:#2c4c9a}}
 </style>`;
 
-const NAV = [['/members', 'Members'], ['/bills', 'Bills'], ['/pacs', 'PACs'], ['/lobbying', 'Lobbying'], ['/elections', '2026 races'], ['/states', 'States'], ['/rankings', 'Rankings'], ['/stocks', 'Stocks'], ['/reports', 'Reports'], ['/guides', 'Guides'], ['/this-week', 'This week']];
+const NAV = [['/members', 'Members'], ['/states', 'States'], ['/rankings', 'Rankings'], ['/stocks', 'Stocks'], ['/guides', 'Guides']];
 const NAV_ES = [['/es/members', 'Miembros'], ['/es/states', 'Estados'], ['/es/elections', 'Elecciones 2026'], ['/members', 'English']];
 const FOOT = [['/members', 'Members of Congress'], ['/past-members', 'Past members'], ['/appointees/all', 'Appointees'], ['/judges', 'Federal judges'], ['/committees', 'Committees'], ['/caucuses', 'Caucuses'], ['/votes', 'Votes'], ['/bills', 'Bills'], ['/pacs', 'PACs'], ['/lobbying', 'Lobbying groups'], ['/lobbying-firms', 'Lobbying firms'], ['/outside-groups', 'Outside spending'], ['/ethics', 'Ethics statements'], ['/companies', 'Companies'], ['/elections', '2026 elections'], ['/states', 'States'], ['/this-week', 'This week in Congress'], ['/rankings', 'Rankings'], ['/stocks', 'Stocks in Congress'], ['/official-trades', 'Officials’ stock trades'], ['/reports', 'Monthly reports'], ['/guides', 'Guides'], ['/es/members', 'En español']];
 const APP = 'https://app.capitolreceipts.com';
@@ -78,7 +80,17 @@ function citeBox(pg) {
   return `<section class="sr-cite"><h2>${es ? 'Cita o inserta esta página' : 'Cite or embed this page'}</h2><p>${esc(cite)}</p>${embed ? `<p>${es ? 'Para insertar esta ficha en tu sitio, copia este código:' : 'Embed this member’s card on your site:'}</p><pre class="sr-code">${esc(embed)}</pre>` : ''}</section>`;
 }
 
+// long pages get a row of jump links under the intro
+function addJump(body, es) {
+  const hs = []; let i = 0;
+  body = body.replace(/<section><h2>([^<]{2,60})<\/h2>/g, (m, h) => { const id = 's' + (++i); hs.push([id, h]); return `<section id="${id}"><h2>${h}</h2>`; });
+  if (hs.length < 4) return body;
+  const nav = `<nav class="sr-jump" aria-label="${es ? 'En esta página' : 'On this page'}">${hs.filter(([, h]) => !/^(Related|More|Más|About these numbers|Sobre estas cifras|Common questions|More guides|Other months|Contact|Contacto)$|^(More from|Más de)/.test(h)).slice(0, 7).map(([id, h]) => `<a href="#${id}">${h}</a>`).join('')}</nav>`;
+  const at = body.indexOf('</p>', body.indexOf('class="sr-lead"'));
+  return at > 0 ? body.slice(0, at + 4) + nav + body.slice(at + 4) : nav + body;
+}
 function frame(pg, mode) {
+  if (mode !== 'app' && pg.body && !pg.jumped) { pg.body = addJump(pg.body, pg.lang === 'es'); pg.jumped = true; }
   const es = pg.lang === 'es';
   const crumbs = [[es ? 'Inicio' : 'Home', HOST + '/'], ...(pg.crumbs || [])];
   const cl = `<ol class="sr-crumbs">${crumbs.map((c, i) => `<li>${i < crumbs.length - 1 && c[1] ? `<a href="${c[1].replace(HOST, '') || '/'}">${esc(c[0])}</a>` : esc(c[0])}</li>`).join('')}</ol>`;

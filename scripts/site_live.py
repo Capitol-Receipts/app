@@ -118,6 +118,23 @@ def mobile(s):
     s = re.sub(r'<style data-mobile>.*?</style>\n?', '', s, flags=re.S)
     return s.replace('</head>', MOBILE_CSS + '\n</head>', 1)
 
+NAV_LINKS = [('/features', 'Features'), ('/receipts', 'The Receipts'), ('/pricing', 'Pricing'), ('/about', 'About')]
+LOOKUP = [('/states', 'Find your state'), ('/members', 'Every member of Congress'), ('/this-week', 'This week in Congress'), ('/rankings', 'Rankings'),
+          ('/stocks', 'Stocks in Congress'), ('/official-trades', 'Officials’ stock trades'), ('/reports', 'Monthly reports'), ('/guides', 'Guides'),
+          ('/elections', '2026 House and Senate races'), ('/bills', 'Bills since 1947'), ('/pacs', 'PACs and who they fund'), ('/lobbying', 'Who lobbies Congress'),
+          ('/es/members', 'En español')]
+def simplify(s):
+    """Four links in the top menu, and one list of data links above the footer (the footer keeps every page)."""
+    s = re.sub(r'(<div class="hide-sm site-links" id="site-links"[^>]*>)(.*?)(\n  </div>)',
+               lambda m: m.group(1) + ''.join(f'\n   <a class="navlink" href="{h}">{l}</a>' for h, l in NAV_LINKS) + m.group(3), s, count=1, flags=re.S)
+    s = re.sub(r'<div data-explore[^\n]*</div>\n', '', s)
+    s = re.sub(r'(<section data-seo-explore[^>]*>.*?<ul[^>]*>)(.*?)(</ul>)',
+               lambda m: m.group(1) + ''.join(f'<li><a href="{h}" style="font-weight:600;text-decoration:none">{html.escape(t)}&nbsp;›</a></li>' for h, t in LOOKUP) + m.group(3), s, count=1, flags=re.S)
+    for h, l in [('/parties', 'Red vs Blue'), ('/appointees', 'Appointees'), ('/quiz', 'Quiz'), ('/how-it-works', 'How it works'), ('/newsrooms', 'Newsrooms')]:
+        if f'href="{h}" style="color: #c9d1e3' not in s:
+            s = s.replace('<a href="/about" style="color: #c9d1e3; text-decoration: none">About</a>', f'<a href="{h}" style="color: #c9d1e3; text-decoration: none">{l}</a>\n   <a href="/about" style="color: #c9d1e3; text-decoration: none">About</a>', 1)
+    return s
+
 def footer_about(s):
     if 'href="/about" style="color: #c9d1e3' in s: return s
     return s.replace('<a href="/pricing" style="color: #c9d1e3; text-decoration: none">Pricing</a>',
@@ -233,7 +250,7 @@ s = s.replace('<section id="contact"', CITE + '<section id="contact"', 1)
 wr('newsrooms.html', faq(s, NEWS_FAQ))
 wr('about.html', fill(about()))
 for f in os.listdir(S):
-    if f.endswith('.html'): wr(f, mobile(footer_about(rd(f))))
+    if f.endswith('.html'): wr(f, simplify(mobile(footer_about(rd(f)))))
 sm = os.path.join(S, 'sitemaps', 'site.xml')
 if os.path.exists(sm):
     x = open(sm).read()
