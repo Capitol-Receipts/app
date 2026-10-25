@@ -30,6 +30,36 @@ async function authorized(req: Request) {
   const r = await fetch(`${URL_}/auth/v1/admin/users?per_page=1`, { headers: { apikey: h, Authorization: `Bearer ${h}` } });
   return r.ok;
 }
+// iPhone push alerts (APNs). Needs APNS_KEY (the .p8 key text), APNS_KEY_ID and APNS_TEAM_ID; APNS_TOPIC is the
+// app's bundle id. Until they're set, alerts go by email only.
+const APNS = { key: Deno.env.get("APNS_KEY") || "", kid: Deno.env.get("APNS_KEY_ID") || "", team: Deno.env.get("APNS_TEAM_ID") || "",
+  topic: Deno.env.get("APNS_TOPIC") || "com.capitolreceipts.app", host: Deno.env.get("APNS_ENV") === "sandbox" ? "api.sandbox.push.apple.com" : "api.push.apple.com" };
+let apnsJwt = { t: "", at: 0 };
+const b64u = (b: ArrayBuffer | Uint8Array | string) => btoa(typeof b === "string" ? b : String.fromCharCode(...new Uint8Array(b as ArrayBuffer))).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+async function apnsToken() {
+  if (apnsJwt.t && Date.now() - apnsJwt.at < 40 * 60e3) return apnsJwt.t;
+  const pem = APNS.key.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
+  const der = Uint8Array.from(atob(pem), (c) => c.charCodeAt(0));
+  const k = await crypto.subtle.importKey("pkcs8", der, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+  const head = b64u(JSON.stringify({ alg: "ES256", kid: APNS.kid })), body = b64u(JSON.stringify({ iss: APNS.team, iat: Math.floor(Date.now() / 1000) }));
+  const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, k, new TextEncoder().encode(`${head}.${body}`));
+  apnsJwt = { t: `${head}.${body}.${b64u(sig)}`, at: Date.now() };
+  return apnsJwt.t;
+}
+async function pushTo(db: any, userId: string, title: string, body: string, data: Record<string, string>) {
+  if (!APNS.key || !APNS.kid || !APNS.team) return 0;
+  const { data: devs } = await db.from("push_devices").select("token").eq("user_id", userId);
+  if (!devs?.length) return 0;
+  const jwt = await apnsToken(); let ok = 0;
+  for (const d of devs) {
+    const r = await fetch(`https://${APNS.host}/3/device/${d.token}`, { method: "POST",
+      headers: { authorization: `bearer ${jwt}`, "apns-topic": APNS.topic, "apns-push-type": "alert", "apns-priority": "10" },
+      body: JSON.stringify({ aps: { alert: { title, body }, sound: "default" }, ...data }) });
+    if (r.ok) ok++; else if (r.status === 410 || r.status === 400) await db.from("push_devices").delete().eq("token", d.token); // uninstalled or bad token
+  }
+  return ok;
+}
+const plain = (s: string) => s.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"');
 type Trade = { key: string; member_id: string; name: string; party: string; state: string; chamber: string; district: number | null; tdate: string; kind: string; ticker: string | null; asset: string | null; lo: number; hi: number; owner: string | null; comm: string | null; first_seen: string };
 const who = (t: Trade) => `${t.chamber === "Senate" ? "Sen." : "Rep."} ${esc(t.name)} (${esc(t.party?.[0] || "")}-${esc(t.state)})`;
 const assetName = (t: Trade) => ((t.asset || t.ticker || "stock").split(" - ")[0].replace(/\s*\(The\)/i, "").replace(/\s*\([A-Z.\-]{1,8}\)\s*$/, "").replace(/\b(New\s+)?(Common|Ordinary|Class [A-Z]|Series [A-Z])\b.*$/i, "").replace(/[,\s]+(Inc|Corp|Corporation|Co|Ltd|plc|Incorporated|Holdings|Company)\.?\s*$/i, "").replace(/[,\s]+(Inc|Corp|Corporation|Co|Ltd|plc)\.?\s*$/i, "").trim() || t.ticker || "stock").slice(0, 60);
@@ -238,6 +268,12 @@ Deno.serve(async (req) => {
     const count = seenKeys.size;
     const subject = pro && count ? `${count} new trade${count === 1 ? "" : "s"} to know about` : pro && billParts.length ? "Updates on bills you watch" : pro ? "Your Capitol Receipts alerts" : "Your weekly Capitol Receipts update";
     if (dry) { sent++; continue; }
+    // same alert on their iPhone, if they turned it on in the app
+    try {
+      const first = fresh.find((t) => seenKeys.has(t.key));
+      const line = first ? plain(`${first.chamber === "Senate" ? "Sen." : "Rep."} ${first.name} ${what(first)}`) : plain(billParts[0] || "");
+      if (line) await pushTo(db, u.user_id, subject, count > 1 ? `${line}, and ${count - 1} more` : line, first ? { member: first.member_id } : {});
+    } catch (e) { errors.push(`push ${String(e).slice(0, 120)}`); }
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${RESEND}`, "Content-Type": "application/json" },

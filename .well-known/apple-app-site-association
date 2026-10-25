@@ -1,0 +1,28 @@
+{
+ "applinks": {
+  "details": [
+   {
+    "appIDs": [
+     "TEAMID.com.capitolreceipts.app"
+    ],
+    "components": [
+     {
+      "/": "/api/*",
+      "exclude": true
+     },
+     {
+      "/": "/admin*",
+      "exclude": true
+     },
+     {
+      "/": "/embed/*",
+      "exclude": true
+     },
+     {
+      "/": "*"
+     }
+    ]
+   }
+  ]
+ }
+}

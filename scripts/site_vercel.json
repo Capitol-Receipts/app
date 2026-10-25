@@ -51,6 +51,15 @@
           "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
         }
       ]
+    },
+    {
+      "source": "/.well-known/apple-app-site-association",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ]
     }
   ],
   "redirects": [

@@ -1,0 +1,20 @@
+{
+  "appId": "com.capitolreceipts.app",
+  "appName": "Capitol Receipts",
+  "webDir": "www",
+  "server": {
+    "url": "https://app.capitolreceipts.com/?src=ios",
+    "errorPath": "offline.html",
+    "allowNavigation": ["app.capitolreceipts.com"]
+  },
+  "ios": {
+    "contentInset": "never",
+    "limitsNavigationsToAppBoundDomains": true,
+    "backgroundColor": "#14274e",
+    "scheme": "Capitol Receipts"
+  },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 600, "backgroundColor": "#14274e", "showSpinner": false },
+    "PushNotifications": { "presentationOptions": ["badge", "sound", "alert"] }
+  }
+}

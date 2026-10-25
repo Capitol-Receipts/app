@@ -21,10 +21,15 @@ PAGES = {  # design file -> (url path, output file, description)
 }
 APP_LABELS = ('Get the app', 'Download free', 'Start 7-day free trial')
 
+KEEP = os.path.join(OUT, '.well-known')  # iPhone app links file survives a rebuild
+keep = {f: open(os.path.join(KEEP, f)).read() for f in os.listdir(KEEP)} if os.path.isdir(KEEP) else {}
 if os.path.isdir(OUT):
     shutil.rmtree(OUT)
 os.makedirs(os.path.join(OUT, 'img'))
 os.makedirs(os.path.join(OUT, 'js'))
+if keep:
+    os.makedirs(KEEP, exist_ok=True)
+    for f, t in keep.items(): open(os.path.join(KEEP, f), 'w').write(t)
 
 used = set()
 for name, (path, fname, desc) in PAGES.items():

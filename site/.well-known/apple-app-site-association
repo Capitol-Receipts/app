@@ -1,0 +1,64 @@
+{
+ "applinks": {
+  "details": [
+   {
+    "appIDs": [
+     "TEAMID.com.capitolreceipts.app"
+    ],
+    "components": [
+     {
+      "/": "/member/*"
+     },
+     {
+      "/": "/past-member/*"
+     },
+     {
+      "/": "/appointee/*"
+     },
+     {
+      "/": "/nominee/*"
+     },
+     {
+      "/": "/judge/*"
+     },
+     {
+      "/": "/bill/*"
+     },
+     {
+      "/": "/vote/*"
+     },
+     {
+      "/": "/pac/*"
+     },
+     {
+      "/": "/lobbying/*"
+     },
+     {
+      "/": "/company/*"
+     },
+     {
+      "/": "/committee/*"
+     },
+     {
+      "/": "/race/*"
+     },
+     {
+      "/": "/state/*"
+     },
+     {
+      "/": "/district/*"
+     },
+     {
+      "/": "/stock/*"
+     },
+     {
+      "/": "/official-trades/*"
+     },
+     {
+      "/": "/go/*"
+     }
+    ]
+   }
+  ]
+ }
+}
