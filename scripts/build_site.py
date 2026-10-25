@@ -19,7 +19,7 @@ PAGES = {  # design file -> (url path, output file, description)
     'Newsrooms': ('/newsrooms', 'newsrooms.html', 'Capitol Receipts for reporters, researchers and watchdog groups.'),
     'Pricing': ('/pricing', 'pricing.html', 'Capitol Receipts is free to use. See what comes with Pro and Newsrooms.'),
 }
-APP_LABELS = ('Get the app', 'Download free', 'Start 7-day free trial')
+APP_LABELS = ('Get the app', 'Download free', 'Start 7-day free trial', 'Start 14-day free trial')
 
 KEEP = os.path.join(OUT, '.well-known')  # iPhone app links file survives a rebuild
 keep = {f: open(os.path.join(KEEP, f)).read() for f in os.listdir(KEEP)} if os.path.isdir(KEEP) else {}
@@ -55,7 +55,7 @@ for name, (path, fname, desc) in PAGES.items():
         return tag + label + '</a>'
     body = re.sub(r'(<a [^>]*>)([^<]*)</a>', to_app, body)
     body = body.replace('>Download free<', '>Open the app free<')
-    body = body.replace('>Start 7-day free trial<', '>Try Pro free for 7 days<')
+    body = body.replace('>Start 7-day free trial<', '>Try Pro free for 14 days<').replace('>Start 14-day free trial<', '>Try Pro free for 14 days<')
 
     # fill placeholders
     body = body.replace('Get early access before launch on [LAUNCH DATE].', 'Get a short weekly email on what Congress did and how your members voted.')

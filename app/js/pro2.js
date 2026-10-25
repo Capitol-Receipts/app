@@ -32,7 +32,7 @@ const pctS=(x,d=0)=>x==null||isNaN(x)?'—':(x>0?'+':'')+(x*100).toFixed(d)+'%';
 /* ---------- bill watchlist ---------- */
 function saveBills(){if(ACCT.user&&ACCT.client)ACCT.client.from('user_prefs').upsert({user_id:ACCT.user.id,bills:S.bills}).then(({error})=>{if(error)console.warn(error)})}
 function watchBill(k){
-  if(!signedIn())return authSheet('up','Create a free account, then try Pro free for 7 days to watch bills.');
+  if(!signedIn())return authSheet('up','Create a free account, then try Pro free for 14 days to watch bills.');
   if(!isPro())return needPro('The bill watchlist is part of Pro. We’ll email you when the bill moves, gets a vote, or more groups lobby on it.');
   if(!S.bills.includes(k)){S.bills=[k,...S.bills].slice(0,200);saveBills();track('watch_bill',{bill:k});toast('Watching this bill. We’ll email you when something changes.')}render();
 }
@@ -71,7 +71,7 @@ function perfPage(){
    <div class="seg" role="group" style="margin-top:14px">${[['all','All'],['House','House'],['Senate','Senate']].map(([k,l])=>`<button data-pch="${k}" aria-pressed="${PRO2.pch===k}">${l}</button>`).join('')}</div>
    <div class="chipsrow" style="margin-top:10px">${[['ex','Most above the S&P'],['ret','Highest return'],['n','Most purchases']].map(([k,l])=>`<button data-psort="${k}" aria-pressed="${PRO2.psort===k}">${l}</button>`).join('')}</div>
    <section class="sec"><div class="group">${shown.map(([m,r])=>memRow(m,right(r))).join('')}</div>
-   ${pro?(rows.length>(S.limit||60)?`<button class="more" data-more>Show ${Math.min(rows.length-(S.limit||60),100)} more</button>`:''):`<div class="plock"><div class="pblur" aria-hidden="true">${rows.slice(3,6).map(([m,r])=>memRow(m,right(r))).join('')}</div><div class="plockin"><span class="pfi">${PI.lock}</span><b>See all ${ord(rows.length)} members with Pro</b><span>The full ranking, each member’s best and worst picks, and how their sales timed the market.</span><button class="pcta sm" data-gopro>Try Pro free for 7 days</button></div></div>`}</section>
+   ${pro?(rows.length>(S.limit||60)?`<button class="more" data-more>Show ${Math.min(rows.length-(S.limit||60),100)} more</button>`:''):`<div class="plock"><div class="pblur" aria-hidden="true">${rows.slice(3,6).map(([m,r])=>memRow(m,right(r))).join('')}</div><div class="plockin"><span class="pfi">${PI.lock}</span><b>See all ${ord(rows.length)} members with Pro</b><span>The full ranking, each member’s best and worst picks, and how their sales timed the market.</span><button class="pcta sm" data-gopro>Try Pro free for 14 days</button></div></div>`}</section>
    <div class="cap">Each purchase counts from its trade-date closing price to the latest close, weighted by the middle of the reported dollar range, and is compared with SPY (an S&amp;P 500 fund) over exactly the same days. Trades without a stock ticker (funds, bonds, private companies) aren’t included. Past results say nothing about future ones, and none of this is investment advice.</div></div>`;
 }
 function perfCard(m){
@@ -105,7 +105,7 @@ function myStocksPage(){
    <div class="phead lbanner bg-dusk"><span class="pkick">${PI.bag} Pro</span><h1>Does Congress own what you own?</h1><p>Add the stocks you hold. See who in Congress trades them, and get an email when someone does.</p></div>
    <section class="sec"><div class="group pad"><form class="wadd" id="wadd"><input id="wtick" placeholder="Add a ticker, like AAPL" autocomplete="off" autocapitalize="characters" maxlength="8" aria-label="Stock ticker"><button type="submit">Add</button></form>
     ${mine.length?`<p class="s" style="margin:10px 0 0;color:var(--soft)">${traded} of your ${mine.length} stock${mine.length===1?'':'s'} ${traded===1?'was':'were'} traded by members of Congress since January 2025.</p>`:''}</div></section>
-   ${pro?mine.map(card).join(''):`<section class="sec"><div class="group pad" style="text-align:center"><span class="pfi" style="margin:0 auto 8px">${PI.lock}</span><p style="margin:0 0 12px"><b>Part of Pro.</b> Add your stocks, see who in Congress trades them, and get an email when someone does.</p><button class="pcta sm" data-gopro>Try Pro free for 7 days</button></div></section>`}
+   ${pro?mine.map(card).join(''):`<section class="sec"><div class="group pad" style="text-align:center"><span class="pfi" style="margin:0 auto 8px">${PI.lock}</span><p style="margin:0 0 12px"><b>Part of Pro.</b> Add your stocks, see who in Congress trades them, and get an email when someone does.</p><button class="pcta sm" data-gopro>Try Pro free for 14 days</button></div></section>`}
    <div class="cap">From House and Senate trade reports. Members report trades in ranges, up to 45 days after the trade. We only keep the tickers you add; nothing about your actual holdings or amounts.</div></div>`;
 }
 

@@ -86,11 +86,11 @@ export function upcoming(o: { amount: number; plan: Plan; renewsAt: number; emai
 
 export function trialEnding(o: { amount: number; plan: Plan; endsAt: number; email: string }) {
   return {
-    subject: `Your free week of Pro ends ${day(o.endsAt)}`,
+    subject: `Your free trial of Pro ends ${day(o.endsAt)}`,
     preheader: `Then ${usd(o.amount)} for ${planPhrase(o.plan)} unless you cancel.`,
     html: shell({
-      title: "Your free week ends soon", pro: true, preheader: `Then ${usd(o.amount)} unless you cancel.`,
-      body: p(`Your free week of Pro ends on <b>${day(o.endsAt)}</b>. After that, the card you added will be charged <b>${usd(o.amount)}</b> for ${planPhrase(o.plan)}.`) +
+      title: "Your free trial ends soon", pro: true, preheader: `Then ${usd(o.amount)} unless you cancel.`,
+      body: p(`Your free trial of Pro ends on <b>${day(o.endsAt)}</b>. After that, the card you added will be charged <b>${usd(o.amount)}</b> for ${planPhrase(o.plan)}.`) +
         p("Keeping Pro? You don't need to do anything. Not for you? Cancel before that date and you won't be charged.") +
         button(`${APP}/?go=pro`, "Review my plan"),
       foot: `Sent to ${esc(o.email)}. ${manage}`,
@@ -104,7 +104,7 @@ export function canceling(o: { plan: Plan; endsAt: number; email: string; trial?
     preheader: `You'll keep Pro until ${day(o.endsAt)}.`,
     html: shell({
       title: "Your Pro plan is set to end", pro: true, preheader: `You'll keep Pro until ${day(o.endsAt)}.`,
-      body: p(o.trial ? `You've cancelled before your free week ended, so you won't be charged. You'll keep every Pro feature until <b>${day(o.endsAt)}</b>.` : `You've cancelled ${planPhrase(o.plan)}. You won't be charged again, and you'll keep every Pro feature until <b>${day(o.endsAt)}</b>.`) +
+      body: p(o.trial ? `You've cancelled before your free trial ended, so you won't be charged. You'll keep every Pro feature until <b>${day(o.endsAt)}</b>.` : `You've cancelled ${planPhrase(o.plan)}. You won't be charged again, and you'll keep every Pro feature until <b>${day(o.endsAt)}</b>.`) +
         p("After that your account stays free, along with everyone you follow. Changed your mind? You can keep Pro with one tap.") +
         button(`${APP}/?go=pro`, "Keep Pro"),
       foot: `Sent to ${esc(o.email)}. We'd love to know why you left. Just reply to this email.`,

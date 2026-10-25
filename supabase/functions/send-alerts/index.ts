@@ -258,7 +258,7 @@ Deno.serve(async (req) => {
     const { data: ud } = await db.auth.admin.getUserById(u.user_id);
     const email = ud?.user?.email;
     if (!email) { skipped++; continue; }
-    const upsell = pro ? "" : `<tr><td style="padding:16px;background:#f3f4f6;border-radius:12px;font:14px/1.5 ${font};color:#1f2937"><b>Get these within hours of filing.</b> Pro sends same-day alerts, watches the stocks you pick, and flags every trade tied to a member's own committee. <a href="${APP}/?go=pro" style="color:#2557a8;font-weight:600">Try Pro free for 7 days</a></td></tr>`;
+    const upsell = pro ? "" : `<tr><td style="padding:16px;background:#f3f4f6;border-radius:12px;font:14px/1.5 ${font};color:#1f2937"><b>Get these within hours of filing.</b> Pro sends same-day alerts, watches the stocks you pick, and flags every trade tied to a member's own committee. <a href="${APP}/?go=pro" style="color:#2557a8;font-weight:600">Try Pro free for 14 days</a></td></tr>`;
     const html = `<div style="background:#f3f4f6;padding:24px 12px"><table role="presentation" width="100%" style="max-width:600px;margin:0 auto;background:#fff;border-radius:14px;padding:24px 28px">
       <tr><td><div style="font:800 20px Arial,sans-serif"><span style="background:#c8323a;color:#fff;padding:2px 6px;border-radius:4px">Capitol</span> Receipts${pro ? ` <span style="font:700 11px Arial;background:#0f1f40;color:#fff;padding:3px 7px;border-radius:999px;vertical-align:middle">PRO</span>` : ""}</div>
       <h1 style="font:800 24px/1.25 ${font};color:#0f1f40;margin:18px 0 4px">${pro ? "New since your last alert" : "Your weekly update"}</h1>

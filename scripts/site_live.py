@@ -56,7 +56,7 @@ def faq(s, qa, title='Common questions'):
 A = lambda h, t: f'<a class="rlink" href="{h}">{t}</a>'
 HOME_FAQ = [
     ('What is Capitol Receipts?', 'A free website and app that shows who funds each member of Congress, what stocks they trade, how they vote and who lobbies them. Every number comes from public records.'),
-    ('Is it free?', f'Yes. Every record is free to look up. {A("/pricing", "Pro")} adds daily alerts, a stock watchlist, the conflict radar and CSV downloads for $4.99 a month or $39 a year.'),
+    ('Is it free?', f'Yes. Every record is free to look up. {A("/pricing", "Pro")} adds daily alerts, a stock watchlist, the conflict radar and CSV downloads for $5.99 a month or $39.99 a year.'),
     ('Where does the data come from?', f'Federal Election Commission filings, House and Senate stock trade reports, Voteview roll call records, the Senate lobbying database and Office of Government Ethics reports. {A("/how-it-works", "See how we count")}.'),
     ('How often is it updated?', 'Every day. New trade reports, campaign filings and votes show up within a day of being posted.'),
     ('Is it biased toward one party?', 'No. Both parties appear on every list and every member is measured the same way. We take no money from parties, campaigns, PACs or lobbyists.'),
@@ -239,6 +239,39 @@ def about():
     s = re.sub(r'<main.*?</main>\n', lambda m: body, s, count=1, flags=re.S)
     return script(s, 'live.js')
 
+PRICE_FIX = [  # (old,new) applied in order to every file
+ ("Pricing: Free, or Pro for $4.99 a Month","Pricing: Free, or Pro for $5.99 a Month"),
+ ("$4.99 a month or $39 a year","$5.99 a month or $39.99 a year"),
+ ("$4.99 a month or $39.99 a year","$5.99 a month or $39.99 a year"),
+ ("$4.99 a month, or $39 a year","$5.99 a month, or $39.99 a year"),
+ ('>$4.99<','>$5.99<'),
+ ("or $39 a year · save 35%","or $39.99 a year · save 44%"),
+ ("Plans are $4.99 a month or $39 a year","Plans are $5.99 a month or $39.99 a year"),
+ ("Capitol Receipts Pro · $4.99/mo","Capitol Receipts Pro · $5.99/mo"),
+ ("price:{m:4.99,y:39}","price:{m:5.99,y:39.99}"),
+ ('"price": "4.99"','"price": "5.99"'),('"price": "39"','"price": "39.99"'),
+ ("'price': '4.99'","'price': '5.99'"),("'price': '39'","'price': '39.99'"),
+ ("| $4.99 | 1-week free trial","| $5.99 | 2-week free trial"),("| $39.99 | 1-week free trial","| $39.99 | 2-week free trial"),
+ ("Try Pro free for 7 days","Try Pro free for 14 days"),("try Pro free for 7 days","try Pro free for 14 days"),
+ ("Start 7-day free trial","Start 14-day free trial"),("Free for 7 days, then","Free for 14 days, then"),
+ ("The 7-day free trial","The 14-day free trial"),("the 7-day free trial","the 14-day free trial"),
+ ("start your free week of Pro","start your 14-day free trial of Pro"),
+ ("Start your free week","Start your free trial"),
+ ("`7 days free, then","`14 days free, then"),
+ ("during your free week","during your free trial"),
+ ("Pro free week ·","Pro free trial ·"),("Your free week runs until","Your free trial runs until"),
+ ("for the free week?","for the free trial?"),("for the free week\\?","for the free trial\\?"),
+ ("start your 7 free days. You won’t be charged until the week ends","start your 14 free days. You won’t be charged until the trial ends"),
+ ("start your 7 free days. You won't be charged until the week ends","start your 14 free days. You won't be charged until the trial ends"),
+ ("in free week","in free trial"),("In free week","In free trial"),
+ ("Your free week of Pro ends","Your free trial of Pro ends"),("Your free week ends soon","Your free trial ends soon"),
+ ("before your free week ended","before your free trial ended"),
+]
+def pricing(s):
+    """Current Pro price and trial length ($5.99/mo, $39.99/yr, 14-day trial), whatever the design files say."""
+    for a, b in PRICE_FIX: s = s.replace(a, b)
+    return s
+
 # ---------- run ----------
 pages = {'index.html': home, 'receipts.html': receipts, 'parties.html': parties, 'quiz.html': quiz}
 for f, fn in pages.items():
@@ -250,7 +283,7 @@ s = s.replace('<section id="contact"', CITE + '<section id="contact"', 1)
 wr('newsrooms.html', faq(s, NEWS_FAQ))
 wr('about.html', fill(about()))
 for f in os.listdir(S):
-    if f.endswith('.html'): wr(f, simplify(mobile(footer_about(rd(f)))))
+    if f.endswith('.html'): wr(f, pricing(simplify(mobile(footer_about(rd(f))))))
 sm = os.path.join(S, 'sitemaps', 'site.xml')
 if os.path.exists(sm):
     x = open(sm).read()

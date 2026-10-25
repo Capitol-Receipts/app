@@ -23,7 +23,7 @@ for f in glob.glob(os.path.join(SITE, '*.html')):
         if f.endswith('index.html'):
             s = s.replace('<p style="margin: 0; font-size: 14px; color: #a9b6d3">All 535 members of Congress.', HERO + '\n   <p style="margin: 0; font-size: 14px; color: #a9b6d3">All 535 members of Congress.', 1)
         if f.endswith('pricing.html') and FAQ_Q not in s:
-            s = re.sub(r'(<details><summary>Do I need a card for the free week\?</summary>.*?</details>)', r'\1\n  <details><summary>' + FAQ_Q + '</summary><p>' + FAQ_A + '</p></details>', s, count=1, flags=re.S)
+            s = re.sub(r'(<details><summary>Do I need a card for the free (?:week|trial)\?</summary>.*?</details>)', r'\1\n  <details><summary>' + FAQ_Q + '</summary><p>' + FAQ_A + '</p></details>', s, count=1, flags=re.S)
             s = s.replace('"mainEntity": [', '"mainEntity": [{"@type": "Question", "name": "' + FAQ_Q + '", "acceptedAnswer": {"@type": "Answer", "text": "' + FAQ_A + '"}}, ', 1)
     if s != o:
         open(f, 'w', encoding='utf-8').write(s); print('updated', os.path.basename(f))

@@ -1,6 +1,6 @@
 // Stripe tells us when someone subscribes, renews, changes plan or cancels; we keep public.subscriptions in step
 // and send our own branded billing emails through Resend (receipt, failed payment, yearly renewal reminder,
-// cancellation scheduled, Pro ended, free week ending). Emails only go out while app_meta.billing_emails = "on".
+// cancellation scheduled, Pro ended, free trial ending). Emails only go out while app_meta.billing_emails = "on".
 // Needs STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET and RESEND_API_KEY (GA_API_SECRET optional, for Google Analytics).
 // Events: checkout.session.completed, customer.subscription.created/updated/deleted, invoice.paid,
 // invoice.payment_failed, invoice.upcoming, customer.subscription.trial_will_end.
@@ -172,7 +172,7 @@ async function gaEventFor(db: DB, ev: any): Promise<{ sub: any; userId: string |
       params: { currency: "USD", value: cents / 100, plan, items: [item(sub, plan, cents)] } };
   }
   if (ev.type === "invoice.paid") {
-    if (!o.amount_paid) return null; // the $0 invoice at the start of a free week
+    if (!o.amount_paid) return null; // the $0 invoice at the start of a free trial
     const subId = subIdOfInvoice(o);
     const sub = subId ? await getSub(subId).catch(() => null) : null;
     const line = o.lines?.data?.find((l: any) => (l.amount || 0) > 0) || o.lines?.data?.[0];

@@ -37,7 +37,7 @@ ALSO INSIDE
 - English and Spanish
 
 CAPITOL RECEIPTS PRO
-Pro sends an alert when someone you follow files a trade, watches the stocks you pick, flags every trade tied to a member's own committee, and adds CSV downloads. Pro is $4.99 a month or $39.99 a year, billed through your Apple ID.
+Pro sends an alert when someone you follow files a trade, watches the stocks you pick, flags every trade tied to a member's own committee, and adds CSV downloads. Pro is $5.99 a month or $39.99 a year, billed through your Apple ID.
 
 Capitol Receipts is nonpartisan and independent. We take no money from parties, campaigns, PACs or lobbyists. Data comes from the Federal Election Commission, House and Senate disclosure reports, Voteview, the Senate lobbying database and the Office of Government Ethics.
 
@@ -66,8 +66,8 @@ Subscription group **Capitol Receipts Pro**, both in the same group so people ca
 
 | Reference name | Product ID | Price | Notes |
 |---|---|---|---|
-| Pro Monthly | com.capitolreceipts.pro.monthly | $4.99 | 1-week free trial as an introductory offer (optional) |
-| Pro Yearly | com.capitolreceipts.pro.yearly | $39.99 | 1-week free trial as an introductory offer (optional) |
+| Pro Monthly | com.capitolreceipts.pro.monthly | $5.99 | 2-week free trial as an introductory offer (optional) |
+| Pro Yearly | com.capitolreceipts.pro.yearly | $39.99 | 2-week free trial as an introductory offer (optional) |
 
 Display name: Capitol Receipts Pro. Description: Same-day trade alerts, a stock watchlist, the conflict radar and CSV downloads.
 Each product needs a review screenshot: use `store/raw/5_radar.png`.

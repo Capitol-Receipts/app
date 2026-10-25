@@ -1,8 +1,8 @@
 /* ================= Capitol Receipts Pro =================
 Records stay free for everyone. Pro is the early-warning system on top:
 daily alerts, a stock watchlist, the conflict radar across all of Congress, unlimited follows and CSV downloads.
-Who has Pro lives in the database (subscriptions); the 7-day free trial runs through Stripe Checkout and needs a card. */
-const PRO={price:{m:4.99,y:39},cycle:'y',feed:null,feedErr:null,rmode:'all',FREE_FOLLOWS:5,BIG:250001};
+Who has Pro lives in the database (subscriptions); the 14-day free trial runs through Stripe Checkout and needs a card. */
+const PRO={price:{m:5.99,y:39.99},cycle:'y',feed:null,feedErr:null,rmode:'all',FREE_FOLLOWS:5,BIG:250001};
 const isPro=()=>!!(ACCT.plan&&ACCT.plan.pro);
 const PRO_FEATS=[
  ['bell','Daily alerts','An email the morning a trade report is filed. Free accounts get a weekly summary.'],
@@ -27,7 +27,7 @@ async function loadPlan(){
   try{const {data,error}=await ACCT.client.rpc('my_plan');if(error)throw error;ACCT.plan=data}catch(e){console.warn('plan',e);ACCT.plan=null}
 }
 async function startTrial(){
-  if(!signedIn())return authSheet('up','Create a free account, then start your free week of Pro.');
+  if(!signedIn())return authSheet('up','Create a free account, then start your 14-day free trial of Pro.');
   return billing('checkout',true);
 }
 async function billing(action,trial){
@@ -53,13 +53,13 @@ function planPicker(){
   return `<div class="ppick"><div class="pplans" role="radiogroup" aria-label="Billing">
     <button role="radio" data-cycle="y" aria-checked="${y}"><span class="pn">Yearly <em>Save ${save}%</em></span><b>$${PRO.price.y}<small>/year</small></b><span class="ps">$${mo} a month</span></button>
     <button role="radio" data-cycle="m" aria-checked="${!y}"><span class="pn">Monthly</span><b>$${PRO.price.m}<small>/month</small></b><span class="ps">Cancel anytime</span></button></div>
-   ${used?`<button class="pcta" data-billing="checkout">Subscribe · $${y?PRO.price.y+'/year':PRO.price.m+'/month'}</button>`:`<button class="pcta" data-protrial>Start your free week</button>`}
-   <div class="pfine" id="promsg" role="status">${used?'Secure checkout. Cancel anytime.':`7 days free, then $${y?PRO.price.y+' a year':PRO.price.m+' a month'}. Card required; you won’t be charged if you cancel during your free week.`}</div></div>`;
+   ${used?`<button class="pcta" data-billing="checkout">Subscribe · $${y?PRO.price.y+'/year':PRO.price.m+'/month'}</button>`:`<button class="pcta" data-protrial>Start your free trial</button>`}
+   <div class="pfine" id="promsg" role="status">${used?'Secure checkout. Cancel anytime.':`14 days free, then $${y?PRO.price.y+' a year':PRO.price.m+' a month'}. Card required; you won’t be charged if you cancel during your free trial.`}</div></div>`;
 }
 function featList(){return `<div class="pfeats">${PRO_FEATS.map(([i,t,d])=>`<div class="pfeat"><span class="pfi">${PI[i]}</span><span><b>${t}</b><span>${d}</span></span></div>`).join('')}</div>`}
 function needPro(why){
   track('view_promotion',{promotion_id:'pro',promotion_name:String(why||'').slice(0,90)});
-  if(!signedIn())return authSheet('up',why+' Create a free account, then try Pro free for 7 days.');
+  if(!signedIn())return authSheet('up',why+' Create a free account, then try Pro free for 14 days.');
   openSheet('Capitol Receipts Pro',`<div class="psheet"><p class="pwhy">${esc(why)}</p>${planPicker()}${featList()}<p class="pfine">Every record stays free. Pro adds the alerts and tools on top.</p></div>`);
 }
 
@@ -67,7 +67,7 @@ function needPro(why){
 function proStatus(){
   const p=ACCT.plan;if(!p||!p.pro)return '';
   const trial=p.status==='trialing';
-  return `<div class="pstat"><span class="pstat-ic">${PI.star}</span><span><b>${trial?`Pro free week · ${daysLeft(p.trial_ends)} day${daysLeft(p.trial_ends)===1?'':'s'} left`:'You have Pro'}</b><span>${trial?'Pick a plan any time to keep it after your trial.':p.period_end?`Renews ${fmtISO(String(p.period_end).slice(0,10))}`:'Thanks for supporting nonpartisan records.'}</span></span>${p.billing?'<button class="link" data-billing="portal">Manage</button>':''}</div>`;
+  return `<div class="pstat"><span class="pstat-ic">${PI.star}</span><span><b>${trial?`Pro free trial · ${daysLeft(p.trial_ends)} day${daysLeft(p.trial_ends)===1?'':'s'} left`:'You have Pro'}</b><span>${trial?'Pick a plan any time to keep it after your trial.':p.period_end?`Renews ${fmtISO(String(p.period_end).slice(0,10))}`:'Thanks for supporting nonpartisan records.'}</span></span>${p.billing?'<button class="link" data-billing="portal">Manage</button>':''}</div>`;
 }
 function topTickers(n){const c={};(typeof allTrades==='function'?allTrades():[]).forEach(([m,t])=>{if(t[2])c[t[2]]=(c[t[2]]||0)+1});return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,n).map(x=>x[0])}
 function watchSection(){
@@ -122,7 +122,7 @@ function radarPage(){
    <div class="glance rglance">${glance('Last 30 days',ord(wk),'newly flagged',false)}${glance('Committee-linked',ord(all.filter(t=>t.comm).length),'in the radar',false)}${glance('Over $250K',ord(all.filter(t=>+t.hi>=PRO.BIG).length),'in the radar',false)}</div>
    <div class="rbar"><div class="rseg" role="group">${modes.map(([k,l])=>`<button data-rmode="${k}" aria-pressed="${k===PRO.rmode}">${l}</button>`).join('')}</div><button class="rcsv" data-csv="radar">${PI.down}<span>CSV</span></button></div>
    ${PRO.feedErr?`<div class="calm">Couldn’t load the radar. Try reloading.</div>`:`<div class="group" style="margin-top:10px">${shown.map(radarRow).join('')||'<div class="empty">Nothing flagged yet.</div>'}</div>
-   ${pro?(list.length>(S.limit||60)?`<button class="more" data-more>Show ${Math.min(list.length-(S.limit||60),100)} more</button>`:''):`<div class="plock"><div class="pblur" aria-hidden="true">${list.slice(3,6).map(radarRow).join('')}</div><div class="plockin"><span class="pfi">${PI.lock}</span><b>${ord(Math.max(0,list.length-3))} more on the radar</b><span>Pro shows the full radar and emails you new flags the morning they’re filed.</span><button class="pcta sm" data-gopro>Try Pro free for 7 days</button></div></div>`}`}
+   ${pro?(list.length>(S.limit||60)?`<button class="more" data-more>Show ${Math.min(list.length-(S.limit||60),100)} more</button>`:''):`<div class="plock"><div class="pblur" aria-hidden="true">${list.slice(3,6).map(radarRow).join('')}</div><div class="plockin"><span class="pfi">${PI.lock}</span><b>${ord(Math.max(0,list.length-3))} more on the radar</b><span>Pro shows the full radar and emails you new flags the morning they’re filed.</span><button class="pcta sm" data-gopro>Try Pro free for 14 days</button></div></div>`}`}
    <div class="cap">From House and Senate periodic transaction reports. "Reported" is the day the filing showed up in public records. A committee link means the company’s industry falls under a committee the member sits on; it isn’t proof of wrongdoing.</div>
   </div>`;
 }
@@ -209,7 +209,7 @@ navGo=function(gk){if(gk==='pro'||gk==='radar'){closeDrawer();$('#sheet').hidden
 const _morePro=more;
 more=function(){
   const card=isPro()?`<div class="sec" style="margin-top:16px"><button class="procard on" data-gopro><span class="pfi">${PI.star}</span><span><b>Capitol Receipts Pro</b><span>${ACCT.plan.status==='trialing'?`Free week · ${daysLeft(ACCT.plan.trial_ends)} days left`:'Active'} · watchlist, radar and alerts</span></span>${chev}</button></div>`
-   :`<div class="sec" style="margin-top:16px"><button class="procard" data-gopro><span class="pfi">${PI.star}</span><span><b>Try Pro free for 7 days</b><span>Daily alerts, a stock watchlist and the conflict radar. Then $${PRO.price.m}/month or $${PRO.price.y}/year.</span></span>${chev}</button></div>`;
+   :`<div class="sec" style="margin-top:16px"><button class="procard" data-gopro><span class="pfi">${PI.star}</span><span><b>Try Pro free for 14 days</b><span>Daily alerts, a stock watchlist and the conflict radar. Then $${PRO.price.m}/month or $${PRO.price.y}/year.</span></span>${chev}</button></div>`;
   return _morePro().replace(/<div class="sec" style="margin-top:16px"><div class="plan">[\s\S]*?<\/div><\/div>/,card)
     .replace(/<div class="sec"><div class="sh"><h2>Notify me about<\/h2><\/div>[\s\S]*?<\/div><\/div>/,`<div class="sec"><div class="group"><button class="row plain" data-alertset style="grid-template-columns:1fr auto"><span>Alert settings</span>${chev}</button></div></div>`);
 };
@@ -232,7 +232,7 @@ window.addEventListener('click',e=>{
   if(g('[data-radar]')){e.preventDefault();e.stopImmediatePropagation();$('#sheet').hidden=true;S.limit=60;go('radar');return}
   if(el=g('[data-rmode]')){e.preventDefault();e.stopImmediatePropagation();PRO.rmode=el.dataset.rmode;S.limit=60;render();return}
   if(el=g('[data-csv]')){e.preventDefault();e.stopImmediatePropagation();doCsv(el.dataset.csv);return}
-  if(el=g('[data-watch]')){e.preventDefault();e.stopImmediatePropagation();if(!signedIn())return authSheet('up','Create a free account, then try Pro free for 7 days to watch stocks.');watch(el.dataset.watch);return}
+  if(el=g('[data-watch]')){e.preventDefault();e.stopImmediatePropagation();if(!signedIn())return authSheet('up','Create a free account, then try Pro free for 14 days to watch stocks.');watch(el.dataset.watch);return}
   if(el=g('[data-unwatch]')){e.preventDefault();e.stopImmediatePropagation();unwatch(el.dataset.unwatch);return}
   /* free accounts follow up to 5 people */
   if(signedIn()&&!isPro()&&(el=g('[data-follow]'))&&!S.following.has(el.dataset.follow)&&S.following.size>=PRO.FREE_FOLLOWS){e.preventDefault();e.stopImmediatePropagation();needPro(`Free accounts can follow ${PRO.FREE_FOLLOWS} people. Pro lets you follow as many as you like.`);return}
@@ -252,6 +252,6 @@ window.addEventListener('click',e=>{
   let n=0;const iv=setInterval(async()=>{n++;
     if(typeof ACCT==='undefined'||!ACCT.user){if(n>40)clearInterval(iv);return}
     await loadPlan();
-    if(isPro()||n>20){clearInterval(iv);if(isPro()){const p=ACCT.plan;toast(p.status==='trialing'&&p.trial_ends?'Pro is on. Your free week runs until '+new Date(p.trial_ends).toLocaleDateString('en-US',{month:'long',day:'numeric'})+'.':'Pro is on. Thanks for subscribing.')}render()}
+    if(isPro()||n>20){clearInterval(iv);if(isPro()){const p=ACCT.plan;toast(p.status==='trialing'&&p.trial_ends?'Pro is on. Your free trial runs until '+new Date(p.trial_ends).toLocaleDateString('en-US',{month:'long',day:'numeric'})+'.':'Pro is on. Thanks for subscribing.')}render()}
   },1500);
 })();

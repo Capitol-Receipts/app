@@ -152,7 +152,7 @@ async overview(){
   return head('Overview','Accounts, Pro and data health at a glance.')+
   `<div class="tiles">${tile('Accounts',ord(s.users),`${ord(s.users_7d)} new this week · ${ord(s.users_30d)} in 30 days`)}
    ${tile('Signed in this week',ord(s.active_7d),`${ord(s.confirmed)} confirmed emails`)}
-   ${tile('Pro now',ord(s.pro),`${ord(s.paying)} paying · ${ord(s.trialing)} in free week · ${ord(s.comp)} comped`,'hl')}
+   ${tile('Pro now',ord(s.pro),`${ord(s.paying)} paying · ${ord(s.trialing)} in free trial · ${ord(s.comp)} comped`,'hl')}
    ${tile('Monthly revenue (MRR)',r.configured&&!r.error?usd(r.mrr):'—',r.configured&&!r.error?`${usd(r.arr)} a year at this rate`:'Stripe not reachable')}
    ${tile('Revenue, last 30 days',r.configured&&!r.error?usd(r.revenue_30d):'—',r.charges_30d!=null?`${ord(r.charges_30d)} payments${r.failed_30d?` · ${r.failed_30d} failed`:''}`:'')}
    ${tile('Open mistake reports',ord(s.reports_open),`${ord(s.reports_total)} total`,s.reports_open?'warn':'')}
@@ -184,9 +184,9 @@ async revenue(){
   const d=ST.cache.ov||await api('overview');ST.cache.ov=d;const r=d.revenue||{},s=d.stats;
   if(!r.configured)return head('Pro & revenue','Stripe isn’t connected.');
   if(r.error)return head('Pro & revenue','')+`<div class="card"><b>Stripe didn’t answer.</b><div class="muted">${esc(r.error)}</div></div>`;
-  return head('Pro & revenue','Live from Stripe. Plans are $4.99 a month or $39 a year.')+
+  return head('Pro & revenue','Live from Stripe. Plans are $5.99 a month or $39.99 a year.')+
    `<div class="tiles">${tile('MRR',usd(r.mrr),`${usd(r.arr)} a year`,'hl')}${tile('Paying subscriptions',ord(r.active),`${ord(s.monthly)} monthly · ${ord(s.yearly)} yearly`)}
-    ${tile('In free week',ord(r.trialing),'card on file, not charged yet')}${tile('Set to cancel',ord(r.canceling),'still active until period ends',r.canceling?'warn':'')}
+    ${tile('In free trial',ord(r.trialing),'card on file, not charged yet')}${tile('Set to cancel',ord(r.canceling),'still active until period ends',r.canceling?'warn':'')}
     ${tile('Last 30 days',usd(r.revenue_30d),`${ord(r.charges_30d)} payments · ${usd(r.refunds_30d)} refunded`)}${tile('Failed payments',ord(r.failed_30d),'last 30 days',r.failed_30d?'bad':'')}
     ${tile('Stripe balance',usd(r.available),usd(r.pending)+' pending')}${tile('Comped Pro',ord(s.comp),'free Pro you granted')}</div>
    <h2>Recent payments</h2><div class="tbl"><table><thead><tr><th>Date</th><th>Customer</th><th>Amount</th><th>Note</th></tr></thead><tbody>
