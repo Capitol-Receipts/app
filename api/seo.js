@@ -56,7 +56,8 @@ const CSS = `<style id="sr-css">
 .sr-pager b{background:var(--n);color:#fff}
 .sr-note{font-size:13px;color:var(--s);margin-top:28px}
 main.has-cta{padding-bottom:96px}
-.sr-cta{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:20;background:var(--n);color:#fff!important;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:999px;box-shadow:0 10px 30px rgba(14,17,22,.28);white-space:nowrap;font-size:15px}
+.sr-cta{position:fixed;right:14px;bottom:14px;z-index:20;background:var(--n);color:#fff!important;text-decoration:none;font-weight:700;padding:9px 14px;border-radius:999px;box-shadow:0 6px 18px rgba(14,17,22,.22);white-space:nowrap;font-size:13px}
+.sr-cite{margin-top:28px}.sr-cite summary{cursor:pointer;font-weight:700;padding:8px 0;color:var(--s)}
 .sr-cta:hover{background:var(--r)}
 .sr-cite p{font-size:14px;color:var(--s);overflow-wrap:anywhere}
 .sr-code{background:var(--b);padding:12px;border-radius:10px;font-size:12px;white-space:pre-wrap;word-break:break-all;max-width:760px}
@@ -77,7 +78,7 @@ function citeBox(pg) {
   const cite = `Capitol Receipts, “${name},” ${url} (${es ? 'consultado el' : 'accessed'} ${today}).`;
   const m = pg.route && /^[A-Z]\d{6}$/.test(pg.route) ? pg.route : null;
   const embed = m ? `<iframe src="${APP}/embed/member/${m}" title="${esc(name)}" width="420" height="320" style="border:0;max-width:100%" loading="lazy"></iframe>` : '';
-  return `<section class="sr-cite"><h2>${es ? 'Cita o inserta esta página' : 'Cite or embed this page'}</h2><p>${esc(cite)}</p>${embed ? `<p>${es ? 'Para insertar esta ficha en tu sitio, copia este código:' : 'Embed this member’s card on your site:'}</p><pre class="sr-code">${esc(embed)}</pre>` : ''}</section>`;
+  return `<details class="sr-cite"><summary>${es ? 'Cita o inserta esta página' : 'Cite or embed this page'}</summary><p>${esc(cite)}</p>${embed ? `<p>${es ? 'Para insertar esta ficha en tu sitio, copia este código:' : 'Embed this member’s card on your site:'}</p><pre class="sr-code">${esc(embed)}</pre>` : ''}</details>`;
 }
 
 // long pages get a row of jump links under the intro
@@ -95,7 +96,7 @@ function frame(pg, mode) {
   const crumbs = [[es ? 'Inicio' : 'Home', HOST + '/'], ...(pg.crumbs || [])];
   const cl = `<ol class="sr-crumbs">${crumbs.map((c, i) => `<li>${i < crumbs.length - 1 && c[1] ? `<a href="${c[1].replace(HOST, '') || '/'}">${esc(c[0])}</a>` : esc(c[0])}</li>`).join('')}</ol>`;
   // search pages stay light: the full app opens on its own domain when someone asks for it
-  const cta = pg.route && mode !== 'app' ? `<a class="sr-cta" href="${APP}${pg.path}?app=1${es ? '&lang=es' : ''}" rel="nofollow">${es ? 'Abrir en la app interactiva' : 'Open the interactive version'} ›</a>` : '';
+  const cta = pg.route && mode !== 'app' ? `<a class="sr-cta" href="${APP}${pg.path}?app=1${es ? '&lang=es' : ''}" rel="nofollow">${es ? 'Abrir en la app' : 'Open in the app'} ›</a>` : '';
   return `<div class="sr" lang="${es ? 'es' : 'en'}"><header class="sr-top"><div class="in"><a class="sr-logo" href="${es ? '/es/members' : '/'}"><span>Capitol</span>Receipts</a><nav aria-label="${es ? 'Explorar' : 'Browse'}">${(es ? NAV_ES : NAV).map(([h, l]) => `<a href="${h}">${l}</a>`).join(' ')}</nav></div></header>
 <main class="sr-main${cta ? ' has-cta' : ''}">${cl}${pg.body}${pg.route && !pg.noindex ? citeBox(pg) : ''}${pg.route && mode === 'app' ? '<p id="bootmsg" hidden></p>' : ''}
 <footer class="sr-foot">${FOOT.map(([h, l]) => `<a href="${h}">${l}</a>`).join('')}<a href="${SITE}/how-it-works">${es ? 'De dónde vienen los datos' : 'Where the data comes from'}</a><a href="${SITE}/">${es ? 'Acerca de Capitol Receipts' : 'About Capitol Receipts'}</a></footer></main>${cta}</div>`;

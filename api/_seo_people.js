@@ -57,21 +57,21 @@ async function member(id) {
 ${facts([['Raised for 2026', f.rec ? money(f.rec) : '—'], ['Cash on hand', f.coh != null ? money(f.coh) : '—'], ['From small donors', pct(d.smallShare)], ['From PACs', f.rec ? pct(f.pac / f.rec) : '—'],
   ['Stock trades since 2025', num(d.tradeN || 0)], ['Votes missed', pct(missed, 1)], ['Voted with party', pct(d.unity)], ['Age', d.age], ['Next election', d.next]])}
 ${sec('Who funds the campaign', (d.industries || []).length || (d.pacs || []).length ? `
-${(d.industries || []).filter(i => !/^(Retired|Other or not listed|Not employed)/.test(i[0])).slice(0, 6).length ? `<h3>Top industries</h3>${rows((d.industries || []).filter(i => !/^(Retired|Other or not listed|Not employed)/.test(i[0])).slice(0, 6).map(i => [esc(i[0]), money(i[1] + (i[2] || 0))]))}` : ''}
-${(d.pacs || []).length ? `<h3>Top PACs</h3>${rows((d.pacs || []).slice(0, 10).map(p => [pacId[p[0]] ? a(P('pac', pacId[p[0]], pacFn[p[0]]), p[0]) : esc(p[0]), money(p[1])]))}` : ''}
-${(d.employers || []).length ? `<h3>Top employers of donors</h3>${rows((d.employers || []).slice(0, 8).map(e => [esc(e[0]), money(e[1])]))}` : ''}
+${(d.industries || []).filter(i => !/^(Retired|Other or not listed|Not employed)/.test(i[0])).slice(0, 6).length ? `<h3>Top industries</h3>${rows((d.industries || []).filter(i => !/^(Retired|Other or not listed|Not employed)/.test(i[0])).slice(0, 6).map(i => [esc(i[0]), money(i[1] + (i[2] || 0))]), 5)}` : ''}
+${(d.pacs || []).length ? `<h3>Top PACs</h3>${rows((d.pacs || []).slice(0, 10).map(p => [pacId[p[0]] ? a(P('pac', pacId[p[0]], pacFn[p[0]]), p[0]) : esc(p[0]), money(p[1])]), 5)}` : ''}
+${(d.employers || []).length ? `<h3>Top employers of donors</h3>${rows((d.employers || []).slice(0, 8).map(e => [esc(e[0]), money(e[1])]), 5)}` : ''}
 <p>${f.thru ? `FEC reports through ${date(f.thru)}.` : ''} ${a('https://www.fec.gov/data/candidate/' + (d.fecId || '') + '/', 'FEC filings')}</p>` : '')}
 ${sec('Stock trades', sh ? `<p>${esc(d.last || d.name)} reported ${num(sh)} trades since January 2025${(d.tradeStats || {}).buys != null ? ` (${num(d.tradeStats.buys)} buys, ${num(d.tradeStats.sells)} sells)` : ''}${d.commTrades ? `, including ${num(d.commTrades)} in industries their committees oversee` : ''}.</p>
 ${ticks.length ? `<h3>Most-traded stocks</h3>${cols(((d.tradeStats || {}).ticks || []).slice(0, 12).map(([tk, n]) => a(P('stock', tk, coByTick[tk] ? coByTick[tk].name : ''), coByTick[tk] ? `${coByTick[tk].name} (${tk})` : tk) + ` · ${n}`))}` : ''}
-<h3>Latest trades</h3>${rows((d.trades || []).slice(0, 10).map(tr => [`${esc(date(tr[0]))} · ${esc(tr[1])} · ${tr[2] && coByTick[tr[2]] ? a(P('company', coByTick[tr[2]].id, coByTick[tr[2]].name), tr[3]) : esc(tr[3])}`, `${money(tr[4])}–${money(tr[5])}`]))}` : (m.chamber === 'House' ? '<p>No stock trades reported since January 2025.</p>' : ''))}
-${sec('Recent votes', recentIds.length ? rows((d.recent || []).filter(r => rcBy[r[0]]).map(r => { const v = rcBy[r[0]]; return [`${a(P('vote', `119-${v.id[0]}-${v.id.slice(1)}`, v.s || v.question), clamp(v.s || v.question, 110))}<br><small>${esc(v.question)} · ${esc(date(v.voted_on))} · ${esc(v.result)}</small>`, `${esc(r[1])}${r[2] === false ? ' (broke with party)' : ''}`]; })) : '')}
+<h3>Latest trades</h3>${rows((d.trades || []).slice(0, 10).map(tr => [`${esc(date(tr[0]))} · ${esc(tr[1])} · ${tr[2] && coByTick[tr[2]] ? a(P('company', coByTick[tr[2]].id, coByTick[tr[2]].name), tr[3]) : esc(tr[3])}`, `${money(tr[4])}–${money(tr[5])}`]), 5)}` : (m.chamber === 'House' ? '<p>No stock trades reported since January 2025.</p>' : ''))}
+${sec('Recent votes', recentIds.length ? rows([...(d.recent || [])].filter(r => rcBy[r[0]]).sort((x, y) => (x[2] === false ? 0 : 1) - (y[2] === false ? 0 : 1)).map(r => { const v = rcBy[r[0]]; return [`${a(P('vote', `119-${v.id[0]}-${v.id.slice(1)}`, v.s || v.question), clamp(v.s || v.question, 80))}<br><small>${esc(date(v.voted_on))} · ${esc(v.result)}</small>`, `<b>${esc(r[1])}</b>${r[2] === false ? '<br><small>against their party</small>' : ''}`]; }), 5) : '')}
 ${sec('Committees', myComms.length ? cols(myComms.map(([c, role]) => a(P('committee', c.id, c.name), c.name) + (role ? ` · ${esc(role)}` : ''))) : '')}
 ${sec('Caucuses', myCauc.length ? cols(myCauc.map(c => a(P('caucus', c.id, c.name), c.name))) : '')}
-${sec('Bills sponsored', bl.n ? `<p>${esc(d.last || d.name)} has sponsored ${num(bl.n)} bills${bl.law ? `, and ${num(bl.law)} became law` : ''}.</p>${rows(sponsored.map(b => [a(P('bill', b[5], b[2]), `${b[1]}: ${clamp(b[2], 100)}`), esc(date(b[3]))]))}` : '')}
+${sec('Bills sponsored', bl.n ? `<p>${esc(d.last || d.name)} has sponsored ${num(bl.n)} bills${bl.law ? `, and ${num(bl.law)} became law` : ''}.</p>${rows(sponsored.map(b => [a(P('bill', b[5], b[2]), `${b[1]}: ${clamp(b[2], 80)}`), esc(date(b[3]))]), 5)}` : '')}
 ${sec('2026 election', races.length ? cols(races.map(r => a(P('race', r.id, ''), `${r.id.startsWith('S') ? `${ST[m.state]} Senate race` : `${distName(m.state, m.district)} House race`}${r.sp ? ' (special election)' : ''}`))) : '')}
-${sec('Former staff now lobbying', (d.revolving || []).length ? `<p>${num(d.revolving.length)} people who worked for ${esc(d.name)} are now registered lobbyists.</p>${rows(d.revolving.slice(0, 8).map(r => [esc(r[0]), esc(r[2] || '')]))}` : '')}
+${sec('Former staff now lobbying', (d.revolving || []).length ? `<p>${num(d.revolving.length)} people who worked for ${esc(d.name)} are now registered lobbyists.</p>${rows(d.revolving.slice(0, 8).map(r => [esc(r[0]), esc(r[2] || '')]), 5)}` : '')}
 ${sec('Office spending', x.office && x.office.total ? `<p>${money(x.office.total)} spent on the office in ${esc(x.office.period)}, including ${money(x.office.staff)} on staff.</p>` : '')}
-${sec('Earmarks', x.earmarks && x.earmarks.n ? `<p>Requested ${num(x.earmarks.n)} earmarks worth ${money(x.earmarks.t)}.</p>${rows((x.earmarks.items || []).slice(0, 6).map(e => [esc(e[1]), money(e[0])]))}` : '')}
+${sec('Earmarks', x.earmarks && x.earmarks.n ? `<p>Requested ${num(x.earmarks.n)} earmarks worth ${money(x.earmarks.t)}.</p>${rows((x.earmarks.items || []).slice(0, 10).map(e => [esc(e[1]), money(e[0])]), 5)}` : '')}
 ${sec('Contact', rows([d.office && ['Office', esc(d.office)], d.phone && ['Phone', esc(d.phone)], d.url && ['Website', a(d.url, d.url.replace(/^https?:\/\//, ''))]].filter(Boolean)))}
 ${sec('More from ' + (ST[m.state] || m.state), cols([a(P('state', m.state, ST[m.state]), `All of ${ST[m.state] || m.state}'s members of Congress`), m.chamber === 'House' ? a(P('district', `${m.state}-${+m.district || 0}`, distName(m.state, m.district)), distName(m.state, m.district)) : '', a(`${SITE}/parties`, 'Democrats vs Republicans')].filter(Boolean)))}
 ${note('From FEC campaign reports, House and Senate stock trade disclosures, Voteview roll calls, Senate lobbying records and House expense reports. Updated daily.')}`;
@@ -181,12 +181,17 @@ async function nominee(id) {
   const voteLine = d.y != null ? `The Senate voted ${d.y}–${d.n} on ${date(d.d || conf)}${conf ? ' to confirm' : ''}.` : (conf ? `Confirmed ${date(conf)}.` : 'Nomination pending in the Senate.');
   const split = Object.entries(br).map(([p, v]) => `${PN[p] || p}s ${v[0]}–${v[1]}`).join(', ');
   const lead = `${r.name} was nominated as ${r.position}. ${voteLine}${split ? ` By party: ${split}.` : ''}${(oge.pay || []).length ? ` Financial disclosures list ${num(oge.pay.length)} sources of income.` : ''}`;
+  // their own stock trades, from OGE 278-T reports (api/_seo_exec.js)
+  let xt = null;
+  try { const v = await require('./_seo_exec').DATA(); const nm = String(r.name || '').toLowerCase().replace(/[^a-z ]/g, ' ').split(/\s+/).filter(Boolean);
+    xt = nm.length > 1 ? v.filers.find(f => { const dn = f.display.toLowerCase(); return dn.includes(nm[nm.length - 1]) && dn.startsWith(nm[0]); }) : null; } catch (e) { xt = null; }
   const t = `${r.name}, ${r.position}: Senate Vote & Finances`;
   const body = `<h1>${esc(r.name)}</h1><p class="sr-sub">${esc(r.position)}${conf ? ` · Confirmed ${esc(date(conf))}` : ' · Nominee'}</p>
 <p class="sr-lead">${esc(lead)}</p>
 ${facts([['Senate vote', d.y != null ? `${d.y}–${d.n}` : null], ['Democrats', br.D ? `${br.D[0]}–${br.D[1]}` : null], ['Republicans', br.R ? `${br.R[0]}–${br.R[1]}` : null], ['Nomination', d.pn || null]])}
-${sec('Income listed on financial disclosures', (oge.pay || []).length ? rows(oge.pay.slice(0, 20).map(p => [esc(p[0]) + (p[1] ? ` <small>· ${esc(p[1])}</small>` : ''), typeof p[2] === 'number' ? money(p[2]) : esc(p[2] || '')])) : '')}
-${sec('Ethics documents', (oge.docs || []).length ? rows(oge.docs.map(x => [a(x[2], x[1]), esc(date(x[0]))])) : '')}
+${sec('Stock trades', xt ? `<p>${esc(r.name)} reported ${num(xt.n)} stock and bond trades since January 2025: ${num(xt.buys)} purchases and ${num(xt.sells)} sales, worth ${money(xt.lo)} to ${money(xt.hi)} in total. ${a(P('official-trades', xt.slug, ''), 'See every trade')}</p>` : '')}
+${sec('Income listed on financial disclosures', (oge.pay || []).length ? rows(oge.pay.slice(0, 20).map(p => [esc(p[0]) + (p[1] ? ` <small>· ${esc(p[1])}</small>` : ''), typeof p[2] === 'number' ? money(p[2]) : esc(p[2] || '')]), 5) : '')}
+${sec('Ethics documents', (oge.docs || []).length ? rows(oge.docs.map(x => [a(x[2], x[1]), esc(date(x[0]))]), 5) : '')}
 ${sec('More', cols([a('/appointees/all', 'All appointees and nominees'), d.pn ? a(`https://www.congress.gov/nomination/${String(d.pn).replace(/\D/g, '').length ? '119th-congress/' + String(d.pn).replace(/\D/g, '') : ''}`, 'Nomination on Congress.gov') : ''].filter(Boolean)))}
 ${note('From Senate roll call votes and Office of Government Ethics financial disclosures.')}`;
   return {

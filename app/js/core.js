@@ -308,9 +308,9 @@ function mVotes(m){
     <div class="cap" style="padding:6px 0 0">Share of votes missed each month, Jan 2025 – Sep 2026. Orange: missed more than 1 in 5.</div></div>
     ${m.id===SPEAKER?'<div class="cap">The Speaker rarely votes by tradition.</div>':''}</div>
   ${lv.length?`<div class="sec"><div class="sh"><h2>Most-lobbied bills they voted on</h2></div><div class="group">${lv.map(x=>`<button class="vote" data-bill="${x.b}" style="all:unset;box-sizing:border-box;display:grid;gap:4px;padding:12px 16px;cursor:pointer;width:100%;position:relative"><div class="vt">${esc(x.r.s||x.r.q)}</div><div class="vm"><span>${billName(x.b)} · ${x.n} groups lobbied · ${fmtISO(x.r.d)}</span><span class="cast ${word[x.c]}">${word[x.c]}</span></div></button>`).join('')}</div><div class="cap">Tap a bill to see who lobbied on it. Final passage votes only.</div></div>`:''}
-  <div class="sec"><div class="sh"><h2>Recent votes</h2></div><div class="group">${(m.recent||[]).map(([rid,cast,withP])=>{const r=DATA.rc[rid];if(!r)return '';
+  <div class="sec"><div class="sh"><h2>Recent votes</h2></div><div class="group">${[...(m.recent||[])].sort((a,b)=>(a[2]===false?0:1)-(b[2]===false?0:1)).map(([rid,cast,withP])=>{const r=DATA.rc[rid];if(!r)return '';
     return `<div class="vote"><div class="vt">${esc(r.s||r.q)}</div><div class="vm"><span>${r.b?(/^(HR|S|HJRES|SJRES)\d+$/.test(billKey(r.b))?`<button class="link" data-bill="${billKey(r.b)}" style="font-size:inherit;text-decoration:underline">${esc(billName(r.b))}</button>`:esc(billName(r.b)))+' · ':''}${fmtISO(r.d)} · ${esc(r.res)} ${r.y}–${r.n}${r.lob?` · ${r.lob} groups lobbied`:''}</span><span style="display:flex;gap:8px;align-items:center">${withP===false?'<span class="tag off">Broke with party</span>':''}<span class="cast ${cast}">${cast}</span></span></div></div>`}).join('')}</div>
-   <div class="cap">Their last 10 roll-call votes, newest first.</div></div>
+   <div class="cap">Their last 10 roll-call votes. Votes against their own party come first, then newest first.</div></div>
   <div class="sec"><div class="sh"><h2>Party loyalty</h2></div><div class="group pad"><div class="bigline"><b>${pct(m.unity,1)}</b><span>sided with ${PN[m.caucus]}s on ${m.unityN} votes where the parties split</span></div></div></div>`;
 }
 function mStocks(m){

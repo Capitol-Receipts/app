@@ -93,16 +93,7 @@ function smProfile(){
   const w=$('#app .wrap');if(!w||w.dataset.smBusy)return;w.dataset.smBusy='1';
   try{
     const m=byId[cur],first=(m.first||m.name.split(' ')[0]);
-    // What stands out: the two strongest, the rest on tap
-    const st=w.querySelector('.stories');
-    if(st&&!st.dataset.sm){st.dataset.sm='1';const cards=[...st.children];
-      if(cards.length>2&&!S.soAll){cards.slice(2).forEach(c=>c.classList.add('smhide'));st.insertAdjacentHTML('afterend',`<button class="smmore" data-somore>Show ${cards.length-2} more</button>`)}}
-    // quick links to each topic
-    const gl=w.querySelector('.gl-asof')||w.querySelector('.glance');
-    if(gl&&!w.querySelector('.smjump')){
-      const tp=[...w.querySelectorAll('.topic[data-topic]')].map(t=>[t.dataset.topic,(t.querySelector('.tt')||{}).textContent||'']);
-      gl.insertAdjacentHTML('afterend',`<nav class="smjump" aria-label="Jump to">${tp.map(([k,l])=>`<button data-topic="${k}">${esc({money:'Money',stocks:'Stocks',votes:'Votes',influence:'Lobbying',career:'Career'}[k]||l)}</button>`).join('')}<button data-smjump="moredet">More</button></nav>`);
-    }
+    smSummary(w);
     // everything after the topic cards folds into "More about ..."
     const kids=[...w.children];
     let last=-1;kids.forEach((e,i)=>{if(e.querySelector&&e.querySelector('.topic'))last=i});
@@ -128,7 +119,99 @@ function smProfile(){
     });
     // the delegation links and source note stay last
     w.querySelectorAll(':scope > [data-placelinks], :scope > .note').forEach(e=>w.appendChild(e));
+    smTabs(w,m);
   }finally{delete w.dataset.smBusy}
+}
+
+/* ---------- people pages: one summary, then tabs ---------- */
+// "What stands out" repeated the three top numbers. Its other points move into the summary card as short lines.
+function smSummary(w){
+  const st=w.querySelector('.stories'),sec=st&&st.closest('section'),pe=w.querySelector('.pe-card');
+  if(!st||!sec||sec.classList.contains('smhide'))return;
+  const gv=[...w.querySelectorAll('.glance b')].map(b=>b.textContent.trim());
+  const keep=[...st.querySelectorAll('.story')].filter(c=>{const big=((c.querySelector('.sbig')||{}).textContent||'').trim();return big&&!gv.includes(big)});
+  const lines=keep.map(c=>`<li><b>${esc(((c.querySelector('.sbig')||{}).textContent||'').trim())}</b> ${(c.querySelector('p')||{}).innerHTML||''}</li>`).join('');
+  const cmp=sec.querySelector('[data-topic="compare"]')?'<button class="link pcmp" data-topic="compare">How they compare with everyone else ›</button>':'';
+  if(pe){if(!pe.querySelector('.pstand')&&(lines||cmp))pe.insertAdjacentHTML('beforeend',`${lines?`<ul class="pstand">${lines}</ul>`:''}${cmp}`)}
+  else if(lines)sec.insertAdjacentHTML('beforebegin',`<section class="sec"><div class="group pad"><ul class="pstand">${lines}</ul>${cmp}</div></section>`);
+  sec.classList.add('smhide');
+}
+const SM_TABL={money:'Money',stocks:'Stocks',votes:'Votes',influence:'Lobbying',career:'Career'};
+S.mtab=S.mtab||{};
+let _smInl=false;
+function smInline(topic,box){
+  _smInl=true;const wasHidden=$('#sheet').hidden;
+  try{_topicSheetSM(topic)}catch(e){console.warn(e)}finally{_smInl=false}
+  const pn=$('#panel');box.innerHTML='';
+  [...pn.children].filter(c=>!c.classList.contains('grab')&&!c.classList.contains('ptop')).forEach(n=>box.appendChild(n));
+  pn.innerHTML='';if(wasHidden)$('#sheet').hidden=true;
+}
+function smTabs(w,m){
+  const id=m.id;
+  // empty topics shrink to one line
+  const emptyLine=(topic,text)=>{const c=w.querySelector(`.topic[data-topic="${topic}"]`);if(c&&!c.dataset.empty){c.dataset.empty='1';c.outerHTML=`<div class="smempty">${text}</div>`}};
+  if(!m.tradeN&&!m.ptr)emptyLine('stocks','No stock trades reported since January 2025.');
+  if(!m.money)emptyLine('money','No 2025–26 campaign reports on file with the FEC.');
+  const topics=[...w.querySelectorAll('.topic[data-topic]')].map(t=>t.dataset.topic).filter(t=>SM_TABL[t]);
+  const tabs=[['overview','Overview'],...topics.map(t=>[t,SM_TABL[t]]),['more','More']];
+  let cur=S.mtab[id]||'overview';if(!tabs.some(t=>t[0]===cur))cur='overview';
+  let bar=w.querySelector('.mtabs');
+  const at=w.querySelector('.gl-asof')||w.querySelector('.glance');
+  if(!bar&&at){at.insertAdjacentHTML('afterend',`<nav class="mtabs" role="tablist" aria-label="Sections"></nav><div id="ptbody"></div>`);bar=w.querySelector('.mtabs')}
+  if(!bar)return;
+  bar.innerHTML=tabs.map(([k,l])=>`<button role="tab" data-mtab="${k}" aria-selected="${k===cur}">${l}</button>`).join('');
+  if(S.lang==='es'&&typeof translateRoot==='function')try{translateRoot(bar)}catch(e){}
+  w.dataset.mtab=cur;
+  const body=w.querySelector('#ptbody');
+  if(SM_TABL[cur]){if(body.dataset.t!==cur||!body.children.length){smInline(cur,body);body.dataset.t=cur}
+    if(cur==='career'&&/Loading their full career/.test(body.textContent)){clearTimeout(smTabs._t);smTabs._t=setTimeout(()=>{if(S.stack.at(-1)===id&&(S.mtab[id]||'')==='career'){body.dataset.t='';smTabs(w,m)}},800)}}
+  else{body.innerHTML='';body.dataset.t=''}
+  // show only what belongs to this tab
+  const keepTop=e=>e.matches('.glance,.gl-asof,.mtabs,#ptbody,.note');
+  w.querySelectorAll(':scope > *, :scope > .dcols > .dcol > *').forEach(e=>{
+    if(e.classList.contains('dcols')||keepTop(e))return;
+    const isMore=e.id==='moredet',isEnd=e.hasAttribute('data-placelinks');
+    const show=cur==='overview'?!isMore:cur==='more'?(isMore||isEnd):false;
+    e.classList.toggle('ptoff',!show);
+  });
+}
+// tab taps, and topic cards on a profile open their tab instead of a pop-up
+document.addEventListener('click',e=>{
+  const g=s=>e.target.closest&&e.target.closest(s);let el;
+  const cur=S.stack.at(-1);if(!cur||!byId[cur])return;
+  if(el=g('#app .mtabs button[data-mtab]')){e.preventDefault();e.stopImmediatePropagation();S.mtab[cur]=el.dataset.mtab;render();
+    const bar=document.querySelector('#app .mtabs');if(bar){const y=bar.getBoundingClientRect().top+scrollY-(parseInt(getComputedStyle(document.documentElement).getPropertyValue('--navh'))||56)-4;if(scrollY>y)scrollTo(0,y)}return}
+  if((el=g('#app .topic[data-topic]'))&&SM_TABL[el.dataset.topic]&&!g('#ptbody')){e.preventDefault();e.stopImmediatePropagation();S.mtab[cur]=el.dataset.topic;render();
+    const bar=document.querySelector('#app .mtabs');if(bar)scrollTo(0,bar.getBoundingClientRect().top+scrollY-70);return}
+},true);
+const _topicSheetSM=topicSheet;
+topicSheet=function(t){
+  const cur=S.stack.at(-1);
+  // inside a profile, "show more" and links between topics stay on the page
+  if(!_smInl&&cur&&byId[cur]&&SM_TABL[t]&&document.querySelector('#app #ptbody')&&$('#sheet').hidden){
+    S.mtab[cur]=t;const b=document.querySelector('#app #ptbody');if(b)b.dataset.t='';render();return}
+  _topicSheetSM(t);
+};
+
+/* ---------- appointee pages: one summary, money and jobs on the page, their own stock trades ---------- */
+function smAppointee(){
+  const cur=S.stack.at(-1);if(!cur||typeof nomById==='undefined'||!nomById[cur])return;
+  const n=nomById[cur],w=$('#app .wrap');if(!w||w.dataset.smApp===cur)return;w.dataset.smApp=cur;
+  smSummary(w);
+  // financial disclosures shown right on the page
+  const mc=w.querySelector('.topic[data-topic="oge"]');
+  if(mc&&n.oge&&typeof ogeSections==='function'){let h='';try{h=ogeSections(n)}catch(e){}
+    if(h){const box=document.createElement('div');box.className='smoge';box.innerHTML=`<section class="sec"><div class="sh"><h2>Money & past jobs</h2></div></section>${h}`;
+      const sec=mc.closest('section');if(sec){sec.after(box);mc.remove()}}}
+  // their stock trades, from the OGE 278-T reports
+  if(typeof xtLoad==='function'){xtLoad();
+    if(XTR.data){const nm=String(n.name||'').toLowerCase().replace(/[^a-z ]/g,' ').split(/\s+/).filter(Boolean);
+      const f=XTR.data.find(x=>{const d=x.display.toLowerCase();return nm.length>1&&d.includes(nm[nm.length-1])&&d.startsWith(nm[0])});
+      if(f&&!w.querySelector('[data-smxt]')){const anchor=w.querySelector('.smoge')||w.querySelector('.topics')?.closest('section');
+        anchor?.insertAdjacentHTML('afterend',`<section class="sec" data-smxt><div class="sh"><h2>Their stock trades</h2><button data-go="xtr:${esc(f.slug)}">See all</button></div><div class="group pad"><div class="bigline"><b>${ord(f.n)}</b><span>trades reported since January 2025: ${ord(f.buys)} purchases, ${ord(f.sells)} sales, worth ${M(f.lo)}–${M(f.hi)} in total</span></div>
+          ${(f.trades||[]).slice(0,5).map(t=>`<div class="row plain" style="grid-template-columns:1fr auto;cursor:default;padding-left:0;padding-right:0"><span style="min-width:0"><span class="t">${t[2]?`<b>${esc(t[2])}</b> · `:''}${esc(t[3])}</span><br><span class="s">${xtKind(t[1])} · ${esc(xtDate(t[0]))}</span></span><span class="val" style="font-size:14px">${t[4]?(t[5]?`${M(t[4])}–${M(t[5])}`:`Over ${M(t[4]-1)}`):''}</span></div>`).join('')}
+          <p class="s" style="margin:10px 0 0">From OGE Form 278-T reports. Amounts are reported in ranges.</p></div></section>`)}}
+    else setTimeout(()=>{if(S.stack.at(-1)===cur){w.dataset.smApp='';smAppointee()}},900);}
 }
 let _smObs=null;
 function smWatch(){
@@ -149,7 +232,7 @@ render=function(){
     const pn=document.querySelector('#app .pnav .in');
     if(pn&&!pn.querySelector('[data-menu]')){const b=document.createElement('span');b.className='pright';b.innerHTML=`<button data-menu aria-label="Menu">${MENU_ICON}</button>`;pn.appendChild(b)}
   }else _renderSM();
-  smTabbar();smHome();smProfile();smWatch();
+  smTabbar();smHome();smProfile();smAppointee();smWatch();
 };
 const _navGoSM=navGo;
 navGo=function(g){
@@ -160,11 +243,20 @@ document.addEventListener('click',e=>{
   const g=s=>e.target.closest&&e.target.closest(s);let el;
   if(el=g('[data-tab="rankhub"]')){e.preventDefault();e.stopImmediatePropagation();navGo('rankhub');return}
   if(el=g('[data-tab="stockstab"]')){e.preventDefault();e.stopImmediatePropagation();navGo('stocks');return}
-  if(el=g('[data-somore]')){e.preventDefault();e.stopImmediatePropagation();S.soAll=true;el.previousElementSibling?.querySelectorAll('.smhide').forEach(c=>c.classList.remove('smhide'));el.remove();return}
-  if(el=g('[data-smjump]')){e.preventDefault();e.stopImmediatePropagation();const t=document.getElementById(el.dataset.smjump);if(t)scrollTo({top:t.getBoundingClientRect().top+scrollY-70,behavior:'smooth'});return}
 },true);
 document.head.insertAdjacentHTML('beforeend',`<style>
 .smhide{display:none!important}
+.mtabs{position:sticky;top:var(--navh,56px);z-index:5;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:12px -16px 4px;padding:8px 16px;background:var(--bg,#f2f3f7)}
+.mtabs::-webkit-scrollbar{display:none}
+.mtabs button{flex:0 0 auto;border:1px solid var(--line,#dfe3ec);background:var(--surface,#fff);color:inherit;font:inherit;font-weight:650;font-size:14px;padding:8px 14px;border-radius:999px;cursor:pointer}
+.mtabs button[aria-selected="true"]{background:var(--ink,#0e1116);color:var(--bg,#fff);border-color:transparent}
+.ptoff{display:none!important}
+.wrap[data-mtab="overview"] #ptbody,.wrap[data-mtab="more"] #ptbody{display:none}
+#ptbody>.sec:first-child{margin-top:8px}
+.pstand{margin:12px 0 0;padding:0 0 0 18px;display:grid;gap:6px;font-size:16px;line-height:1.45}
+.pcmp{display:inline-block;margin-top:10px;font-weight:650;text-decoration:underline;background:none;border:0;padding:4px 0;color:inherit;cursor:pointer;font-size:15px}
+.smempty{margin:10px 0;padding:14px 16px;border-radius:16px;background:var(--surface,#fff);color:var(--muted,#5b6374);font-size:15px}
+@media (max-width:760px){.phero .face{width:76px!important;height:76px!important}.phero h1{font-size:28px;margin:10px 0 2px}.phero .in{padding-bottom:18px}.phero .pchips{margin-top:6px}}
 .smmore{display:block;margin:10px auto 0;background:none;border:0;color:var(--accent,#2557a8);font:inherit;font-weight:700;padding:10px 14px;cursor:pointer}
 .smjump{display:flex;gap:8px;overflow-x:auto;padding:12px 16px 4px;margin:0 -16px;scrollbar-width:none}
 .smjump::-webkit-scrollbar{display:none}
