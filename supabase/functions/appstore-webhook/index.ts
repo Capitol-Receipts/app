@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
   const ids = [e.app_user_id, e.original_app_user_id, ...(e.aliases || [])].filter((x: string) => UUID.test(String(x || "")));
   const userId = ids[0];
   if (!userId) return Response.json({ ignored: "no app user" });
-  if (e.environment === "SANDBOX" && Deno.env.get("ALLOW_SANDBOX") !== "1") return Response.json({ ignored: "sandbox" });
+  // sandbox purchases (TestFlight and Apple's own review) count too; they only ever unlock Pro for the account that made them
 
   const db = createClient(URL_, SERVICE, { auth: { persistSession: false } });
   const { data: cur } = await db.from("subscriptions").select("source,status,period_end,trial_ends").eq("user_id", userId).maybeSingle();
