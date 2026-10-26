@@ -59,7 +59,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<!-- the iOS client ID reversed, from Google Cloud: com.googleusercontent.apps.123-abc -->
-				<string>com.googleusercontent.apps.REPLACE-WITH-IOS-CLIENT-ID</string>
+				<string>com.googleusercontent.apps.37666810110-g2jmvu9tfn58qr1hhb448mvghmefce2j</string>
 			</array>
 		</dict>
 	</array>

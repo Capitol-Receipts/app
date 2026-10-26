@@ -7,8 +7,8 @@ Each button shows only when that provider is switched on in Supabase (Authentica
 also needs its iOS client ID below, and Apple is always offered next to Google, as the App Store requires. */
 const SOC={apple:false,google:false,inited:false};
 // Google OAuth client IDs (public by design; set when the Google Cloud project exists)
-const GOOGLE_WEB_CLIENT_ID='';
-const GOOGLE_IOS_CLIENT_ID='';
+const GOOGLE_WEB_CLIENT_ID='37666810110-kd1vc52i3qpeq1rt3gkba3rmhrfqm07h.apps.googleusercontent.com';
+const GOOGLE_IOS_CLIENT_ID='37666810110-g2jmvu9tfn58qr1hhb448mvghmefce2j.apps.googleusercontent.com';
 const APPLE_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.6c-.02-2.1 1.72-3.11 1.8-3.16-.98-1.43-2.5-1.63-3.04-1.65-1.29-.13-2.52.76-3.18.76-.66 0-1.67-.74-2.75-.72-1.41.02-2.72.82-3.45 2.09-1.47 2.55-.38 6.32 1.06 8.39.7 1.01 1.53 2.15 2.62 2.11 1.05-.04 1.45-.68 2.72-.68 1.27 0 1.63.68 2.74.66 1.13-.02 1.85-1.03 2.54-2.05.8-1.17 1.13-2.31 1.15-2.37-.03-.01-2.2-.84-2.21-3.38ZM14.29 6.44c.58-.7.97-1.68.86-2.65-.83.03-1.84.55-2.44 1.25-.53.62-1 1.61-.88 2.56.93.07 1.88-.47 2.46-1.16Z"/></svg>';
 const GOOGLE_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.46a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.56-5.17 3.56-8.81Z"/><path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.91l-3.88-3.01c-1.07.72-2.45 1.15-4.06 1.15-3.13 0-5.78-2.11-6.72-4.95H1.27v3.11A12 12 0 0 0 12 24Z"/><path fill="#FBBC05" d="M5.28 14.28A7.2 7.2 0 0 1 4.9 12c0-.79.14-1.56.38-2.28V6.61H1.27A12 12 0 0 0 0 12c0 1.94.46 3.77 1.27 5.39l4.01-3.11Z"/><path fill="#EA4335" d="M12 4.77c1.76 0 3.34.61 4.59 1.8l3.44-3.44C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.27 6.61l4.01 3.11C6.22 6.88 8.87 4.77 12 4.77Z"/></svg>';
 fetch(SB.url+'/auth/v1/settings',{headers:{apikey:SB.key}}).then(r=>r.json()).then(s=>{const x=(s&&s.external)||{};SOC.apple=!!x.apple;SOC.google=!!x.google}).catch(()=>{});
