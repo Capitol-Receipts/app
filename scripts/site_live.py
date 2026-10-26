@@ -267,7 +267,7 @@ def privacy_body():
         + LH('How we use it') + LP('To run your account, send the alerts and emails you ask for, process your subscription, keep the service secure, fix problems and understand which parts of the app people use.')
         + LH('What we don’t do') + LP('We don’t sell or rent your personal information. We don’t show ads. We don’t share who you follow, what you search or what’s on your watchlist with advertisers, campaigns, parties or anyone else.')
         + LH('Who processes data for us') + LP('Supabase (accounts and database), Vercel (hosting), Stripe (web payments), Apple (iPhone purchases, Sign in with Apple and push notifications), RevenueCat (confirming App Store purchases), Google (Sign in with Google and Google Analytics), Resend (email delivery) and GitHub (running our daily data updates, which don’t include your personal data). Each handles data only to provide its service to us.')
-        + LH('Analytics') + LP(f'Google Analytics sets cookies to count visits. You can block them with your browser’s settings or the {LA("https://tools.google.com/dlpage/gaoptout", "Google Analytics opt-out add-on")}. The site keeps working without them.')
+        + LH('Analytics') + LP(f'Google Analytics sets cookies to count visits. Visitors in Europe and the UK are asked first, and those cookies stay off unless they accept. Anywhere else you can block them with your browser’s settings or the {LA("https://tools.google.com/dlpage/gaoptout", "Google Analytics opt-out add-on")}. The site keeps working without them.')
         + LH('How long we keep it') + LP('We keep your account data until you delete your account. Alert history is overwritten as new alerts go out. Payment records that tax law requires us to keep, such as invoices in Stripe, are kept for as long as the law requires, even after you delete your account. Database backups are kept for a limited time and then expire.')
         + LH('Your choices') + LP(f'You can change your alert settings, turn off alerts or cancel Pro at any time in the app. To delete your account and everything saved with it, open Account and tap <b>Delete my account</b>; it happens right away. You can also {LA("/delete-account", "ask us to delete it by email")}. To get a copy of your data or correct it, email {MAIL} from the address on your account and we’ll reply within 30 days.')
         + LP('If you subscribe through Apple, deleting your account doesn’t cancel the subscription. Cancel it in your iPhone’s Settings › your name › Subscriptions.')
@@ -292,6 +292,8 @@ def fonts(s):
     s = s.replace('<link rel="preconnect" href="https://fonts.googleapis.com">\n', '<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n', 1) if 'fonts.gstatic.com" crossorigin' not in s else s
     return re.sub(r'<link rel="stylesheet" href="(https://fonts\.googleapis\.com/css2\?[^"]+)">',
                   r'<link rel="stylesheet" href="\1" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="\1"></noscript>', s)
+
+from consent import apply as consent  # Google Consent Mode + EU/UK cookie banner (scripts/consent.py)
 
 PRICE_FIX = [  # (old,new) applied in order to every file
  ("Pricing: Free, or Pro for $4.99 a Month","Pricing: Free, or Pro for $5.99 a Month"),
@@ -339,7 +341,7 @@ wr('about.html', fill(about()))
 legal('delete-account.html', '/delete-account', 'Delete Your Account', 'How to delete your Capitol Receipts account and the data saved with it, in the app or by email.', delete_body())
 legal('privacy.html', '/privacy', 'Privacy Policy', 'What Capitol Receipts collects, how it is used, who processes it and how to delete your account.', privacy_body())
 for f in os.listdir(S):
-    if f.endswith('.html'): wr(f, fonts(pricing(simplify(mobile(footer_about(rd(f)))))))
+    if f.endswith('.html'): wr(f, consent(fonts(pricing(simplify(mobile(footer_about(rd(f))))))))
 sm = os.path.join(S, 'sitemaps', 'site.xml')
 if os.path.exists(sm):
     x = open(sm).read()
