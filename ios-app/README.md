@@ -16,7 +16,7 @@ The app identity: bundle id `com.capitolreceipts.app`, iPhone only, portrait.
 
 ## Build
 
-Needs a Mac with Xcode 16 or later (or a cloud build service such as Codemagic or Ionic Appflow).
+Needs a Mac with Xcode 26 or later (App Store submissions require the iOS 26 SDK) (or a cloud build service such as Codemagic or Ionic Appflow).
 
 ```sh
 cd ios-app
