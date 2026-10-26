@@ -239,6 +239,53 @@ def about():
     s = re.sub(r'<main.*?</main>\n', lambda m: body, s, count=1, flags=re.S)
     return script(s, 'live.js')
 
+def legal(fname, path, title, desc, body_html):
+    """A plain text page (privacy, account deletion) built on the privacy page's design."""
+    s = rd('privacy.html')
+    s = re.sub(r'<title>.*?</title>', f'<title>{title} | Capitol Receipts</title>', s, count=1, flags=re.S)
+    s = re.sub(r'(<meta (?:name|property)="(?:description|og:description|twitter:description)" content=")[^"]*', lambda m: m.group(1) + desc, s)
+    s = re.sub(r'(<meta (?:property|name)="(?:og:title|twitter:title)" content=")[^"]*', lambda m: m.group(1) + title, s)
+    s = s.replace(f'{SITE}/privacy"', f'{SITE}{path}"')
+    s = re.sub(r'<main.*?</main>\n', lambda m: body_html, s, count=1, flags=re.S)
+    wr(fname, s)
+
+LH = lambda t: f'<h2 style="font-size:22px;margin:40px 0 10px;letter-spacing:-.01em">{t}</h2>'
+LP = lambda t: f'<p style="margin:0 0 12px;color:#2a3140">{t}</p>'
+LA = lambda h, t: f'<a href="{h}">{t}</a>'
+MAIL = LA('mailto:admin@squaredawaylabs.com', 'admin@squaredawaylabs.com')
+
+def privacy_body():
+    return ('<main style="max-width:760px;margin:0 auto;padding:64px 24px 96px">\n<h1 class="disp" style="font-size:64px;margin:0;color:#14274e">Privacy Policy</h1>\n'
+        + '<p class="mono" style="margin:14px 0 0;font-size:14px;color:#5b6475">Last updated October 26, 2026</p>\n'
+        + LH('Who we are') + LP(f'Capitol Receipts is made by Squared Away Labs LLC ("we", "us"), Wilkes-Barre, Pennsylvania. This policy covers www.capitolreceipts.com, app.capitolreceipts.com and the Capitol Receipts iPhone app. Questions: {MAIL}.')
+        + LH('What we collect') + LP('<b>If you just browse:</b> usage data through Google Analytics, such as pages viewed, buttons tapped, device type, browser and approximate location from your IP address. It is not linked to an account. No account is needed to use the site.')
+        + LP('<b>If you create an account:</b> your email address, and your name if you sign in with Apple or Google and they share it. We also keep what you save: your ZIP code or state if you enter one, the people, stocks and bills you follow, your alert settings, and when we last emailed you an alert.')
+        + LP('<b>If you sign in with Apple or Google:</b> we receive your email address and an account identifier from them. For Sign in with Apple we also keep a token so we can tell Apple when you delete your account.')
+        + LP('<b>If you turn on alerts in the iPhone app:</b> a push notification token for your device, so we can send alerts to it. Signing out removes it.')
+        + LP('<b>If you subscribe to Pro:</b> on the web, payments are handled by Stripe. We never see or store your full card number; we keep your Stripe customer and subscription IDs, your plan and its renewal date. In the iPhone app, purchases go through Apple, and RevenueCat confirms them to us; we keep your plan, its renewal date and the App Store transaction ID.')
+        + LP('<b>If you write to us or report a mistake:</b> what you send and the email address you send it from.')
+        + LH('How we use it') + LP('To run your account, send the alerts and emails you ask for, process your subscription, keep the service secure, fix problems and understand which parts of the app people use.')
+        + LH('What we don’t do') + LP('We don’t sell or rent your personal information. We don’t show ads. We don’t share who you follow, what you search or what’s on your watchlist with advertisers, campaigns, parties or anyone else.')
+        + LH('Who processes data for us') + LP('Supabase (accounts and database), Vercel (hosting), Stripe (web payments), Apple (iPhone purchases, Sign in with Apple and push notifications), RevenueCat (confirming App Store purchases), Google (Sign in with Google and Google Analytics), Resend (email delivery) and GitHub (running our daily data updates, which don’t include your personal data). Each handles data only to provide its service to us.')
+        + LH('Analytics') + LP(f'Google Analytics sets cookies to count visits. You can block them with your browser’s settings or the {LA("https://tools.google.com/dlpage/gaoptout", "Google Analytics opt-out add-on")}. The site keeps working without them.')
+        + LH('How long we keep it') + LP('We keep your account data until you delete your account. Alert history is overwritten as new alerts go out. Payment records that tax law requires us to keep, such as invoices in Stripe, are kept for as long as the law requires, even after you delete your account. Database backups are kept for a limited time and then expire.')
+        + LH('Your choices') + LP(f'You can change your alert settings, turn off alerts or cancel Pro at any time in the app. To delete your account and everything saved with it, open Account and tap <b>Delete my account</b>; it happens right away. You can also {LA("/delete-account", "ask us to delete it by email")}. To get a copy of your data or correct it, email {MAIL} from the address on your account and we’ll reply within 30 days.')
+        + LP('If you subscribe through Apple, deleting your account doesn’t cancel the subscription. Cancel it in your iPhone’s Settings › your name › Subscriptions.')
+        + LH('Security') + LP('Data is encrypted in transit. Access to your account data is limited to you and to the few systems that need it to run the service, and our admin tools require two-step sign-in.')
+        + LH('Children') + LP('Capitol Receipts isn’t directed at children under 13, and we don’t knowingly collect their information.')
+        + LH('Changes') + LP('If we change this policy in a meaningful way, we’ll update the date above and tell account holders by email.')
+        + '</main>\n')
+
+def delete_body():
+    return ('<main style="max-width:760px;margin:0 auto;padding:64px 24px 96px">\n<h1 class="disp" style="font-size:56px;margin:0;color:#14274e">Delete your account</h1>\n'
+        + LP('You can delete your Capitol Receipts account, and everything saved with it, at any time.').replace('margin:0 0 12px', 'margin:18px 0 12px')
+        + LH('In the app or on the website') + LP(f'Sign in at {LA("https://app.capitolreceipts.com", "app.capitolreceipts.com")} or in the iPhone app, open <b>Account</b> and tap <b>Delete my account</b>. Your account is deleted right away.')
+        + LH('By email') + LP(f'If you can’t sign in, email {MAIL} from the address on your account with the subject “Delete my account”. We’ll confirm and delete it within 7 days.')
+        + LH('What gets deleted') + LP('Your login, email address, saved representatives and ZIP code, the people, stocks and bills you follow, your alert settings and history, the devices registered for alerts, your Pro record, and any mistake reports or sign-ups sent from your email address. A web Pro subscription is canceled so you aren’t charged again.')
+        + LH('What we keep') + LP('Payment records that tax law requires us to keep, such as invoices held by Stripe, for as long as the law requires. Database backups that contain your data expire on their normal schedule. The public records on Capitol Receipts are not personal data and stay available.')
+        + LH('Subscriptions through Apple') + LP('Deleting your account doesn’t cancel an App Store subscription. Cancel it in your iPhone’s Settings › your name › Subscriptions.')
+        + '</main>\n')
+
 PRICE_FIX = [  # (old,new) applied in order to every file
  ("Pricing: Free, or Pro for $4.99 a Month","Pricing: Free, or Pro for $5.99 a Month"),
  ("$4.99 a month or $39 a year","$5.99 a month or $39.99 a year"),
@@ -282,6 +329,8 @@ s = re.sub(r'<section data-cite.*?</section>\n', '', s, flags=re.S)
 s = s.replace('<section id="contact"', CITE + '<section id="contact"', 1)
 wr('newsrooms.html', faq(s, NEWS_FAQ))
 wr('about.html', fill(about()))
+legal('delete-account.html', '/delete-account', 'Delete Your Account', 'How to delete your Capitol Receipts account and the data saved with it, in the app or by email.', delete_body())
+legal('privacy.html', '/privacy', 'Privacy Policy', 'What Capitol Receipts collects, how it is used, who processes it and how to delete your account.', privacy_body())
 for f in os.listdir(S):
     if f.endswith('.html'): wr(f, pricing(simplify(mobile(footer_about(rd(f))))))
 sm = os.path.join(S, 'sitemaps', 'site.xml')
