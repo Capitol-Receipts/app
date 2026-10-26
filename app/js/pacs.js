@@ -18,7 +18,7 @@ function personRowPac(bg,right,sub){
   return '';
 }
 function pacPage(id){
-  if(!H)return loading('PAC records');const p=H.pacs&&H.pacs[id];if(!p)return `<div class="wrap"><div class="empty">Not found.</div></div>`;
+  if(!H)return needData('hist'),loading('PAC records');const p=H.pacs&&H.pacs[id];if(!p)return `<div class="wrap"><div class="empty">Not found.</div></div>`;
   const sp=p.sp||{},spT=Object.values(sp).reduce((a,b)=>a+b,0)||1;
   const parts=[['D','Democrats'],['R','Republicans'],['I','Independents']].filter(([k])=>sp[k]>0);
   const lob=typeof clientFor==='function'?clientFor(p.n):null;
@@ -37,7 +37,7 @@ function pacPage(id){
 }
 /* list of the biggest PACs */
 function pacsScreen(){
-  if(!H)return loading('PAC records');
+  if(!H)return needData('hist'),loading('PAC records');
   const mode=S.pmode||'cur',q=(S.pq||'').trim().toLowerCase();
   let list=Object.entries(H.pacs);
   if(q)list=list.filter(([,p])=>fz(p.n+' '+(p.fn||''),q));

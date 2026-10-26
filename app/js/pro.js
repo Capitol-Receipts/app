@@ -32,17 +32,21 @@ async function startTrial(){
 }
 async function billing(action,trial){
   if(!signedIn())return authSheet('up','Create a free account first, then pick your plan.');
-  const msg=$('#promsg');if(msg)msg.textContent='Opening secure checkout…';
+  if(PRO.busy)return;PRO.busy=true;
+  const msg=$('#promsg'),what=action==='portal'?'Your billing page':'Checkout';if(msg)msg.textContent=action==='portal'?'Opening your billing page…':'Opening secure checkout…';
   try{
     const {data:{session}}=await ACCT.client.auth.getSession();
+    if(!session){if(msg)msg.textContent='';return authSheet('in','Your sign-in expired. Sign in again to continue.')}
     let ga={cid:'',sid:''};
     if(action==='checkout'){const v=PRO.cycle==='m'?PRO.price.m:PRO.price.y;track('begin_checkout',{currency:'USD',value:v,trial:!!trial,items:[{item_id:'pro_'+(PRO.cycle==='m'?'monthly':'yearly'),item_name:'Capitol Receipts Pro',price:v,quantity:1}]});try{ga=await gaIds()}catch(e){}}
     else track('manage_billing');
     const r=await fetch(SB.url+'/functions/v1/billing',{method:'POST',headers:{'Content-Type':'application/json',apikey:SB.key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({action,trial:!!trial,cycle:PRO.cycle,back:location.origin+'/?go=pro',ga_cid:ga.cid,ga_sid:ga.sid})});
     const j=await r.json().catch(()=>({}));
-    if(j.url){location.href=j.url;return}
-    if(msg)msg.textContent=j.error==='not_configured'?'Card payments are being switched on. Try again shortly.':'Checkout didn’t open. Try again in a moment.';
-  }catch(e){console.warn(e);if(msg)msg.textContent='Checkout didn’t open. Try again in a moment.'}
+    if(j.url){PRO.leaving=true;location.href=j.url;return}
+    if(r.status===401||j.error==='sign_in'){if(msg)msg.textContent='';return authSheet('in','Your sign-in expired. Sign in again to continue.')}
+    if(msg)msg.textContent=j.error==='not_configured'?'Card payments are being switched on. Try again shortly.':j.error==='no_billing'?'There’s no card billing on this account yet.':what+' didn’t open. Try again in a moment.';
+  }catch(e){console.warn(e);if(msg)msg.textContent=what+' didn’t open. Try again in a moment.'}
+  finally{if(!PRO.leaving)PRO.busy=false;else setTimeout(()=>{PRO.busy=false;PRO.leaving=false},8000)}
 }
 function toast(t){let el=$('#toast');if(!el){el=document.createElement('div');el.id='toast';el.className='toast';document.body.appendChild(el)}el.textContent=t;el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),3600)}
 
@@ -145,7 +149,7 @@ function doCsv(kind){
 }
 
 /* ---------- watchlist ---------- */
-function saveStocks(){if(ACCT.user&&ACCT.client)ACCT.client.from('user_prefs').upsert({user_id:ACCT.user.id,stocks:S.stocks,following:[...S.following]}).then(({error})=>{if(error)console.warn(error)})}
+function saveStocks(){if(ACCT.user&&ACCT.client)ACCT.client.from('user_prefs').upsert({user_id:ACCT.user.id,stocks:S.stocks,following:[...S.following]}).then(({error})=>{if(error){console.warn(error);saveFailed()}})}
 function watch(t){
   t=(t||'').toUpperCase().replace(/[^A-Z.\-]/g,'').slice(0,8);if(!t)return;
   if(!isPro())return needPro('The stock watchlist is part of Pro. We’ll email you when anyone in Congress trades the stocks you pick.');

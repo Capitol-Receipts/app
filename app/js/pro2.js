@@ -30,7 +30,7 @@ PRO_FEATS.splice(0,PRO_FEATS.length,
 const pctS=(x,d=0)=>x==null||isNaN(x)?'—':(x>0?'+':'')+(x*100).toFixed(d)+'%';
 
 /* ---------- bill watchlist ---------- */
-function saveBills(){if(ACCT.user&&ACCT.client)ACCT.client.from('user_prefs').upsert({user_id:ACCT.user.id,bills:S.bills}).then(({error})=>{if(error)console.warn(error)})}
+function saveBills(){if(ACCT.user&&ACCT.client)ACCT.client.from('user_prefs').upsert({user_id:ACCT.user.id,bills:S.bills}).then(({error})=>{if(error){console.warn(error);saveFailed()}})}
 function watchBill(k){
   if(!signedIn())return authSheet('up','Create a free account, then try Pro free for 14 days to watch bills.');
   if(!isPro())return needPro('The bill watchlist is part of Pro. We’ll email you when the bill moves, gets a vote, or more groups lobby on it.');

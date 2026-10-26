@@ -29,13 +29,12 @@ async function acctSet(u){
     S.following=new Set([...(row.following||[]),...localFollow]);
     if(row.home&&!S.home){S.home=row.home;S.dist=row.dist||null;S.zip=row.zip||'';store.set('home',S.home);store.set('dist',S.dist);store.set('zip',S.zip)}
   }else S.following=new Set(localFollow);
-  _storeSet('following',[]);               // the account is now the only copy
   acctSave(true);render();
 }
 function acctSave(now){
   if(!ACCT.user||!ACCT.client)return;
   clearTimeout(ACCT.saveT);
-  ACCT.saveT=setTimeout(()=>{ACCT.client.from('user_prefs').upsert({user_id:ACCT.user.id,zip:S.zip||null,home:S.home||null,dist:S.dist&&S.dist.length?S.dist:null,following:[...S.following],updated_at:new Date().toISOString()}).then(({error})=>{if(error)console.warn(error)})},now?0:600);
+  ACCT.saveT=setTimeout(()=>{ACCT.client.from('user_prefs').upsert({user_id:ACCT.user.id,zip:S.zip||null,home:S.home||null,dist:S.dist&&S.dist.length?S.dist:null,following:[...S.following],updated_at:new Date().toISOString()}).then(({error})=>{if(error){console.warn(error);saveFailed()}else _storeSet('following',[]) /* the account is now the only copy */})},now?0:600);
 }
 /* keep follows in the account rather than this browser */
 const _storeSet=store.set.bind(store);
@@ -45,6 +44,11 @@ store.set=function(k,v){
   _storeSet(k,v);
   if(['home','dist','zip'].includes(k)&&ACCT.user)acctSave();
 };
+
+/* a save to the account didn't go through: say so instead of looking saved */
+let _saveFailT=0;
+function saveFailed(){if(Date.now()-_saveFailT<4000)return;_saveFailT=Date.now();
+  if(typeof toast==='function')toast(navigator.onLine===false?'You’re offline. That change wasn’t saved.':'That change wasn’t saved. Check your connection and try again.')}
 
 /* ---------- sign-in sheet ---------- */
 function authSheet(mode,reason){

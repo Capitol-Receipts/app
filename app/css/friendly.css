@@ -301,7 +301,7 @@ div.mphoto{cursor:default}
 .pct{background:var(--surface);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
 .pctl{font-size:12.5px;color:var(--soft);font-weight:600;line-height:1.25;min-height:2.5em}
 .pctv{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
-.pctv b{font:700 18px/1 var(--stat,inherit);font-variant-numeric:tabular-nums;opacity:.55}.pctv b.hi{opacity:1}
+.pctv b{font:700 18px/1 var(--stat,inherit);font-variant-numeric:tabular-nums;opacity:.78}.pctv b.hi{opacity:1}
 .pctv .d{color:var(--D)}.pctv .r{color:var(--R)}
 .pcts{display:flex;height:5px;border-radius:3px;overflow:hidden;gap:2px}.pcts i{display:block;height:100%}.pcts .d{background:var(--D)}.pcts .r{background:var(--R)}
 @media (min-width:1100px){.bdgrid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}}

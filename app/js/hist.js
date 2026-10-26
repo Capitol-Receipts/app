@@ -251,7 +251,7 @@ function pastProfile(p){
 
 /* ---------- current member: whole-career section ---------- */
 function careerSection(m){
-  if(!H)return `<section class="sec"><div class="calm">Loading their full career history…</div></section>`;
+  if(!H)return needData('hist'),`<section class="sec"><div class="calm">Loading their full career history…</div></section>`;
   const p=HC[m.id];if(!p)return '';
   if(!p._full)return `<section class="sec"><div class="calm">Loading their full career history…</div></section>`;
   const b=p.bl;
@@ -362,7 +362,7 @@ function archiveCards(){
   return cards;
 }
 function archiveCarousel(){
-  if(!H)return '';
+  if(!H)return ''; // optional home section: appears once history has loaded on its own
   return `<section class="sec"><div class="sh"><h2>From the archives</h2><button data-hist>Explore</button></div><div class="carousel">${archiveCards().map(c=>{const who=c.p||c.a;
    return `<button class="hcard c-${c.cat}" ${c.p?(HC[c.p.id]?`data-p="${c.p.id}"`:`data-hp="${c.p.id}"`):`data-ha="${c.a.id}"`}><div class="sk">${CAT[c.cat].icon}<span>${c.kick}</span></div><div class="sbig">${esc(c.big)}</div><p>${esc(c.text)}</p><div class="who">${hFace(who,40)}<span><b>${esc(who.n)}</b><br><span>${esc(c.p?((c.p.t.at(-1)||[])[5]||''):(who.ttl||''))}</span></span></div></button>`}).join('')}</div></section>`;
 }
@@ -422,7 +422,7 @@ function hSummary(n,noun,act){
 function historyScreen(){
   const q=S.q.trim().toLowerCase();
   let h=searchHeader('Any past member, president or appointee')+(typeof scopeHero==='function'?scopeHero():'');
-  if(!H)return `<div class="wrap">${h}<div class="calm" style="margin-top:14px">${LOADERR.hist?`Couldn't load the history records (${esc(LOADERR.hist)}). Try reloading.`:'Loading 236 years of records…'}</div></div>`;
+  if(!H)return needData('hist'),`<div class="wrap">${h}<div class="calm" style="margin-top:14px">${LOADERR.hist?`Couldn't load the history records (${esc(LOADERR.hist)}). Try reloading.`:'Loading 236 years of records…'}</div></div>`;
   S.hk=S.hk||'members';
   if(S.hy0==null){S.hy0=HY_MIN;S.hy1=HY_MAX}
   S.hparty=S.hparty||'All';S.hch=S.hch||'All';

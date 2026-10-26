@@ -97,7 +97,7 @@ function billStats(keys,mode){
   return `<section class="sec dash wide billdash"><div class="bdgrid">${tiles.map(([c,k,v,s])=>`<div class="dstat c-${c}"><span class="dic">${CAT[c].icon}</span><span class="dk">${k}</span><b class="dv">${v}</b><span class="ds">${s}</span></div>`).join('')}${split}</div></section>`;
 }
 function billsScreen(){
-  if(!H)return `<div class="wrap"><div class="lbanner bg-library pghero"><h1>Bills & laws</h1></div><div class="calm">Loading bill records…</div></div>`;
+  if(!H)return needData('hist'),`<div class="wrap"><div class="lbanner bg-library pghero"><h1>Bills & laws</h1></div><div class="calm">Loading bill records…</div></div>`;
   S.bmode=S.bmode||'lobbied';
   const q=(S.bq||'').trim().toLowerCase();
   const modes=[['lobbied','Most lobbied'],['new','New laws'],['laws','All laws'],['veto','Vetoed']];

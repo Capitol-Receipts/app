@@ -101,7 +101,7 @@ window.addEventListener('click',e=>{
 window.addEventListener('change',e=>{
   const el=e.target.closest('[data-alert]');if(!el||!ACCT.user)return;
   ACCT.alerts=Object.assign({trades:true,votes:true,money:true,email:false},ACCT.alerts||{},{[el.dataset.alert]:el.checked});
-  ACCT.client.from('user_prefs').update({alerts:ACCT.alerts}).eq('user_id',ACCT.user.id).then(()=>{});render();
+  ACCT.client.from('user_prefs').update({alerts:ACCT.alerts}).eq('user_id',ACCT.user.id).then(({error})=>{if(error){console.warn(error);saveFailed()}});render();
 },true);
 const _navGoT=navGo;
 navGo=function(gk){if(gk==='corrections'){closeDrawer();$('#sheet').hidden=true;S.stack=[];S.tab='more';go('corrections');return}_navGoT(gk)};

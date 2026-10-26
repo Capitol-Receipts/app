@@ -674,3 +674,10 @@ mark{background:color-mix(in srgb,#f5c542 45%,transparent);color:inherit;border-
 
 /* iOS Safari's floating address bar leaves a strip under fixed bars; extend the tab bar's background down to the screen edge */
 .tabbar::after{content:"";position:absolute;left:0;right:0;top:100%;height:200px;background:var(--surface);pointer-events:none}
+/* accessibility: skip link, screen-reader-only text, visible keyboard focus, contrast */
+.skiplink{position:fixed;left:12px;top:-60px;z-index:100;background:var(--ink);color:var(--surface);padding:10px 14px;border-radius:10px;font-weight:700;text-decoration:none}
+.skiplink:focus{top:calc(env(safe-area-inset-top) + 10px)}
+.sronly{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#app:focus,#app h1:focus,#app .pnav .mid:focus,#app h2:focus,#panel:focus{outline:none}
+:focus-visible{outline:2px solid #2557a8;outline-offset:2px}
+.tabbar button{color:var(--soft)}

@@ -364,12 +364,20 @@ document.addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#sheet').hidden=true});
 MEM.forEach(m=>{const nm=(m.name||'').split(' ')[0];m.her=null});
 render();
-/* history and lobbying data (several MB) load once the first screen is up and the phone is idle, or as soon as the
-   reader taps anything, so they never compete with the first screen */
-function later(f){let done=false;const run=()=>{if(done)return;done=true;f()};
-  if(window.__ROUTE||location.pathname.startsWith('/go/')||/[?&]go=/.test(location.search)){run();return}
-  ['pointerdown','keydown'].forEach(ev=>window.addEventListener(ev,run,{once:true,capture:true,passive:true}));
-  const idle=()=>('requestIdleCallback' in window?requestIdleCallback(run,{timeout:4000}):run());
-  const wait=()=>{if(window.__FULL||window.__FULLERR)setTimeout(idle,1500);else setTimeout(wait,200)};wait()}
-later(loadHist);
+/* history and lobbying data (several MB) load on demand: when a screen that needs them opens (needData), when the
+   reader starts a search, or once the first screen is up and the phone has been idle for a while. A deep link to a
+   record only waits for them if that record needs them, so the first screen never competes with them. */
+function needData(k){const D=window.__DL||(window.__DL={});const f=D[k]||(D[k]={run:null,started:false});if(!f.started){f.started=true;if(f.run)setTimeout(f.run,0)}return ''}
+var ROUTE_NEEDS={hist:/^(hp|ha|bill|pac|dist|state):/,pages:/^(lob|firm|eth|com):/};
+function later(f,k){
+  const D=window.__DL||(window.__DL={});const pre=D[k]&&D[k].started;D[k]={run:f,started:false};if(pre){needData(k);return}
+  const r=window.__ROUTE||(location.pathname.startsWith('/go/')?decodeURIComponent(location.pathname.slice(4)):(new URLSearchParams(location.search).get('go')||''));
+  if(r&&ROUTE_NEEDS[k]&&ROUTE_NEEDS[k].test(r)){needData(k);return}
+  window.addEventListener('input',e=>{if(e.target&&e.target.matches&&e.target.matches('input[type=search],#q,.sbox input'))needData(k)},{capture:true,passive:true});
+  const idle=()=>('requestIdleCallback' in window?requestIdleCallback(()=>needData(k),{timeout:8000}):needData(k));
+  const wait=()=>{if(window.__FULL||window.__FULLERR)setTimeout(idle,6000);else setTimeout(wait,300)};wait()}
+later(loadHist,'hist');
+/* any screen beyond home, the tabs and member pages may draw on the bigger data sets: start them as soon as one opens */
+{const _renderNeed=render;render=function(){const r=_renderNeed.apply(this,arguments);const c=S.stack.at(-1);
+  if(c&&!(typeof byId!=='undefined'&&byId[c])&&!/^(mvotes|stock):/.test(c)){needData('hist');needData('pages')}return r}}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.hpop){S.hpop=null;document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'))}});

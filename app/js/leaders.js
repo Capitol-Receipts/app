@@ -48,7 +48,7 @@ function courtView(L){
    ${H?`<section class="sec"><div class="sh"><h2>Past justices</h2><button data-hkgo="apps">All judges</button></div><div class="group">${APPS.filter(a=>a.k==='Judge'&&a.pos?.some(p=>/Supreme Court/.test(p[PK_I.o]))&&!C.some(c=>c.jid===a.id)).sort((a,b)=>(b.ly||0)-(a.ly||0)).slice(0,6).map(a=>appRow(a,'')).join('')}</div></section>`:''}`;
 }
 function leadersScreen(){
-  if(!G)return `<div class="wrap"><div class="calm" style="margin-top:20px">${LOADERR.pages?`Couldn't load this section (${esc(LOADERR.pages)}). Try reloading.`:'Loading…'}</div></div>`;
+  if(!G)return needData('pages'),`<div class="wrap"><div class="calm" style="margin-top:20px">${LOADERR.pages?`Couldn't load this section (${esc(LOADERR.pages)}). Try reloading.`:'Loading…'}</div></div>`;
   const L=G.leaders;S.lmode2=S.lmode2||'wh';
   const seg=`<div class="scopes" style="margin:0 -16px;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 4px">${[['wh','White House'],['cabinet','Cabinet'],['court','Supreme Court']].map(([k,l])=>`<button data-lmode2="${k}" aria-pressed="${k===S.lmode2}">${l}</button>`).join('')}<button data-menu aria-label="Open menu" style="margin-left:auto">${MENU_ICON}</button></div>`;
   return `<div class="wrap">${seg}${S.lmode2==='wh'?whiteHouse(L):S.lmode2==='cabinet'?cabinetView(L):courtView(L)}</div>`;

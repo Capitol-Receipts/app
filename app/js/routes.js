@@ -38,6 +38,10 @@ function gaPageView(){
     }
   }catch(e){}
 }
+let _popRt=false;
+addEventListener('popstate',e=>{const st=e.state;if(!st||!st.cr)return;
+  _popRt=true;const sh=document.getElementById('sheet');if(sh)sh.hidden=true;
+  S.tab=st.tab;S.stack=[...(st.stack||[])];if(st.msort)S.msort=st.msort;render();scrollTo(0,0)});
 (function(){
   try{if(new URLSearchParams(location.search).get('lang')==='es'&&S.lang!=='es'){S.lang='es';store.set('lang','es')}}catch(e){}
   const _renderRt=render;
@@ -57,10 +61,16 @@ function gaPageView(){
       /* ?app=1 keeps a reload in the app; without it the address shows the public page on www */
       const want=p==='/'?'/':p;
       /* screens without a record address (lists, tools) get /go/<screen>, so the address bar and copied links reopen them */
-      const sid=S.stack.at(-1);
-      if(p==='/'){const tgt=sid?'/go/'+encodeURIComponent(sid).replace(/%3A/g,':'):(S.tab==='search'&&typeof RK!=='undefined'&&RK[S.msort]&&S.filter==='Congress'?'/go/rank:'+S.msort:'/');if(location.pathname+location.search!==tgt)history.replaceState(null,'',tgt+location.hash)}
-      else if(!(p!=='/'&&cur.startsWith(p+'/'))&&cur!==want)history.replaceState(null,'',want+(want==='/'?'':'?app=1')+location.hash);
-      else if(want!=='/'&&!/[?&]app=1/.test(location.search))history.replaceState(null,'',location.pathname+'?app=1'+location.hash)}catch(e){}
+      const sid=S.stack.at(-1);let tgt=null;
+      if(p==='/'){const t=sid?'/go/'+encodeURIComponent(sid).replace(/%3A/g,':'):(S.tab==='search'&&typeof RK!=='undefined'&&RK[S.msort]&&S.filter==='Congress'?'/go/rank:'+S.msort:'/');if(location.pathname+location.search!==t)tgt=t}
+      else if(!cur.startsWith(p+'/')&&cur!==want)tgt=want+'?app=1';
+      else if(!/[?&]app=1/.test(location.search))tgt=location.pathname+'?app=1';
+      /* each new screen gets its own browser history entry, so Back (browser, phone, swipe) goes to the previous screen */
+      const k=S.tab+'|'+S.stack.join('>')+'|'+(S.msort||''),st={cr:1,k,tab:S.tab,stack:[...S.stack],msort:S.msort||null};
+      const url=(tgt||location.pathname+location.search)+location.hash;
+      if(!_popRt&&history.state&&history.state.cr&&history.state.k!==k)history.pushState(st,'',url);
+      else history.replaceState(st,'',url);
+      _popRt=false}catch(e){}
   };
   if(window.__HOLD&&window.__ROUTE){
     const r=window.__ROUTE,t0=Date.now();

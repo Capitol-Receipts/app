@@ -25,7 +25,7 @@ const qtrLabel=q=>q.replace(/^(\d{4}) Q(\d)$/,(_,y,n)=>`Q${n} '${y.slice(2)}`);
 
 /* ---------- lobbying group (client) ---------- */
 function clientPage(id){
-  if(!G)return loading('lobbying records');const c=G.clients[id];if(!c)return `<div class="wrap"><div class="empty">Not found.</div></div>`;
+  if(!G)return needData('pages'),loading('lobbying records');const c=G.clients[id];if(!c)return `<div class="wrap"><div class="empty">Not found.</div></div>`;
   const inhouse=c.firms.find(f=>f[3]),hired=c.firms.filter(f=>!f[3]);
   const lobBills=c.bills.filter(([k])=>hasBill(k));
   return `${pageHead(c.n)}
@@ -47,7 +47,7 @@ function clientPage(id){
 }
 /* ---------- lobbying firm ---------- */
 function firmPage(id){
-  if(!G)return loading('lobbying records');const f=G.firms[id];if(!f)return `<div class="wrap"><div class="empty">Not found.</div></div>`;
+  if(!G)return needData('pages'),loading('lobbying records');const f=G.firms[id];if(!f)return `<div class="wrap"><div class="empty">Not found.</div></div>`;
   return `${pageHead(f.n)}
   <section class="phero p-N bg-capitol"><div class="in" style="padding-top:calc(var(--navh) + 18px)"><span class="billno">Lobbying firm</span><h1 style="font-size:${f.n.length>40?24:30}px">${esc(f.n)}</h1><div class="psub">Reported income, ${esc(DATA.lobby.periods)}</div></div></section>
   <div class="wrap">
@@ -61,7 +61,7 @@ function firmPage(id){
 /* ---------- ethics matter ---------- */
 const ETHC={'Formal investigation':'No','Reproved':'No','Contempt referral':'No','Under review':'','Referred for review':'','Report released':'','Closed':'Yes','Working group review':'','Statement issued':'off'};
 function ethicsPage(id){
-  if(!G)return loading('ethics records');const e=G.ethById[id];if(!e)return `<div class="wrap"><div class="empty">Not found.</div></div>`;
+  if(!G)return needData('pages'),loading('ethics records');const e=G.ethById[id];if(!e)return `<div class="wrap"><div class="empty">Not found.</div></div>`;
   const related=G.ethics.filter(x=>x.id!==e.id&&x.who.some(w=>e.who.includes(w)));
   return `${pageHead('Ethics Committee')}
   <section class="phero p-N bg-court2"><div class="in" style="padding-top:calc(var(--navh) + 18px)"><span class="billno">House Ethics Committee</span><h1 style="font-size:${e.t.length>60?22:28}px">${esc(e.t)}</h1><div class="psub">${fmtISO(e.d)}</div><div class="pchips"><span>${esc(e.st)}</span></div></div></section>
@@ -77,7 +77,7 @@ function ethRow(e){const p=e.who[0]&&(byId[e.who[0]]||HP[e.who[0]]);
   return `<button class="row" data-eth="${e.id}">${p?(byId[e.who[0]]?face(p,44):hFace(p,44)):`<span class="face fb nomf" style="width:44px;height:44px;font-size:15px">§</span>`}<span style="min-width:0"><span class="t clamp">${esc(e.t)}</span><span class="s">${fmtISO(e.d)}</span></span><span class="rr"><span class="tag ${ETHC[e.st]==='No'?'':'off'}" style="font-size:11px">${esc(e.st)}</span>${chev}</span></button>`}
 /* ---------- committee ---------- */
 function commPage(id){
-  if(!G)return loading('committee records');const c=G.comm[id];if(!c)return `<div class="wrap"><div class="empty">Not found.</div></div>`;
+  if(!G)return needData('pages'),loading('committee records');const c=G.comm[id];if(!c)return `<div class="wrap"><div class="empty">Not found.</div></div>`;
   const ms=c.mem.map(r=>({m:byId[r[0]],t:r[1],side:r[2]})).filter(x=>x.m);
   const lead=ms.filter(x=>/Chair|Ranking/.test(x.t)&&!/Vice/.test(x.t));
   const maj=ms.filter(x=>x.side==='majority'),min=ms.filter(x=>x.side!=='majority');
@@ -111,7 +111,7 @@ function listShell(title,inner,searchId,ph,val,bg,sub){
    <div class="wrap" style="padding-top:calc(var(--navh) + 8px)"><div class="lt" style="padding-top:4px">${bg?`<div class="lbanner ${bg}"><h1>${esc(title)}</h1>${sub?`<span>${sub}</span>`:''}</div>`:`<h1>${esc(title)}</h1>`}${searchId?`<input class="search" id="${searchId}" type="search" placeholder="${ph}" value="${esc(val||'')}" autocomplete="off" aria-label="${ph}">`:''}</div>${inner}</div>`;
 }
 function lobbyingScreen(){
-  if(!G)return loading('lobbying records');
+  if(!G)return needData('pages'),loading('lobbying records');
   S.lmode=S.lmode||'groups';const q=normN(S.lq||'');
   const C=Object.values(G.clients),F=Object.values(G.firms);
   const total=C.reduce((a,c)=>a+(c.spend||0),0),firmInc=F.reduce((a,f)=>a+(f.inc||0),0);
@@ -135,14 +135,14 @@ function lobbyingScreen(){
   return listShell('Lobbying',`${dash}${seg}<section class="sec wide"><div class="sh"><h2>${S.lmode==='groups'?'Biggest spenders':'Biggest firms'}</h2><span class="cap" style="padding:0">${ord(list.length)}</span></div><div class="lt-head lt-lob"><span>#</span><span>${S.lmode==='groups'?'Company or group':'Lobbying firm'}</span><span>${S.lmode==='groups'?'Top issues':'Clients'}</span><span class="r">${S.lmode==='groups'?'Spent on lobbying':'Paid by clients'}</span></div><div class="lcards tbl">${cards||'<div class="empty">No matches.</div>'}</div>${list.length>S.limit?`<button class="more" data-more>Show more</button>`:''}<div class="cap">${S.lmode==='groups'?'Companies and organizations ranked by reported lobbying spending.':'Lobbying firms ranked by what clients paid them.'}</div></section>`,'lq',S.lmode==='groups'?'Search a company or group':'Search a lobbying firm',S.lq,'bg-dusk',`Who pays to influence Congress, how much, and on what. From lobbying disclosure reports, ${esc(DATA.lobby?.periods||'since Jul 2025')}.`);
 }
 function committeesScreen(){
-  if(!G)return loading('committees');
+  if(!G)return needData('pages'),loading('committees');
   S.cmode=S.cmode||'house';
   const list=Object.values(G.comm).filter(c=>c.ch===S.cmode).sort((a,b)=>a.short.localeCompare(b.short));
   const seg=`<div class="seg" role="group">${[['house','House'],['senate','Senate'],['joint','Joint']].map(([k,l])=>`<button data-cmode="${k}" aria-pressed="${k===S.cmode}">${l}</button>`).join('')}</div>`;
   return listShell('Committees',`${seg}<div class="sec"><div class="group">${list.map(c=>{const ch=c.mem.find(r=>/^Chair/.test(r[1]));const cm=ch&&byId[ch[0]];return `<button class="row plain" data-com="${c.id}" style="grid-template-columns:1fr auto auto"><span style="min-width:0"><span class="t">${esc(c.short)}</span><br><span class="s">${c.mem.length} members${cm?` · Chair: ${esc(cm.name)}`:''}</span></span><span></span>${chev}</button>`}).join('')}</div><div class="cap">Committees write and review bills before the full House or Senate votes. Members often oversee the industries that fund them.</div></div>`,null,null,null,'bg-capfull',`${Object.keys(G.comm).length} House, Senate and joint committees`);
 }
 function ethicsScreen(){
-  if(!G)return loading('ethics records');
+  if(!G)return needData('pages'),loading('ethics records');
   const q=(S.eq||'').toLowerCase();
   const all=G.ethics;
   const list=all.filter(e=>(!S.est2||e.st===S.est2)&&(!q||fz(e.t+' '+e.who.map(w=>(byId[w]||HP[w])?.name||(HP[w]||{}).n||'').join(' '),q)));
@@ -216,4 +216,4 @@ drawerHtml=function(){
    navGroup('ethics',NAVI.info,'Ethics',[['ethics','House Ethics reviews',G?G.ethics.length:'']])+
    `<div class="dgroup ${S.dopen.apps?'open':''}"><button class="dhead" data-dtoggle="apps"`);
 };
-later(loadPages);
+later(loadPages,'pages');

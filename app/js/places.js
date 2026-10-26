@@ -38,7 +38,7 @@ function statePage(st){
 function districtPage(key){
   const [st,dn]=key.split('-');const d=+dn;
   const cur=MEM.find(m=>m.chamber==='House'&&m.state===st&&(+m.district||0)===d);
-  if(!H)return loading('district history');
+  if(!H)return needData('hist'),loading('district history');
   const holders=[];
   H.people.forEach(p=>(p.t||[]).forEach(t=>{if(t[0]==='H'&&t[3]===st&&(+t[4]||0)===d)holders.push([p,t[1],t[2],t[5]])}));
   holders.sort((a,b)=>b[1]-a[1]);
