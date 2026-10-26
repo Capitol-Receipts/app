@@ -6,7 +6,7 @@
 - **Primary category:** Reference. **Secondary:** News
 - **Price:** Free, with an auto-renewing subscription (Capitol Receipts Pro)
 - **Age rating:** 4+ (no objectionable content; the app doesn't offer open web browsing)
-- **Support URL:** https://www.capitolreceipts.com/about
+- **Support URL:** https://www.capitolreceipts.com/support
 - **Marketing URL:** https://www.capitolreceipts.com
 - **Privacy policy URL:** https://www.capitolreceipts.com/privacy
 - **Copyright:** 2026 Squared Away Labs LLC
