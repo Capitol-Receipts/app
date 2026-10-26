@@ -16,6 +16,21 @@
   addEventListener('unhandledrejection',e=>{const r=e.reason;report('promise: '+((r&&r.message)||r))});
   window.reportError=report;
 
+  /* real-visitor speed (Core Web Vitals) to Google Analytics, once per page view when the page is hidden:
+     LCP (largest paint), CLS (layout shift) and INP (slowest interaction, approximated from event timing). */
+  try{
+    const v={lcp:0,cls:0,inp:0};
+    new PerformanceObserver(l=>{for(const e of l.getEntries())v.lcp=e.startTime}).observe({type:'largest-contentful-paint',buffered:true});
+    new PerformanceObserver(l=>{for(const e of l.getEntries())if(!e.hadRecentInput)v.cls+=e.value}).observe({type:'layout-shift',buffered:true});
+    new PerformanceObserver(l=>{for(const e of l.getEntries())if(e.interactionId)v.inp=Math.max(v.inp,e.duration)}).observe({type:'event',buffered:true,durationThreshold:40});
+    let done=false;
+    addEventListener('visibilitychange',()=>{if(done||document.visibilityState!=='hidden'||typeof gtag!=='function')return;done=true;
+      const rate=(x,g,p)=>x<=g?'good':x<=p?'needs_improvement':'poor';
+      const send=(n,x,g,p,u)=>{if(x>0||n==='CLS')gtag('event','web_vitals',{metric_name:n,metric_value:Math.round(x*u)/u,metric_rating:rate(x,g,p),transport_type:'beacon',non_interaction:true})};
+      send('LCP',v.lcp,2500,4000,1);send('CLS',v.cls,0.1,0.25,1000);send('INP',v.inp,200,500,1);
+    });
+  }catch(e){}
+
   const msgScreen=(title,body,retry)=>`<div class="wrap"><div class="empty" role="alert" style="padding-top:calc(var(--navh) + 24px)">
     <p style="font-weight:700;font-size:18px;margin:0 0 6px">${title}</p><p style="margin:0 0 16px">${body}</p>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">${retry?'<button class="abtn sm ghost" data-guardretry>Try again</button>':''}<button class="abtn sm" data-guardhome>Go to the home screen</button></div></div></div>`;

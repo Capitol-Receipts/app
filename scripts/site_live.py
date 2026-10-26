@@ -286,6 +286,13 @@ def delete_body():
         + LH('Subscriptions through Apple') + LP('Deleting your account doesn’t cancel an App Store subscription. Cancel it in your iPhone’s Settings › your name › Subscriptions.')
         + '</main>\n')
 
+def fonts(s):
+    """Google Fonts without blocking the first paint: preconnect to both hosts, load the stylesheet as print and
+    switch it on when it arrives (text shows in the fallback font meanwhile; the CSS already uses display=swap)."""
+    s = s.replace('<link rel="preconnect" href="https://fonts.googleapis.com">\n', '<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n', 1) if 'fonts.gstatic.com" crossorigin' not in s else s
+    return re.sub(r'<link rel="stylesheet" href="(https://fonts\.googleapis\.com/css2\?[^"]+)">',
+                  r'<link rel="stylesheet" href="\1" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="\1"></noscript>', s)
+
 PRICE_FIX = [  # (old,new) applied in order to every file
  ("Pricing: Free, or Pro for $4.99 a Month","Pricing: Free, or Pro for $5.99 a Month"),
  ("$4.99 a month or $39 a year","$5.99 a month or $39.99 a year"),
@@ -332,7 +339,7 @@ wr('about.html', fill(about()))
 legal('delete-account.html', '/delete-account', 'Delete Your Account', 'How to delete your Capitol Receipts account and the data saved with it, in the app or by email.', delete_body())
 legal('privacy.html', '/privacy', 'Privacy Policy', 'What Capitol Receipts collects, how it is used, who processes it and how to delete your account.', privacy_body())
 for f in os.listdir(S):
-    if f.endswith('.html'): wr(f, pricing(simplify(mobile(footer_about(rd(f))))))
+    if f.endswith('.html'): wr(f, fonts(pricing(simplify(mobile(footer_about(rd(f)))))))
 sm = os.path.join(S, 'sitemaps', 'site.xml')
 if os.path.exists(sm):
     x = open(sm).read()
