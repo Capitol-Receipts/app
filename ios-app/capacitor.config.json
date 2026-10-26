@@ -5,16 +5,27 @@
   "server": {
     "url": "https://app.capitolreceipts.com/?src=ios",
     "errorPath": "offline.html",
-    "allowNavigation": ["app.capitolreceipts.com"]
+    "allowNavigation": [
+      "app.capitolreceipts.com"
+    ]
   },
   "ios": {
     "contentInset": "never",
     "limitsNavigationsToAppBoundDomains": true,
-    "backgroundColor": "#14274e",
-    "scheme": "Capitol Receipts"
+    "backgroundColor": "#14274e"
   },
   "plugins": {
-    "SplashScreen": { "launchShowDuration": 600, "backgroundColor": "#14274e", "showSpinner": false },
-    "PushNotifications": { "presentationOptions": ["badge", "sound", "alert"] }
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "backgroundColor": "#14274e",
+      "showSpinner": false
+    },
+    "PushNotifications": {
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
+    }
   }
 }

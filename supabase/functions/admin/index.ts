@@ -84,6 +84,10 @@ Deno.serve(async (req) => {
   const me = user.email.toLowerCase();
   const { data: adm } = await db.from("admins").select("email").eq("email", me).maybeSingle();
   if (!adm) return json({ error: "not_admin" }, 403);
+  // admins must finish a second step (authenticator app code) for this session; getUser above verified the token
+  let aal = "";
+  try { aal = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).aal || ""; } catch { /* treated as no MFA */ }
+  if (aal !== "aal2") return json({ error: "mfa_required" }, 401);
 
   const b = await req.json().catch(() => ({}));
   const log = (action: string, detail: unknown) => db.from("admin_log").insert({ admin: me, action, detail });
@@ -111,7 +115,7 @@ Deno.serve(async (req) => {
         const { data: sub } = await db.from("subscriptions").select("status,plan,stripe_sub").eq("user_id", b.user_id).maybeSingle();
         if (sub?.stripe_sub && ["active", "trialing", "past_due"].includes(sub.status)) return json({ error: "This person already pays through Stripe." }, 400);
         const end = new Date(Date.now() + months * 30.4 * 864e5).toISOString();
-        await one(db.from("subscriptions").upsert({ user_id: b.user_id, status: "active", plan: "comp", period_end: end, updated_at: new Date().toISOString() }));
+        await one(db.from("subscriptions").upsert({ user_id: b.user_id, status: "active", plan: "comp", source: "comp", period_end: end, updated_at: new Date().toISOString() }));
         await log("comp_pro", { user_id: b.user_id, months, until: end });
         return json({ ok: true, until: end });
       }

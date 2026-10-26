@@ -36,9 +36,11 @@ Deno.serve(async (req) => {
   if (body.action !== "delete") return json({ error: "unknown_action" }, 400);
 
   const { data: sub } = await db.from("subscriptions").select("source,stripe_sub,status").eq("user_id", user.id).maybeSingle();
-  if (sub?.source !== "app_store" && sub?.stripe_sub && STRIPE) {
+  // cancel any Stripe subscription on file, whatever the current source says, so a deleted account is never charged
+  if (sub?.stripe_sub && STRIPE && sub.status !== "canceled") {
     const r = await fetch(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(sub.stripe_sub)}`, { method: "DELETE", headers: { Authorization: `Bearer ${STRIPE}` } });
-    if (!r.ok && r.status !== 404) return json({ error: "billing" }, 502); // don't delete the account while a card could still be charged
+    const already = !r.ok && /cancel/i.test(await r.clone().text().catch(() => ""));
+    if (!r.ok && r.status !== 404 && !already) return json({ error: "billing" }, 502); // don't delete the account while a card could still be charged
   }
   // Sign in with Apple: revoke the app's access with Apple too (App Store rule 5.1.1(v)); best effort
   const { data: ap } = await db.from("apple_tokens").select("refresh_token,client_id").eq("user_id", user.id).maybeSingle();
@@ -52,7 +54,9 @@ Deno.serve(async (req) => {
     const { error } = await db.from(t).delete().eq("user_id", user.id);
     if (error) console.warn(t, error.message);
   }
-  if (user.email) for (const t of ["signups", "reports"]) await db.from(t).delete().ilike("email", user.email);
+  // exact, case-insensitive match: escape LIKE wildcards so an address with % or _ can't match anyone else's rows
+  const like = (user.email || "").replace(/[\\%_]/g, (c) => "\\" + c);
+  if (like) for (const t of ["signups", "reports"]) await db.from(t).delete().ilike("email", like);
   const { error } = await db.auth.admin.deleteUser(user.id);
   if (error) return json({ error: "delete_failed" }, 500);
   return json({ ok: true, apple_subscription: sub?.source === "app_store" && ["active", "trialing", "past_due"].includes(sub?.status || "") });

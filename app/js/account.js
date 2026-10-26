@@ -2,6 +2,8 @@
 const ACCT={user:null,ready:false,client:null,saveT:null,msg:''};
 const USER_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.2-3.8 4.2-5.6 7.5-5.6s6.3 1.8 7.5 5.6"/></svg>';
 const signedIn=()=>!!ACCT.user;
+// a password reset link lands here with type=recovery; after it signs the person in, ask for the new password
+const RECOVERY=/type=recovery/.test(location.hash);
 
 function loadSupabaseLib(){
   if(window.supabase)return Promise.resolve();
@@ -12,13 +14,13 @@ async function acctInit(){
   ACCT.client=window.supabase.createClient(SB.url,SB.key,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'cr_auth',detectSessionInUrl:true}});
   const {data}=await ACCT.client.auth.getSession();
   await acctSet(data.session?.user||null);
-  ACCT.client.auth.onAuthStateChange((_ev,session)=>{const u=session?.user||null;if((u&&u.id)!==(ACCT.user&&ACCT.user.id))acctSet(u)});
+  ACCT.client.auth.onAuthStateChange((ev,session)=>{const u=session?.user||null;if((u&&u.id)!==(ACCT.user&&ACCT.user.id))acctSet(u);if(ev==='PASSWORD_RECOVERY')setTimeout(newPasswordSheet,300)});
   ACCT.ready=true;render();
+  if(RECOVERY&&ACCT.user)setTimeout(newPasswordSheet,300);
 }
 /* while signed out, follows and saved reps aren't shown; signing in restores the account's own */
 async function acctSet(u){
   ACCT.user=u;
-  try{gtag('set',{user_id:u?u.id:null})}catch(e){}
   if(!u){S.following=new Set();render();return}
   let row=null;
   try{const r=await ACCT.client.from('user_prefs').select('zip,home,dist,following').eq('user_id',u.id).maybeSingle();row=r.data}catch(e){console.warn(e)}
@@ -88,9 +90,30 @@ async function authSubmit(){
     say(/Invalid login/i.test(m)?'That email and password don’t match.':/not confirmed/i.test(m)?'Confirm your email first. Check your inbox for the link we sent.':/already registered/i.test(m)?'There’s already an account with that email. Sign in instead.':/rate limit/i.test(m)?'Too many tries. Wait a few minutes and try again.':m);
   }finally{btn.disabled=false}
 }
+function newPasswordSheet(){
+  if(!ACCT.user||document.getElementById('npform'))return;
+  openSheet('Choose a new password',`<form class="authform" id="npform" novalidate>
+    <p class="authwhy">You opened a password reset link. Pick a new password for ${esc(ACCT.user.email||'your account')}.</p>
+    <label class="af">New password<input id="np1" type="password" autocomplete="new-password" minlength="8" required></label>
+    <label class="af">Type it again<input id="np2" type="password" autocomplete="new-password" minlength="8" required></label>
+    <div id="npmsg" class="amsg" role="status"></div>
+    <button class="abtn" type="submit">Save new password</button></form>`);
+  setTimeout(()=>$('#np1')?.focus(),60);
+}
+async function newPasswordSubmit(){
+  const a=$('#np1').value,b=$('#np2').value,msg=$('#npmsg'),btn=$('#npform .abtn');
+  const say=(t,ok)=>{msg.textContent=t;msg.className='amsg'+(ok?' ok':'')};
+  if(a.length<8)return say('Passwords need at least 8 characters.');
+  if(a!==b)return say('The two passwords don’t match.');
+  btn.disabled=true;say('One moment…',true);
+  try{const {error}=await ACCT.client.auth.updateUser({password:a});if(error)throw error;
+    history.replaceState(null,'',location.pathname+location.search);$('#sheet').hidden=true;toast('Your new password is saved.')}
+  catch(e){say(/should be different/i.test(String(e.message))?'Pick a password you haven’t used for this account before.':/weak|pwned|leaked/i.test(String(e.message))?'That password is too easy to guess. Try a longer one.':'We couldn’t save it. Try again, or ask for a new reset link.')}
+  finally{btn.disabled=false}
+}
 async function signOut(){if(ACCT.client)await ACCT.client.auth.signOut();ACCT.user=null;S.following=new Set();if(S.tab==='following')S.tab='home';render()}
 
-window.addEventListener('submit',e=>{if(e.target.id==='authform'){e.preventDefault();authSubmit()}},true);
+window.addEventListener('submit',e=>{if(e.target.id==='authform'){e.preventDefault();authSubmit()}if(e.target.id==='npform'){e.preventDefault();newPasswordSubmit()}},true);
 window.addEventListener('click',e=>{
   const g=s=>e.target.closest(s);let el;
   if(el=g('[data-auth]')){e.preventDefault();e.stopImmediatePropagation();closeDrawer?.();authSheet(el.dataset.auth);return}

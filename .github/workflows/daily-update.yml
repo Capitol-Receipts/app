@@ -85,13 +85,19 @@ jobs:
           if [ -z "$TABLES" ]; then echo "Nothing changed today."; exit 0; fi
           python scripts/load_supabase.py $TABLES
       - name: Send alert emails
+        id: alerts
         if: always()
         env:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           curl -s -m 280 -X POST https://hxgckcriehvrolwnabpd.supabase.co/functions/v1/send-alerts \
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "Content-Type: application/json" -d '{}' | tee -a work/last_run.txt || true
+            -H "Content-Type: application/json" -d '{}' -o work/alerts.json -w "%{http_code}" > work/alerts_code.txt || echo 000 > work/alerts_code.txt
+          cat work/alerts.json 2>/dev/null | tee -a work/last_run.txt; echo
+          code=$(cat work/alerts_code.txt)
+          if [ "$code" != "200" ] || grep -q '"errors":\[[^]]' work/alerts.json 2>/dev/null; then
+            echo "::error::Alert emails failed (HTTP $code). See the step output."; echo "failed=1" >> "$GITHUB_OUTPUT"
+          fi
       - name: Save pipeline state
         if: success()
         uses: actions/cache/save@v4
@@ -101,3 +107,8 @@ jobs:
       - name: Summary
         if: always()
         run: cat work/last_run.txt >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Fail the run if alert emails failed
+        if: steps.alerts.outputs.failed == '1'
+        run: |
+          echo "The data update finished, but sending alert emails failed. See the 'Send alert emails' step."
+          exit 1

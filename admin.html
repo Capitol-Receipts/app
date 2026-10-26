@@ -64,6 +64,7 @@ textarea{width:100%;min-height:70px}
 .login{min-height:100vh;display:grid;place-items:center;padding:16px}
 .login form{background:var(--panel);border-radius:18px;padding:28px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px}
 .login .brand{color:var(--ink);padding:0 0 8px}
+.linkbtn{background:none;border:0;padding:0;color:inherit;text-decoration:underline;cursor:pointer;font:inherit}
 .err{color:var(--bad);font-size:13.5px;min-height:1em}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:14px}.kv span{color:var(--soft)}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}.dot.ok{background:var(--good)}.dot.no{background:var(--bad)}.dot.run{background:var(--warn)}
@@ -109,12 +110,39 @@ function loginView(msg){
     const {error}=await sb.auth.signInWithPassword({email:id,password:$('#lp').value});
     if(error){$('#lerr').textContent=error.message;return}boot()};
 }
+/* ---------- second step: authenticator app code (required for every admin session) ---------- */
+async function mfaView(msg){
+  const {data:f,error}=await sb.auth.mfa.listFactors();
+  if(error)return loginView(error.message);
+  const ok=(f.totp||[]).find(x=>x.status==='verified');
+  let factorId=ok&&ok.id,setup='';
+  if(!ok){
+    for(const x of (f.all||[]).filter(x=>x.status!=='verified'))await sb.auth.mfa.unenroll({factorId:x.id}).catch(()=>{});
+    const {data:en,error:ee}=await sb.auth.mfa.enroll({factorType:'totp',friendlyName:'Admin '+new Date().toISOString().slice(0,10)});
+    if(ee)return loginView(ee.message);
+    factorId=en.id;
+    setup=`<p class="muted" style="margin:0 0 10px">Admin sign-in needs a code from an authenticator app (Google Authenticator, 1Password, Authy). Scan this once:</p>
+      <img src="${esc(en.totp.qr_code)}" alt="QR code for your authenticator app" width="180" height="180" style="display:block;margin:0 auto 8px;background:#fff">
+      <p class="muted" style="margin:0 0 12px;word-break:break-all">Or enter this key by hand: <code>${esc(en.totp.secret)}</code></p>`;
+  }
+  $('#root').innerHTML=`<div class="login"><form id="mf"><div class="brand"><b>Capitol</b>Receipts <em>Admin</em></div>${setup}
+   <label>6-digit code<br><input id="mc" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required style="width:100%"></label>
+   <button class="btn" type="submit">Continue</button><div class="err" id="merr" role="alert">${esc(msg||'')}</div>
+   <div class="muted"><button type="button" id="mso" class="linkbtn">Sign out</button></div></form></div>`;
+  $('#mso').onclick=async()=>{await sb.auth.signOut();loginView()};
+  $('#mc').focus();
+  $('#mf').onsubmit=async e=>{e.preventDefault();$('#merr').textContent='';
+    const {error}=await sb.auth.mfa.challengeAndVerify({factorId,code:$('#mc').value.trim()});
+    if(error){$('#merr').textContent='That code didn’t work. Check the time on your phone and try the newest code.';return}
+    boot()};
+}
 async function boot(){
   const {data:{session}}=await sb.auth.getSession();
   if(!session)return loginView();
   try{ST.me=(await api('me')).email}catch(e){
     if(e.message==='not_admin'){await sb.auth.signOut();return loginView('That account is not an admin.')}
     if(e.message==='sign_in'){await sb.auth.signOut();return loginView('Please sign in again. Your email must be confirmed.')}
+    if(e.message==='mfa_required')return mfaView();
     return loginView(e.message)}
   const v=(location.hash||'').slice(1);if(VIEWS.some(x=>x[0]===v))ST.view=v;
   shell();go(ST.view);

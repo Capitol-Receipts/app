@@ -64,12 +64,18 @@ async function sync(db: DB, ev: any) {
     userId = s.client_reference_id || s.metadata?.user_id || null;
     sub = await getSub(s.subscription);
   } else if (/^customer\.subscription\.(created|updated|deleted)$/.test(ev.type)) {
-    sub = ev.data.object;
+    // events can arrive late or out of order: use Stripe's current state of the subscription, not the event's snapshot
+    sub = await getSub(ev.data.object.id).catch(() => ev.data.object);
   } else return;
   userId = userId || await userFor(db, sub.customer, sub);
   if (!userId) return;
-  const status = ev.type === "customer.subscription.deleted" ? "canceled" : sub.status === "trialing" ? "trialing" : statusOf(sub.status);
+  const status = sub.status === "canceled" || sub.status === "incomplete_expired" ? "canceled" : sub.status === "trialing" ? "trialing" : statusOf(sub.status);
   if (!status) return;
+  // an ended web subscription must not overwrite a running App Store or complimentary one
+  if (status === "canceled") {
+    const { data: cur } = await db.from("subscriptions").select("source,status,stripe_sub").eq("user_id", userId).maybeSingle();
+    if (cur && (cur.source === "app_store" || cur.source === "comp") && cur.status !== "canceled") return;
+  }
   const item = sub.items?.data?.[0];
   const end = sub.current_period_end || item?.current_period_end;
   const interval = item?.price?.recurring?.interval;
@@ -77,7 +83,7 @@ async function sync(db: DB, ev: any) {
     user_id: userId, status, plan: interval === "month" ? "monthly" : interval === "year" ? "yearly" : "pro",
     period_end: end ? new Date(end * 1000).toISOString() : null,
     trial_ends: sub.status === "trialing" && sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
-    stripe_customer: sub.customer, stripe_sub: sub.id, updated_at: new Date().toISOString(),
+    source: "stripe", store_ref: null, stripe_customer: sub.customer, stripe_sub: sub.id, updated_at: new Date().toISOString(),
   });
   if (error) throw error;
 }

@@ -70,6 +70,7 @@ if(NATIVE){
   if(P){
     P.addListener('registration',async t=>{
       try{const uid=ACCT.user&&ACCT.user.id;if(!uid)return;
+        IOS.token=t.value;
         await ACCT.client.from('push_devices').upsert({token:t.value,user_id:uid,platform:'ios',updated_at:new Date().toISOString()},{onConflict:'token'});
         IOS.push='on';store.set('pushAsked',true);}catch(e){console.warn('push save',e)}});
     P.addListener('registrationError',e=>console.warn('push reg',e));
@@ -79,6 +80,17 @@ if(NATIVE){
   }
   // already allowed: refresh the token quietly after sign-in
   setTimeout(()=>{if(signedIn())pushOn(false)},2500);
+}
+
+// signing out stops this phone's alerts for that account and signs RevenueCat out, so the next person doesn't get them
+if(NATIVE&&typeof signOut==='function'){
+  const _signOutNative=signOut;
+  signOut=async function(){
+    try{if(IOS.token&&ACCT.client)await ACCT.client.from('push_devices').delete().eq('token',IOS.token)}catch(e){console.warn('push remove',e)}
+    try{const RC=plug('Purchases');if(RC&&IOS.configured)await RC.logOut()}catch(e){}
+    IOS.push='off';IOS.offer=null;
+    return _signOutNative.apply(this,arguments);
+  };
 }
 
 /* ---------- links that open the app (capitolreceipts.com pages, alert emails) ---------- */
