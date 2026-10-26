@@ -42,6 +42,7 @@ more=function(){
     const rows=`<div class="sec"><div class="group">
       ${NATIVE?`<button class="row plain" data-pushon style="grid-template-columns:1fr auto"><span><span class="t">Alerts on this iPhone</span><br><span class="s">${IOS.push==='on'?'On':'Get a notification when someone you follow trades stock'}</span></span>${chev}</button>`:''}
       ${NATIVE?`<button class="row plain" data-restore style="grid-template-columns:1fr auto"><span class="t">Restore purchases</span>${chev}</button>`:''}
+      ${NATIVE&&IOS.bio&&typeof isPro==='function'&&isPro()?`<button class="row plain" data-faceid style="grid-template-columns:1fr auto"><span><span class="t">Lock with ${IOS.bio==='touchID'?'Touch ID':'Face ID'}</span><br><span class="s">${lockOn()?'On: asks when you open the app':'Off'}</span></span>${chev}</button>`:''}
       <button class="row plain" data-delsheet style="grid-template-columns:1fr auto"><span class="t" style="color:#c8323a">Delete my account</span>${chev}</button></div></div>`;
     h=h.replace(/<\/div>\s*$/,rows+'</div>');
   }
@@ -172,3 +173,55 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .mtabs{top:calc(var(--navh,50px) + env(safe-area-inset-top,0px))!important}
 .native .pfine a{color:inherit;text-decoration:underline}
 </style>`);
+
+
+/* ---------- home-screen widget: share who you follow with it ---------- */
+const CRN=NATIVE?plug('CRNative'):null;
+let _widgetSent='';
+function syncWidget(){
+  if(!CRN||!CRN.setWidgetData)return;
+  const ids=signedIn()?[...(S.following||[])].filter(id=>typeof byId!=='undefined'&&byId[id]).slice(0,200):[];
+  const key=(signedIn()?'1':'0')+ids.join(',');if(key===_widgetSent)return;_widgetSent=key;
+  CRN.setWidgetData({signedIn:signedIn(),follows:ids.map(id=>({id,name:byId[id].full||byId[id].name}))}).catch(()=>{_widgetSent=''});
+}
+if(CRN){const _renderW=render;render=function(){const r=_renderW.apply(this,arguments);try{syncWidget()}catch(e){}return r}}
+
+/* ---------- optional Face ID / Touch ID lock (Pro) ---------- */
+const lockOn=()=>{try{return localStorage.getItem('cr_lock')==='1'}catch(e){return false}};
+if(CRN&&CRN.biometricStatus)CRN.biometricStatus().then(r=>{if(r&&r.available){IOS.bio=r.type;if(!$('#sheet').hidden)return;render()}}).catch(()=>{});
+function lockScreen(){
+  if(document.getElementById('applock'))return;
+  const d=document.createElement('div');d.id='applock';d.setAttribute('role','dialog');d.setAttribute('aria-label','App locked');
+  d.style.cssText='position:fixed;inset:0;z-index:10000;background:#14274e;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center';
+  d.innerHTML='<b style="font-size:22px"><span style="background:#c8323a;padding:2px 7px;border-radius:5px">Capitol</span> Receipts</b><p style="margin:0;opacity:.85">Locked</p><button class="abtn" data-unlock style="background:#fff;color:#14274e">Unlock</button>';
+  document.body.appendChild(d);unlock();
+}
+async function unlock(){
+  if(!CRN)return;try{const r=await CRN.authenticate({reason:'Unlock Capitol Receipts'});if(r&&r.ok){const d=document.getElementById('applock');if(d)d.remove()}}catch(e){}
+}
+if(CRN){
+  if(lockOn())lockScreen();
+  let away=0;const A=plug('App');
+  if(A)A.addListener('appStateChange',st=>{if(!st.isActive){away=Date.now();return}if(lockOn()&&away&&Date.now()-away>60000)lockScreen()});
+}
+document.addEventListener('click',async e=>{
+  const g=s=>e.target.closest&&e.target.closest(s);
+  if(g('[data-unlock]')){e.preventDefault();unlock();return}
+  if(g('[data-faceid]')){e.preventDefault();e.stopImmediatePropagation();
+    if(lockOn()){try{localStorage.removeItem('cr_lock')}catch(x){}toast('App lock is off.');render();return}
+    try{const r=await CRN.authenticate({reason:'Turn on the app lock'});if(r&&r.ok){try{localStorage.setItem('cr_lock','1')}catch(x){}toast('App lock is on. You’ll be asked when you open the app.');render()}}catch(x){}
+    return}
+},true);
+
+/* ---------- offline: say so, and keep the people you follow ready to read ---------- */
+function offlineNote(){if(navigator.onLine===false&&typeof toast==='function')toast('You’re offline. Showing records saved on this device.')}
+addEventListener('offline',offlineNote);
+addEventListener('online',()=>{if(typeof toast==='function')toast('Back online.')});
+if(navigator.onLine===false)setTimeout(offlineNote,1500);
+/* once a day, open-and-cache the photos and pages of followed members so they read offline (the data itself is
+   already cached by the service worker when the app loads) */
+setTimeout(()=>{try{
+  if(!navigator.onLine||!signedIn()||typeof byId==='undefined')return;
+  const last=+(localStorage.getItem('cr_offline_at')||0);if(Date.now()-last<864e5)return;localStorage.setItem('cr_offline_at',String(Date.now()));
+  [...(S.following||[])].slice(0,50).forEach(id=>{if(byId[id]&&window.__PHOTOS&&window.__PHOTOS[id])fetch(faceSrc(id)).catch(()=>{})});
+}catch(e){}},8000);

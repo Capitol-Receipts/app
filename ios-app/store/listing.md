@@ -49,7 +49,7 @@ Privacy Policy: https://www.capitolreceipts.com/privacy
 congress,stock trades,senate,house,campaign finance,lobbying,votes,politics,FEC,STOCK Act,PAC,donors
 
 ## What's new (version 1.0)
-The first iPhone version of Capitol Receipts, with trade alerts on your phone.
+The first iPhone version of Capitol Receipts: trade alerts on your phone, a home-screen widget with the latest trades by the people you follow, Face ID lock for Pro, and offline reading.
 
 ## Screenshots
 `store/screenshots/` holds seven 1290 × 2796 images (the 6.9" iPhone size; App Store Connect uses them for smaller iPhones too):
@@ -95,4 +95,6 @@ Password: [its password]
 
 - Push alerts: Account › Alerts on this iPhone, then follow any member (star on their page).
 - Pro: open the menu › Capitol Receipts Pro › Subscribe. Restore purchases is on the same screen and in Account.
+- Widget: long-press the home screen › + › Capitol Receipts. It shows the latest trades by the members you follow.
+- Face ID lock (Pro): Account › Lock with Face ID.
 - Account deletion: Account › Delete my account. It deletes the account and all saved data right away.

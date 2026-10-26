@@ -10,6 +10,13 @@ code as the website, so every web release updates the app too. The shell adds wh
   No card checkout or Stripe links appear inside the app.
 - **iPhone share sheet**, **links that open the app** (capitolreceipts.com pages and alert emails), and **offline**:
   pages already viewed open without a connection (`/sw.js`), with `www/offline.html` on a first launch offline.
+- **Home-screen widget** (`ios/App/CapitolWidget`, iOS 17+): the latest trades by the people you follow, refreshed
+  hourly from the public trades table, last copy shown offline. The app shares who you follow through the App Group
+  `group.com.capitolreceipts.app` (`App/CRNativePlugin.swift`, registered in `App/MainViewController.swift`).
+  The target was added by `ruby scripts_add_widget.rb` (safe to re-run).
+- **App lock** with Face ID or Touch ID (falls back to the passcode) for Pro accounts: Account › Lock with Face ID.
+  It asks on launch and after the app has been away for more than a minute.
+- **Offline reading**: a notice when the phone is offline; followed members' records and photos are kept on the device.
 - **Delete my account** in Account (required by Apple, and on the web too): `supabase/functions/account`.
 
 The app identity: bundle id `com.capitolreceipts.app`, iPhone only, portrait.
@@ -25,7 +32,7 @@ npx cap sync ios
 npx cap open ios
 ```
 
-In Xcode: select the **App** target › Signing & Capabilities › choose the Squared Away Labs team. The entitlements file
+In Xcode: select the **App** target › Signing & Capabilities › choose the Squared Away Labs team for both the **App** and **CapitolWidget** targets, and add the App Groups capability with `group.com.capitolreceipts.app` to both (also register that App Group and the widget bundle id `com.capitolreceipts.app.widget` in the Apple Developer portal). The entitlements file
 already asks for Push Notifications and Associated Domains; add **In-App Purchase** with the + Capability button.
 Then Product › Archive › Distribute › App Store Connect, and test it in TestFlight.
 
