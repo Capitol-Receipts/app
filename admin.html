@@ -86,8 +86,8 @@ const dt=s=>s?new Date(s).toLocaleDateString('en-US',{month:'short',day:'numeric
 const dtt=s=>s?new Date(s).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
 const ago=s=>{if(!s)return '—';const m=(Date.now()-new Date(s))/6e4;return m<60?Math.round(m)+'m ago':m<1440?Math.round(m/60)+'h ago':Math.round(m/1440)+'d ago'};
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),2800)}
-const ST={view:'overview',me:null,cache:{},uq:'',uonly:'all',uoff:0,rfilter:'open'};
-const VIEWS=[['overview','Overview'],['people','People'],['revenue','Pro & revenue'],['reports','Mistake reports'],['corrections','Corrections'],['signups','Sign-ups'],['emails','Emails'],['system','System']];
+const ST={view:'overview',me:null,cache:{},uq:'',uonly:'all',uoff:0,rfilter:'open',sfilter:'open'};
+const VIEWS=[['overview','Overview'],['support','Support'],['people','People'],['revenue','Pro & revenue'],['reports','Mistake reports'],['corrections','Corrections'],['signups','Sign-ups'],['emails','Emails'],['system','System']];
 
 async function api(action,body={}){
   const {data:{session}}=await sb.auth.getSession();
@@ -175,10 +175,13 @@ const R={
 async overview(){
   const d=await api('overview');ST.cache.ov=d;const s=d.stats,r=d.revenue||{};
   const ro=s.reports_open;const bd=document.querySelector('[data-badge="reports"]');if(bd)bd.innerHTML=ro?`<i>${ro}</i>`:'';
+  const so=s.support_open;const bs=document.querySelector('[data-badge="support"]');if(bs)bs.innerHTML=so?`<i>${so}</i>`:'';
+  const down=(d.status||[]).filter(x=>!x.ok);
   const sig=(s.signups_by_day||[]);
   const revDays=sig.map(([d])=>[d,(r.by_day||{})[d]||0]);
   return head('Overview','Accounts, Pro and data health at a glance.')+
-  `<div class="tiles">${tile('Accounts',ord(s.users),`${ord(s.users_7d)} new this week · ${ord(s.users_30d)} in 30 days`)}
+  (down.length?`<div class="card" style="margin-bottom:14px;border-color:var(--bad)"><b>Down right now:</b> ${down.map(x=>esc(x.label)+' since '+dtt(x.changed_at)).join(', ')}</div>`:'')+
+  `<div class="tiles">${tile('Open support requests',ord(s.support_open),'answer from the Support tab',s.support_open?'warn':'')}${tile('Accounts',ord(s.users),`${ord(s.users_7d)} new this week · ${ord(s.users_30d)} in 30 days`)}
    ${tile('Signed in this week',ord(s.active_7d),`${ord(s.confirmed)} confirmed emails`)}
    ${tile('Pro now',ord(s.pro),`${ord(s.paying)} paying · ${ord(s.trialing)} in free trial · ${ord(s.comp)} comped`,'hl')}
    ${tile('Monthly revenue (MRR)',r.configured&&!r.error?usd(r.mrr):'—',r.configured&&!r.error?`${usd(r.arr)} a year at this rate`:'Stripe not reachable')}
@@ -192,6 +195,7 @@ async overview(){
    </div>
    <h2>Data</h2><div class="card kv"><span>Records as of</span><b>${esc(fmtAsof(s.data_asof))}</b><span>Last database refresh</span><b>${s.data_updated&&s.data_updated.at?dtt(s.data_updated.at)+' ('+ago(s.data_updated.at)+')':'—'}</b>
     <span>Billing emails</span><b>${s.billing_emails_on?'On':'Off'}</b><span>Emails sent this week</span><b>${ord(s.alert_emails_7d)} weekly updates · ${ord(s.billing_emails_7d)} billing</b></div>
+   <h2>Uptime (checked every 5 minutes)</h2><div class="tbl"><table><thead><tr><th>Service</th><th>Status</th><th>Response</th><th>Last check</th></tr></thead><tbody>${(d.status||[]).map(x=>`<tr><td>${esc(x.label)}</td><td>${x.ok?'<span class="pill p-pro">Up</span>':'<span class="pill p-bad">Down</span>'}<div class="muted">since ${dtt(x.changed_at)}</div></td><td>${x.last_ms!=null?x.last_ms+' ms':'—'}${x.last_error?`<div class="muted">${esc(x.last_error)}</div>`:''}</td><td>${ago(x.checked_at)}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">The monitor hasn’t run yet.</td></tr>'}</tbody></table></div>
    <h2>Daily update runs</h2>${runsTable(d.runs)}`;
 },
 async people(){
@@ -220,6 +224,21 @@ async revenue(){
    <h2>Recent payments</h2><div class="tbl"><table><thead><tr><th>Date</th><th>Customer</th><th>Amount</th><th>Note</th></tr></thead><tbody>
    ${(r.recent||[]).map(c=>`<tr><td>${dtt(c.at*1000)}</td><td>${esc(c.email||'—')}</td><td><b>${usd(c.amount)}</b>${c.refunded?' <span class="pill p-bad">Refunded</span>':''}</td><td class="muted">${esc(c.desc)}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">No payments in the last 30 days.</td></tr>'}</tbody></table></div>
    <p class="muted" style="margin-top:12px">Refunds, disputes and payouts: <a href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener">open Stripe</a>.</p>`;
+},
+async support(){
+  const all=await api('support',{status:'all'});ST.cache.support=all;
+  const list=all.filter(r=>ST.sfilter==='all'||r.status===ST.sfilter);
+  const cnt=k=>all.filter(r=>r.status===k).length;
+  const TOP={"account": "Account or sign-in", "billing": "Billing and Pro", "alerts": "Alerts and emails", "data": "A mistake in the data", "app": "Something isn't working", "privacy": "Privacy or deleting data", "other": "Something else"};
+  return head('Support','Messages from the Help & support form on the website and in the apps. Replies are emailed from support@capitolreceipts.com; when people answer, it comes to admin@squaredawaylabs.com.')+
+   `<div class="bar"><div class="seg" role="group">${[['open',`Open (${cnt('open')})`],['answered',`Answered (${cnt('answered')})`],['closed',`Closed (${cnt('closed')})`],['all','All']].map(([k,l])=>`<button data-sf="${k}" aria-pressed="${ST.sfilter===k}">${l}</button>`).join('')}</div></div>
+   ${list.length?list.map(r=>`<div class="card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>CR-${r.id} · ${esc(TOP[r.topic]||r.topic)}</b><span class="muted">${dtt(r.created_at)}</span></div>
+     <div class="muted" style="margin-top:4px">${esc(r.name||'')} <a href="mailto:${esc(r.email)}?subject=${encodeURIComponent('Re: your message to Capitol Receipts (CR-'+r.id+')')}">${esc(r.email)}</a> · ${r.user_id?'signed in · '+esc(r.plan||''):'not signed in'} · ${esc(r.platform||'web')}${r.page?' · '+esc(r.page):''}</div>
+     <p style="margin:10px 0;white-space:pre-wrap">${esc(r.message)}</p>
+     ${(r.replies||[]).map(x=>`<div style="border-left:0;background:var(--soft,#f3f4f6);border-radius:8px;padding:8px 10px;margin:6px 0"><div class="muted">Reply by ${esc(x.by)} · ${dtt(x.at)}</div><div style="white-space:pre-wrap">${esc(x.text)}</div></div>`).join('')}
+     ${r.status!=='closed'?`<form class="sreply" data-id="${r.id}" style="display:grid;gap:8px;margin-top:8px"><textarea required placeholder="Write a reply. It is emailed to ${esc(r.email)}." aria-label="Reply to CR-${r.id}" style="min-height:90px"></textarea>
+       <div class="row-actions"><button class="btn sm" type="submit">Send reply</button><button class="btn sm ghost" type="submit" data-andclose="1">Send and close</button><button class="btn sm ghost" type="button" data-ss="closed" data-id="${r.id}">Close without reply</button></div></form>`
+      :`<div class="row-actions" style="margin-top:8px"><span class="pill p-free">Closed ${dt(r.updated_at)}</span><button class="btn sm ghost" data-ss="open" data-id="${r.id}">Reopen</button></div>`}</div>`).join(''):'<div class="card empty">Nothing here. New messages from the Help & support form land here and in your email.</div>'}`;
 },
 async reports(){
   const all=await api('reports');ST.cache.reports=all;
@@ -294,6 +313,8 @@ document.addEventListener('click',async e=>{
   else if(t.dataset.uncomp)run(()=>api('user_uncomp',{user_id:t.dataset.uncomp}),'Comped Pro removed.')
   else if(t.dataset.reset)run(()=>api('user_reset',{user_id:t.dataset.reset}),'Password reset email sent.')
   else if(t.dataset.rf){ST.rfilter=t.dataset.rf;go('reports')}
+  else if(t.dataset.sf){ST.sfilter=t.dataset.sf;go('support')}
+  else if(t.dataset.ss)run(()=>api('support_update',{id:+t.dataset.id,status:t.dataset.ss}),t.dataset.ss==='open'?'Reopened.':'Closed.')
   else if(t.dataset.rs)run(()=>api('report_update',{id:+t.dataset.id,status:t.dataset.rs}),t.dataset.rs==='open'?'Reopened.':'Updated.')
   else if(t.dataset.fix){const r=(ST.cache.reports||[]).find(x=>x.id==t.dataset.fix);ST.view='corrections';history.replaceState(null,'','#corrections');document.querySelectorAll('[data-v]').forEach(b=>b.setAttribute('aria-current',b.dataset.v==='corrections'?'page':'false'));$('#main').innerHTML=await R.corrections({page:r?.page,what:r?.message,report_id:r?.id})}
   else if(t.dataset.cdel)run(()=>api('correction_delete',{id:+t.dataset.cdel}),'Correction deleted.')
@@ -306,6 +327,8 @@ document.addEventListener('click',async e=>{
 document.addEventListener('submit',async e=>{
   if(e.target.id==='cf'){e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;
     try{await api('correction_add',{fixed_on:$('#cd').value,page:$('#cp').value,what:$('#cw').value,before:$('#cb').value,after:$('#ca').value,report_id:+$('#crid').value||null});toast('Correction published.');go('corrections')}catch(err){toast(err.message);b.disabled=false}}
+  if(e.target.classList.contains('sreply')){e.preventDefault();const f=e.target,btns=f.querySelectorAll('button');const close=!!(e.submitter&&e.submitter.dataset.andclose);btns.forEach(b=>b.disabled=true);
+    try{await api('support_reply',{id:+f.dataset.id,text:f.querySelector('textarea').value,close});toast('Reply sent.');ST.cache.ov=null;go('support')}catch(err){toast(err.message);btns.forEach(b=>b.disabled=false)}}
   if(e.target.id==='af'){e.preventDefault();try{await api('admin_add',{email:$('#ae').value});toast('Admin added.');go('system')}catch(err){toast(err.message)}}
 });
 sb.auth.onAuthStateChange((ev)=>{if(ev==='SIGNED_OUT')loginView()});

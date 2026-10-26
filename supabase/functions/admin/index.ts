@@ -104,7 +104,11 @@ Deno.serve(async (req) => {
           revenue().catch((e) => ({ configured: true, error: String(e.message || e) })),
           workflowRuns(),
         ]);
-        return json({ stats, revenue: rev, runs });
+        const [{ count: support_open }, status] = await Promise.all([
+          db.from("support_requests").select("id", { count: "exact", head: true }).eq("status", "open"),
+          db.from("service_status").select("*").order("service"),
+        ]);
+        return json({ stats: { ...(stats || {}), support_open: support_open || 0 }, revenue: rev, runs, status: status.data || [] });
       }
 
       case "users":
@@ -142,6 +146,43 @@ Deno.serve(async (req) => {
         const status = b.status === "resolved" ? "resolved" : b.status === "dismissed" ? "dismissed" : "open";
         await one(db.from("reports").update({ status, note: b.note ?? null, resolved_at: status === "open" ? null : new Date().toISOString() }).eq("id", b.id));
         await log("report_" + status, { id: b.id });
+        return json({ ok: true });
+      }
+
+      case "support": {
+        const st = ["open", "answered", "closed", "all"].includes(b.status) ? b.status : "open";
+        let q = db.from("support_requests").select("id,created_at,email,name,topic,message,page,platform,user_id,plan,status,replies,note,updated_at").order("created_at", { ascending: false }).limit(200);
+        if (st !== "all") q = q.eq("status", st);
+        return json(await one(q));
+      }
+
+      case "support_reply": {
+        const text = String(b.text || "").trim().slice(0, 8000);
+        if (text.length < 2) return json({ error: "Write a reply first." }, 400);
+        const { data: t } = await db.from("support_requests").select("id,email,name,topic,message,replies").eq("id", b.id).maybeSingle();
+        if (!t) return json({ error: "Request not found." }, 404);
+        if (!RESEND) return json({ error: "Email isn't set up (RESEND_API_KEY)." }, 500);
+        const e = (x: string) => x.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+        const F = "-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif";
+        const n = (t.replies || []).length + 1;
+        const html = `<div style="background:#f3f4f6;padding:24px 12px"><table role="presentation" width="100%" style="max-width:560px;margin:0 auto;background:#fff;border-radius:14px;padding:24px 28px"><tr><td>
+<div style="font:800 18px ${F}"><span style="background:#c8323a;color:#fff;padding:2px 6px;border-radius:4px">Capitol</span> Receipts</div>
+<div style="white-space:pre-wrap;margin:18px 0;font:15px/1.6 ${F};color:#1f2937">${e(text)}</div>
+<div style="font:13px/1.5 ${F};color:#6b7280;border-top:1px solid #e6e8ec;padding-top:12px">Capitol Receipts Support · reference CR-${t.id}. Reply to this email to write back.<br><br>Your message:<br><span style="white-space:pre-wrap">${e(String(t.message).slice(0, 2000))}</span></div></td></tr></table></div>`;
+        const r = await fetch("https://api.resend.com/emails", { method: "POST",
+          headers: { Authorization: `Bearer ${RESEND}`, "Content-Type": "application/json", "Idempotency-Key": `support-${t.id}-reply-${n}` },
+          body: JSON.stringify({ from: "Capitol Receipts Support <support@capitolreceipts.com>", to: [t.email], reply_to: Deno.env.get("SUPPORT_INBOX") || "admin@squaredawaylabs.com", subject: `Re: your message to Capitol Receipts (CR-${t.id})`, html }) });
+        if (!r.ok) return json({ error: `Email failed: ${r.status} ${(await r.text()).slice(0, 160)}` }, 502);
+        const replies = [...(t.replies || []), { at: new Date().toISOString(), by: me, text }];
+        await one(db.from("support_requests").update({ replies, status: b.close ? "closed" : "answered", updated_at: new Date().toISOString() }).eq("id", t.id));
+        await log("support_reply", { id: t.id });
+        return json({ ok: true });
+      }
+
+      case "support_update": {
+        const status = ["open", "answered", "closed"].includes(b.status) ? b.status : "open";
+        await one(db.from("support_requests").update({ status, note: b.note ?? undefined, updated_at: new Date().toISOString() }).eq("id", b.id));
+        await log("support_" + status, { id: b.id });
         return json({ ok: true });
       }
 

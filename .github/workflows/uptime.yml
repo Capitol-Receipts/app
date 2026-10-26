@@ -1,6 +1,8 @@
 name: Uptime check
-# Every 30 minutes: the app, the website, the data proxy and the database must answer. A failed run emails the repo
-# owner (GitHub's default notification), so outages are noticed without a paid monitoring service.
+# Backup check. The main monitor runs inside Supabase every 5 minutes (supabase/functions/uptime) and emails
+# admin@squaredawaylabs.com when something goes down. This workflow checks the sites independently of Supabase, and checks
+# that the Supabase monitor itself has run in the last 20 minutes. GitHub may delay scheduled runs; a failed run emails
+# the repo owner.
 on:
   schedule:
     - cron: "7,37 * * * *"
@@ -26,4 +28,10 @@ jobs:
           check "Website" "https://www.capitolreceipts.com/" "Capitol Receipts"
           check "Record page" "https://www.capitolreceipts.com/member/P000197/nancy-pelosi" "Pelosi"
           check "Data proxy" "https://app.capitolreceipts.com/api/db?q=app_meta%3Fselect%3Dkey%26key%3Deq.asOf" "asOf"
+          # the 5-minute monitor in Supabase must still be running
+          last=$(curl -sS --max-time 20 "https://hxgckcriehvrolwnabpd.supabase.co/rest/v1/service_status?select=checked_at&order=checked_at.desc&limit=1" \
+            -H "apikey: sb_publishable_jiwF5q1sFMuaGXLKg6FKAQ_3rCjcZ1J" | grep -o '"checked_at":"[^"]*"' | cut -d'"' -f4)
+          if [ -z "$last" ] || [ $(( $(date +%s) - $(date -d "$last" +%s) )) -gt 1200 ]; then
+            echo "::error::The 5-minute uptime monitor in Supabase hasn't run since ${last:-ever}"; fail=1
+          else echo "ok   Supabase monitor ran at $last"; fi
           exit $fail

@@ -12,7 +12,7 @@ Secret values are never stored in this repo. This file lists their names and whe
 | Marketing site | Static HTML in `site/`, rebuilt by `scripts/build_site.py` → `seo_site.py`, `app_soon.py`, `site_live.py` | Vercel project for www.capitolreceipts.com (`site/vercel.json`) | Push to `main` |
 | Admin portal | `admin.html` at admin.capitolreceipts.com, calls the `admin` function. Requires an admin email plus an authenticator-app code | Vercel | Push to `main` |
 | Database and sign-in | Supabase project `hxgckcriehvrolwnabpd` (Postgres, Auth, Edge Functions). Every table has row-level security; public records are read-only to everyone; user tables are readable and writable only by their owner | Supabase | Migrations and functions via Supabase (see below) |
-| Edge functions | `supabase/functions/*`: `billing`, `stripe-webhook`, `appstore-webhook`, `account`, `apple-token`, `send-alerts`, `admin`, `send-samples` | Supabase | Supabase MCP or `supabase functions deploy <name>` |
+| Edge functions | `supabase/functions/*`: `billing`, `stripe-webhook`, `appstore-webhook`, `account`, `apple-token`, `send-alerts`, `admin`, `support`, `inbound-email`, `uptime`, `send-samples` | Supabase | Supabase MCP or `supabase functions deploy <name>` |
 | Daily data update | `pipeline/*.py` run by `.github/workflows/daily-update.yml` (several times each weekday), then `send-alerts` | GitHub Actions | Scheduled |
 | iPhone and Android apps | Capacitor shells in `mobile/` (`ios/`, `android/`) that load the live web app | App Store and Google Play (neither submitted yet) | Xcode archive / `./gradlew bundleRelease`, see `mobile/README.md` |
 
@@ -34,6 +34,8 @@ Everything privileged (Stripe, Resend, APNs, Apple, service role) runs in edge f
 | `REVENUECAT_WEBHOOK_AUTH` | appstore-webhook | Must match the authorization value set in RevenueCat |
 | `APNS_KEY`, `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_TOPIC`, `APNS_ENV` | send-alerts | iPhone push alerts |
 | `FCM_SERVICE_ACCOUNT` | send-alerts | Android push alerts (whole Firebase service-account JSON) |
+| `RESEND_WEBHOOK_SECRET` | inbound-email | Signing secret (whsec_...) of the Resend webhook for received mail |
+| `SUPPORT_INBOX`, `ALERT_EMAIL` | support, inbound-email, admin, uptime | Optional. Where support mail and outage alerts go (default admin@squaredawaylabs.com) |
 | `APPLE_TEAM_ID`, `APPLE_SIWA_KEY_ID`, `APPLE_SIWA_KEY` | apple-token, account | Sign in with Apple token exchange and revocation |
 
 **GitHub Actions secret**: `SUPABASE_SERVICE_ROLE_KEY` (daily data load and alert sending).
@@ -51,7 +53,7 @@ RevenueCat public iOS and Android keys (`app/js/native.js`, still empty), Google
   browsers pick up the new code.
 - **Edge functions**: deploy the changed function from `supabase/functions/<name>` (Supabase MCP `deploy_edge_function`
   or `supabase functions deploy <name>`). Keep `verify_jwt` as it is today: off for `billing`, `stripe-webhook`,
-  `appstore-webhook`, `send-alerts`, `admin` (they check tokens or signatures themselves), on for `account`,
+  `appstore-webhook`, `send-alerts`, `admin`, `support`, `inbound-email`, `uptime` (they check tokens or signatures themselves, or are public by design), on for `account`,
   `apple-token`, `send-samples`.
 - **Database changes**: apply as a named migration (Supabase MCP `apply_migration`). Make changes backward compatible:
   add columns before code uses them, remove only after no deployed code reads them.
@@ -79,10 +81,25 @@ user accounts, preferences, subscriptions and the admin log.
 - **Daily data update**: GitHub emails the repo owner when a run fails. The run now also fails if sending alert emails fails.
 - **App errors**: script errors, screens that fail to draw and screens stuck on "Loading…" are sent to Google Analytics as
   `exception` events. Real-visitor speed is sent as `web_vitals` events (LCP, CLS, INP).
-- **Uptime**: `.github/workflows/uptime.yml` checks the app, the website, a record page and the data proxy every
-  30 minutes; a failed run emails the repo owner.
+- **Uptime**: the `uptime` function runs every 5 minutes (pg_cron job `uptime-check`) and checks the web app, website,
+  a record page, the data proxy, sign-in and payments. Two failures in a row email admin@squaredawaylabs.com, and
+  recovery sends another email. Status is in `public.service_status`, shown in the admin portal and on
+  www.capitolreceipts.com/support. `.github/workflows/uptime.yml` is the backup: it checks the sites without Supabase
+  and fails if the 5-minute monitor hasn't run in 20 minutes (GitHub may delay its schedule).
 - **Not yet in place**: alerting on edge function errors (Supabase → Edge Functions → Logs) and a crash reporter for
   the phone apps.
+
+## Support
+
+- **Help page**: www.capitolreceipts.com/support (common questions, live status, contact form). In the app and phone
+  apps: More › Help & support, the menu's Help link, the error screen, or app.capitolreceipts.com/?go=help.
+- **Where messages go**: the form calls the `support` function. It saves the message in `support_requests`, emails
+  admin@squaredawaylabs.com with Reply-To set to the sender, and sends the sender a confirmation with a reference (CR-123).
+- **Email**: capitolreceipts.com receives mail through Resend (MX record, inbox support@capitolreceipts.com). Resend's
+  `email.received` webhook calls `inbound-email`, which files mail to any @capitolreceipts.com address (support@,
+  corrections@ ...) as a support request and forwards it to admin@squaredawaylabs.com. Reply from Gmail to answer.
+  The Resend account is shared with other apps, so the function ignores mail for other domains.
+- **Answering**: admin portal › Support. Replies there are emailed from support@capitolreceipts.com and logged.
 
 ## When something breaks
 

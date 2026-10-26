@@ -130,7 +130,7 @@ def simplify(s):
     s = re.sub(r'<div data-explore[^\n]*</div>\n', '', s)
     s = re.sub(r'(<section data-seo-explore[^>]*>.*?<ul[^>]*>)(.*?)(</ul>)',
                lambda m: m.group(1) + ''.join(f'<li><a href="{h}" style="font-weight:600;text-decoration:none">{html.escape(t)}&nbsp;›</a></li>' for h, t in LOOKUP) + m.group(3), s, count=1, flags=re.S)
-    for h, l in [('/parties', 'Red vs Blue'), ('/appointees', 'Appointees'), ('/quiz', 'Quiz'), ('/how-it-works', 'How it works'), ('/newsrooms', 'Newsrooms')]:
+    for h, l in [('/parties', 'Red vs Blue'), ('/appointees', 'Appointees'), ('/quiz', 'Quiz'), ('/how-it-works', 'How it works'), ('/newsrooms', 'Newsrooms'), ('/support', 'Help')]:
         if f'href="{h}" style="color: #c9d1e3' not in s:
             s = s.replace('<a href="/about" style="color: #c9d1e3; text-decoration: none">About</a>', f'<a href="{h}" style="color: #c9d1e3; text-decoration: none">{l}</a>\n   <a href="/about" style="color: #c9d1e3; text-decoration: none">About</a>', 1)
     return s
@@ -257,20 +257,20 @@ MAIL = LA('mailto:admin@squaredawaylabs.com', 'admin@squaredawaylabs.com')
 def privacy_body():
     return ('<main style="max-width:760px;margin:0 auto;padding:64px 24px 96px">\n<h1 class="disp" style="font-size:64px;margin:0;color:#14274e">Privacy Policy</h1>\n'
         + '<p class="mono" style="margin:14px 0 0;font-size:14px;color:#5b6475">Last updated October 26, 2026</p>\n'
-        + LH('Who we are') + LP(f'Capitol Receipts is made by Squared Away Labs LLC ("we", "us"), Wilkes-Barre, Pennsylvania. This policy covers www.capitolreceipts.com, app.capitolreceipts.com and the Capitol Receipts iPhone app. Questions: {MAIL}.')
+        + LH('Who we are') + LP(f'Capitol Receipts is made by Squared Away Labs LLC ("we", "us"), Wilkes-Barre, Pennsylvania. This policy covers www.capitolreceipts.com, app.capitolreceipts.com and the Capitol Receipts iPhone and Android apps. Questions: {MAIL}.')
         + LH('What we collect') + LP('<b>If you just browse:</b> usage data through Google Analytics, such as pages viewed, buttons tapped, device type, browser and approximate location from your IP address. It is not linked to an account. No account is needed to use the site.')
         + LP('<b>If you create an account:</b> your email address, and your name if you sign in with Apple or Google and they share it. We also keep what you save: your ZIP code or state if you enter one, the people, stocks and bills you follow, your alert settings, and when we last emailed you an alert.')
         + LP('<b>If you sign in with Apple or Google:</b> we receive your email address and an account identifier from them. For Sign in with Apple we also keep a token so we can tell Apple when you delete your account.')
-        + LP('<b>If you turn on alerts in the iPhone app:</b> a push notification token for your device, so we can send alerts to it. Signing out removes it.')
-        + LP('<b>If you subscribe to Pro:</b> on the web, payments are handled by Stripe. We never see or store your full card number; we keep your Stripe customer and subscription IDs, your plan and its renewal date. In the iPhone app, purchases go through Apple, and RevenueCat confirms them to us; we keep your plan, its renewal date and the App Store transaction ID.')
-        + LP('<b>If you write to us or report a mistake:</b> what you send and the email address you send it from.')
+        + LP('<b>If you turn on alerts in the iPhone or Android app:</b> a push notification token for your device, so we can send alerts to it. Signing out removes it.')
+        + LP('<b>If you subscribe to Pro:</b> on the web, payments are handled by Stripe. We never see or store your full card number; we keep your Stripe customer and subscription IDs, your plan and its renewal date. In the iPhone and Android apps, purchases go through Apple or Google Play, and RevenueCat confirms them to us; we keep your plan, its renewal date and the store’s transaction ID.')
+        + LP('<b>If you write to us or report a mistake:</b> what you send, the email address you send it from, and, if you’re signed in, which account and plan it came from, so we can help without asking. We also keep a scrambled form of your network address for an hour to stop spam.')
         + LH('How we use it') + LP('To run your account, send the alerts and emails you ask for, process your subscription, keep the service secure, fix problems and understand which parts of the app people use.')
         + LH('What we don’t do') + LP('We don’t sell or rent your personal information. We don’t show ads. We don’t share who you follow, what you search or what’s on your watchlist with advertisers, campaigns, parties or anyone else.')
-        + LH('Who processes data for us') + LP('Supabase (accounts and database), Vercel (hosting), Stripe (web payments), Apple (iPhone purchases, Sign in with Apple and push notifications), RevenueCat (confirming App Store purchases), Google (Sign in with Google and Google Analytics), Resend (email delivery) and GitHub (running our daily data updates, which don’t include your personal data). Each handles data only to provide its service to us.')
+        + LH('Who processes data for us') + LP('Supabase (accounts and database), Vercel (hosting), Stripe (web payments), Apple (iPhone purchases, Sign in with Apple and iPhone push notifications), RevenueCat (confirming App Store and Google Play purchases), Google (Sign in with Google, Google Play purchases, Android push notifications through Firebase, and Google Analytics), Resend (email delivery) and GitHub (running our daily data updates, which don’t include your personal data). Each handles data only to provide its service to us.')
         + LH('Analytics') + LP(f'Google Analytics sets cookies to count visits. Visitors in Europe and the UK are asked first, and those cookies stay off unless they accept. Anywhere else you can block them with your browser’s settings or the {LA("https://tools.google.com/dlpage/gaoptout", "Google Analytics opt-out add-on")}. The site keeps working without them.')
         + LH('How long we keep it') + LP('We keep your account data until you delete your account. Alert history is overwritten as new alerts go out. Payment records that tax law requires us to keep, such as invoices in Stripe, are kept for as long as the law requires, even after you delete your account. Database backups are kept for a limited time and then expire.')
         + LH('Your choices') + LP(f'You can change your alert settings, turn off alerts or cancel Pro at any time in the app. To delete your account and everything saved with it, open Account and tap <b>Delete my account</b>; it happens right away. You can also {LA("/delete-account", "ask us to delete it by email")}. To get a copy of your data or correct it, email {MAIL} from the address on your account and we’ll reply within 30 days.')
-        + LP('If you subscribe through Apple, deleting your account doesn’t cancel the subscription. Cancel it in your iPhone’s Settings › your name › Subscriptions.')
+        + LP('If you subscribe through Apple or Google Play, deleting your account doesn’t cancel the subscription. Cancel it in your iPhone’s Settings › your name › Subscriptions, or in Google Play › Payments &amp; subscriptions.')
         + LH('Security') + LP('Data is encrypted in transit. Access to your account data is limited to you and to the few systems that need it to run the service, and our admin tools require two-step sign-in.')
         + LH('Children') + LP('Capitol Receipts isn’t directed at children under 13, and we don’t knowingly collect their information.')
         + LH('Changes') + LP('If we change this policy in a meaningful way, we’ll update the date above and tell account holders by email.')
@@ -293,7 +293,8 @@ def fonts(s):
     return re.sub(r'<link rel="stylesheet" href="(https://fonts\.googleapis\.com/css2\?[^"]+)">',
                   r'<link rel="stylesheet" href="\1" media="print" onload="this.media=' + "'all'" + r'"><noscript><link rel="stylesheet" href="\1"></noscript>', s)
 
-from consent import apply as consent  # Google Consent Mode + EU/UK cookie banner (scripts/consent.py)
+from consent import apply as consent
+from support_page import support_body  # /support: FAQ, live status and contact form (scripts/support_page.py)  # Google Consent Mode + EU/UK cookie banner (scripts/consent.py)
 
 PRICE_FIX = [  # (old,new) applied in order to every file
  ("Pricing: Free, or Pro for $4.99 a Month","Pricing: Free, or Pro for $5.99 a Month"),
@@ -339,12 +340,14 @@ s = s.replace('<section id="contact"', CITE + '<section id="contact"', 1)
 wr('newsrooms.html', faq(s, NEWS_FAQ))
 wr('about.html', fill(about()))
 legal('delete-account.html', '/delete-account', 'Delete Your Account', 'How to delete your Capitol Receipts account and the data saved with it, in the app or by email.', delete_body())
+legal('support.html', '/support', 'Help & Support', 'Answers to common questions about Capitol Receipts accounts, Pro, alerts and the data, live service status, and a form to reach a person.', support_body())
 legal('privacy.html', '/privacy', 'Privacy Policy', 'What Capitol Receipts collects, how it is used, who processes it and how to delete your account.', privacy_body())
 for f in os.listdir(S):
     if f.endswith('.html'): wr(f, consent(fonts(pricing(simplify(mobile(footer_about(rd(f))))))))
 sm = os.path.join(S, 'sitemaps', 'site.xml')
 if os.path.exists(sm):
     x = open(sm).read()
-    if f'{SITE}/about<' not in x:
-        x = x.replace('</urlset>', f'  <url><loc>{SITE}/about</loc></url>\n</urlset>'); open(sm, 'w').write(x)
+    for pg in ('about', 'support'):
+        if f'{SITE}/{pg}<' not in x: x = x.replace('</urlset>', f'  <url><loc>{SITE}/{pg}</loc></url>\n</urlset>')
+    open(sm, 'w').write(x)
 print('live numbers:', len(NUMS), 'blocks:', len(BLOCKS))

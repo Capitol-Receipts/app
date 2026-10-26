@@ -33,7 +33,7 @@
 
   const msgScreen=(title,body,retry)=>`<div class="wrap"><div class="empty" role="alert" style="padding-top:calc(var(--navh) + 24px)">
     <p style="font-weight:700;font-size:18px;margin:0 0 6px">${title}</p><p style="margin:0 0 16px">${body}</p>
-    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">${retry?'<button class="abtn sm ghost" data-guardretry>Try again</button>':''}<button class="abtn sm" data-guardhome>Go to the home screen</button></div></div></div>`;
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">${retry?'<button class="abtn sm ghost" data-guardretry>Try again</button>':''}<button class="abtn sm" data-guardhome>Go to the home screen</button></div><p style="margin:14px 0 0;font-size:14px;color:var(--soft)">Still stuck? <button class="link inl" data-help="app">Tell us what happened</button></p></div></div>`;
   const route=()=>{try{return (S.tab||'')+'|'+S.stack.join('>')}catch(e){return ''}};
   let stuckT=null;
   const _renderGuard=render;
