@@ -30,7 +30,7 @@
         const f=[...panel.querySelectorAll('input,select,textarea')].find(visible)||panel;f.focus({preventScroll:true})},80);
     }else if(!open&&wasOpen){
       const o=opener;opener=null;
-      if(o&&document.contains(o)&&!panel.contains(o))setTimeout(()=>{try{o.focus({preventScroll:true})}catch(e){}},0);
+      setTimeout(()=>{try{if(o&&document.contains(o)&&!panel.contains(o)&&visible(o))o.focus({preventScroll:true});else focusHeading(false)}catch(e){}},0);
     }
     wasOpen=open;
   }
@@ -69,11 +69,13 @@
     try{
       const route=(S.tab||'')+'|'+S.stack.join('>');
       const h=heading(),t=h?h.textContent.replace(/\s+/g,' ').trim().slice(0,80):'';
-      if(route!==lastRoute){
+      const changed=route!==lastRoute;
+      if(changed){
         const first=lastRoute===null;lastRoute=route;
         document.title=t&&route!=='home|'?t+' · Capitol Receipts':'Capitol Receipts: Who Funds Congress, Their Stock Trades & Votes';
         if(!first){if(sheet.hidden)focusHeading(false);if(t)say(t)}
-      }else if(k&&hadFocusInApp&&sheet.hidden){
+      }else if(t&&route!=='home|'&&!document.title.startsWith(t)){document.title=t+' · Capitol Receipts'}
+      if(!changed&&k&&hadFocusInApp&&sheet.hidden){
         const el=app.querySelector(k);if(el&&el!==document.activeElement)el.focus({preventScroll:true});
       }
     }catch(e){}

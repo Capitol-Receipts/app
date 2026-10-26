@@ -35,12 +35,21 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   if (body.action !== "delete") return json({ error: "unknown_action" }, 400);
 
-  const { data: sub } = await db.from("subscriptions").select("source,stripe_sub,status").eq("user_id", user.id).maybeSingle();
-  // cancel any Stripe subscription on file, whatever the current source says, so a deleted account is never charged
-  if (sub?.stripe_sub && STRIPE && sub.status !== "canceled") {
-    const r = await fetch(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(sub.stripe_sub)}`, { method: "DELETE", headers: { Authorization: `Bearer ${STRIPE}` } });
-    const already = !r.ok && /cancel/i.test(await r.clone().text().catch(() => ""));
-    if (!r.ok && r.status !== 404 && !already) return json({ error: "billing" }, 502); // don't delete the account while a card could still be charged
+  const { data: sub } = await db.from("subscriptions").select("source,stripe_sub,stripe_customer,status").eq("user_id", user.id).maybeSingle();
+  // cancel every Stripe subscription that could still charge this person, whatever our record says, so a deleted
+  // account is never billed again; if Stripe can't be reached, stop before deleting anything
+  if (STRIPE && (sub?.stripe_customer || sub?.stripe_sub)) {
+    const auth = { Authorization: `Bearer ${STRIPE}` };
+    const ids = new Set<string>();
+    if (sub.stripe_customer) {
+      const l = await fetch(`https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(sub.stripe_customer)}&status=all&limit=100`, { headers: auth });
+      if (!l.ok && l.status !== 404) return json({ error: "billing" }, 502);
+      if (l.ok) for (const s of (await l.json()).data || []) if (!["canceled", "incomplete_expired"].includes(s.status)) ids.add(s.id);
+    } else if (sub.stripe_sub) ids.add(sub.stripe_sub);
+    for (const id of ids) {
+      const r = await fetch(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(id)}`, { method: "DELETE", headers: auth });
+      if (!r.ok && r.status !== 404) return json({ error: "billing" }, 502);
+    }
   }
   // Sign in with Apple: revoke the app's access with Apple too (App Store rule 5.1.1(v)); best effort
   const { data: ap } = await db.from("apple_tokens").select("refresh_token,client_id").eq("user_id", user.id).maybeSingle();

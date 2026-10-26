@@ -75,6 +75,8 @@ async function sync(db: DB, ev: any) {
   if (status === "canceled") {
     const { data: cur } = await db.from("subscriptions").select("source,status,stripe_sub").eq("user_id", userId).maybeSingle();
     if (cur && (cur.source === "app_store" || cur.source === "comp") && cur.status !== "canceled") return;
+    // a different (newer) Stripe subscription is on file and running: an old one ending changes nothing
+    if (cur && cur.stripe_sub && cur.stripe_sub !== sub.id && cur.status !== "canceled") return;
   }
   const item = sub.items?.data?.[0];
   const end = sub.current_period_end || item?.current_period_end;

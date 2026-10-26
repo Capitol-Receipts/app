@@ -20,6 +20,7 @@ function partyStats(p){
 }
 const topIn=(list,f,n=5)=>[...list].filter(m=>f(m)!=null&&f(m)>0).sort((a,b)=>f(b)-f(a)).slice(0,n);
 function partyPage(p){
+  if(typeof PARTYNAME==='undefined'||!PARTYNAME[p])return `<div class="wrap"><div class="empty" style="padding-top:calc(var(--navh) + 24px)"><p>We couldn’t find that party.</p><button class="abtn sm" data-guardhome>Go to the home screen</button></div></div>`;
   const s=partyStats(p),o=['D','R','I'].filter(x=>x!==p),main=o.find(x=>x!=='I');
   const os=partyStats(main||'D');
   const mixParts=[['Small donors',s.mix.small,'var(--c-money)'],['Big donors',s.mix.big,'color-mix(in srgb,var(--c-money) 55%,var(--surface))'],['PACs',s.mix.pac,'var(--ink)'],['Party, self & other',s.mix.party+s.mix.self+s.mix.other,'var(--fill3)']].filter(x=>x[1]>0);

@@ -70,7 +70,7 @@ if(NATIVE){
   if(P){
     P.addListener('registration',async t=>{
       try{const uid=ACCT.user&&ACCT.user.id;if(!uid)return;
-        IOS.token=t.value;
+        IOS.token=t.value;try{localStorage.setItem('cr_push_token',t.value)}catch(e){}
         await ACCT.client.from('push_devices').upsert({token:t.value,user_id:uid,platform:'ios',updated_at:new Date().toISOString()},{onConflict:'token'});
         IOS.push='on';store.set('pushAsked',true);}catch(e){console.warn('push save',e)}});
     P.addListener('registrationError',e=>console.warn('push reg',e));
@@ -86,7 +86,8 @@ if(NATIVE){
 if(NATIVE&&typeof signOut==='function'){
   const _signOutNative=signOut;
   signOut=async function(){
-    try{if(IOS.token&&ACCT.client)await ACCT.client.from('push_devices').delete().eq('token',IOS.token)}catch(e){console.warn('push remove',e)}
+    let tok=IOS.token;try{tok=tok||localStorage.getItem('cr_push_token')}catch(e){}
+    try{if(tok&&ACCT.client)await ACCT.client.from('push_devices').delete().eq('token',tok)}catch(e){console.warn('push remove',e)}
     try{const RC=plug('Purchases');if(RC&&IOS.configured)await RC.logOut()}catch(e){}
     IOS.push='off';IOS.offer=null;
     return _signOutNative.apply(this,arguments);

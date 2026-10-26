@@ -38,7 +38,7 @@ function gaPageView(){
     }
   }catch(e){}
 }
-let _popRt=false;
+let _popRt=false;const _hk=[];
 addEventListener('popstate',e=>{const st=e.state;if(!st||!st.cr)return;
   _popRt=true;const sh=document.getElementById('sheet');if(sh)sh.hidden=true;
   S.tab=st.tab;S.stack=[...(st.stack||[])];if(st.msort)S.msort=st.msort;render();scrollTo(0,0)});
@@ -68,8 +68,12 @@ addEventListener('popstate',e=>{const st=e.state;if(!st||!st.cr)return;
       /* each new screen gets its own browser history entry, so Back (browser, phone, swipe) goes to the previous screen */
       const k=S.tab+'|'+S.stack.join('>')+'|'+(S.msort||''),st={cr:1,k,tab:S.tab,stack:[...S.stack],msort:S.msort||null};
       const url=(tgt||location.pathname+location.search)+location.hash;
-      if(!_popRt&&history.state&&history.state.cr&&history.state.k!==k)history.pushState(st,'',url);
-      else history.replaceState(st,'',url);
+      const hs=history.state,i=hs&&hs.cr?hs.i||0:0;
+      if(!_popRt&&hs&&hs.cr&&hs.k!==k){
+        /* going back to the screen just before this one (the in-app back arrow): step back in history instead of adding */
+        if(i>0&&_hk[i-1]===k){_popRt=true;history.back();return}
+        st.i=i+1;_hk.length=st.i;_hk[st.i]=k;history.pushState(st,'',url);
+      }else{st.i=i;_hk[i]=k;history.replaceState(st,'',url)}
       _popRt=false}catch(e){}
   };
   if(window.__HOLD&&window.__ROUTE){
