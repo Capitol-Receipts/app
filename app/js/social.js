@@ -14,7 +14,9 @@ const GOOGLE_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285
 fetch(SB.url+'/auth/v1/settings',{headers:{apikey:SB.key}}).then(r=>r.json()).then(s=>{const x=(s&&s.external)||{};SOC.apple=!!x.apple;SOC.google=!!x.google}).catch(()=>{});
 const socNative=()=>typeof NATIVE!=='undefined'&&NATIVE;
 function socShow(){
-  const apple=SOC.apple,google=SOC.google&&(!socNative()||(GOOGLE_IOS_CLIENT_ID&&SOC.apple));
+  // Android: Google only (Apple sign-in isn't required on Google Play); iPhone: Google only next to Apple (App Store rule 4.8)
+  const droid=socNative()&&typeof ANDROID!=='undefined'&&ANDROID;
+  const apple=SOC.apple&&!droid,google=SOC.google&&(!socNative()||(droid?!!GOOGLE_WEB_CLIENT_ID:(GOOGLE_IOS_CLIENT_ID&&SOC.apple)));
   return {apple,google};
 }
 const _authSheetSoc=authSheet;
@@ -31,6 +33,7 @@ const rnd=()=>{const a=new Uint8Array(32);crypto.getRandomValues(a);return [...a
 const sha256=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('');
 async function socNativeLogin(provider){
   const SL=plug('SocialLogin');if(!SL)throw new Error('unavailable');
+  if(!SOC.inited&&typeof ANDROID!=='undefined'&&ANDROID){await SL.initialize({google:{webClientId:GOOGLE_WEB_CLIENT_ID,mode:'online'}});SOC.inited=true}
   if(!SOC.inited){await SL.initialize({apple:{clientId:'com.capitolreceipts.app',redirectUrl:''},...(GOOGLE_IOS_CLIENT_ID?{google:{iOSClientId:GOOGLE_IOS_CLIENT_ID,iOSServerClientId:GOOGLE_WEB_CLIENT_ID||undefined,mode:'online'}}:{})});SOC.inited=true}
   const raw=rnd(),hashed=await sha256(raw);
   const r=await SL.login({provider,options:provider==='apple'?{scopes:['email','name'],nonce:hashed}:{scopes:['email','profile'],nonce:hashed}});

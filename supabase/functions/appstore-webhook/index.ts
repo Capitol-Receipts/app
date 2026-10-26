@@ -1,4 +1,5 @@
-// Pro bought in the iPhone app. RevenueCat validates App Store purchases and calls this with each event.
+// Pro bought in the iPhone or Android app. RevenueCat validates App Store and Google Play purchases and calls this
+// with each event.
 // The app logs in to RevenueCat with the Supabase user id, so app_user_id is the user. Needs REVENUECAT_WEBHOOK_AUTH
 // (the authorization value set on the webhook in RevenueCat). Until it is set every call is refused.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
@@ -22,12 +23,14 @@ Deno.serve(async (req) => {
   const db = createClient(URL_, SERVICE, { auth: { persistSession: false } });
   const { data: cur } = await db.from("subscriptions").select("source,status,period_end,trial_ends,store_event_at").eq("user_id", userId).maybeSingle();
   // a paid web subscription stays in charge while it is running
-  const webActive = cur && cur.source !== "app_store" && ["active", "trialing", "past_due"].includes(cur.status) &&
+  const STORES = ["app_store", "play_store"];
+  const src = String(e.store || "").toUpperCase() === "PLAY_STORE" ? "play_store" : "app_store";
+  const webActive = cur && !STORES.includes(cur.source) && ["active", "trialing", "past_due"].includes(cur.status) &&
     new Date(cur.period_end || cur.trial_ends || 0).getTime() > Date.now();
   if (webActive) return Response.json({ ignored: "web subscription active" });
   // RevenueCat can retry or deliver out of order: never let an older event overwrite a newer one
   const at = Number(e.event_timestamp_ms) || Date.now();
-  if (cur?.source === "app_store" && cur.store_event_at && new Date(cur.store_event_at).getTime() > at) return Response.json({ ignored: "older event" });
+  if (STORES.includes(cur?.source) && cur.store_event_at && new Date(cur.store_event_at).getTime() > at) return Response.json({ ignored: "older event" });
 
   const exp = e.expiration_at_ms ? new Date(e.expiration_at_ms).toISOString() : null;
   const trial = e.period_type === "TRIAL";
@@ -40,7 +43,7 @@ Deno.serve(async (req) => {
     case "EXPIRATION": status = "canceled"; break;
     default: return Response.json({ ignored: e.type });
   }
-  const row: Record<string, unknown> = { user_id: userId, status, plan: trial ? "trial" : plan, source: "app_store", store_ref: e.original_transaction_id || e.transaction_id || null, store_event_at: new Date(at).toISOString(), updated_at: new Date().toISOString() };
+  const row: Record<string, unknown> = { user_id: userId, status, plan: trial ? "trial" : plan, source: src, store_ref: e.original_transaction_id || e.transaction_id || null, store_event_at: new Date(at).toISOString(), updated_at: new Date().toISOString() };
   if (trial) row.trial_ends = exp; else row.period_end = exp;
   const { error } = await db.from("subscriptions").upsert(row, { onConflict: "user_id" });
   if (error) return new Response(error.message, { status: 500 });

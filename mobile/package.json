@@ -1,0 +1,30 @@
+{
+  "name": "capitol-receipts-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "iPhone and Android app shell for Capitol Receipts (Capacitor). The app content is app.capitolreceipts.com.",
+  "scripts": {
+    "sync": "cap sync",
+    "open:ios": "cap open ios",
+    "open:android": "cap open android",
+    "assets": "capacitor-assets generate --ios --android",
+    "android:debug": "cd android && ./gradlew assembleDebug",
+    "android:release": "cd android && ./gradlew bundleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/ios": "^8.5.3",
+    "@capacitor/push-notifications": "^8.1.3",
+    "@capacitor/share": "^8.0.3",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4",
+    "@capgo/capacitor-social-login": "^8.7.5",
+    "@revenuecat/purchases-capacitor": "^13.7.6"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.3"
+  }
+}

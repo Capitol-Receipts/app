@@ -14,9 +14,9 @@ Secret values are never stored in this repo. This file lists their names and whe
 | Database and sign-in | Supabase project `hxgckcriehvrolwnabpd` (Postgres, Auth, Edge Functions). Every table has row-level security; public records are read-only to everyone; user tables are readable and writable only by their owner | Supabase | Migrations and functions via Supabase (see below) |
 | Edge functions | `supabase/functions/*`: `billing`, `stripe-webhook`, `appstore-webhook`, `account`, `apple-token`, `send-alerts`, `admin`, `send-samples` | Supabase | Supabase MCP or `supabase functions deploy <name>` |
 | Daily data update | `pipeline/*.py` run by `.github/workflows/daily-update.yml` (several times each weekday), then `send-alerts` | GitHub Actions | Scheduled |
-| iPhone app | Capacitor shell in `ios-app/` that loads the live web app | App Store (not yet submitted) | Xcode archive, see `ios-app/README.md` |
+| iPhone and Android apps | Capacitor shells in `mobile/` (`ios/`, `android/`) that load the live web app | App Store and Google Play (neither submitted yet) | Xcode archive / `./gradlew bundleRelease`, see `mobile/README.md` |
 
-Trust boundaries: the browser and the iPhone app only hold the public Supabase key and the signed-in user's own token.
+Trust boundaries: the browser and the phone apps only hold the public Supabase key and the signed-in user's own token.
 Everything privileged (Stripe, Resend, APNs, Apple, service role) runs in edge functions or GitHub Actions.
 
 ## Configuration reference (names only)
@@ -33,6 +33,7 @@ Everything privileged (Stripe, Resend, APNs, Apple, service role) runs in edge f
 | `GA_API_SECRET` | stripe-webhook | Optional. Sends purchases to Google Analytics |
 | `REVENUECAT_WEBHOOK_AUTH` | appstore-webhook | Must match the authorization value set in RevenueCat |
 | `APNS_KEY`, `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_TOPIC`, `APNS_ENV` | send-alerts | iPhone push alerts |
+| `FCM_SERVICE_ACCOUNT` | send-alerts | Android push alerts (whole Firebase service-account JSON) |
 | `APPLE_TEAM_ID`, `APPLE_SIWA_KEY_ID`, `APPLE_SIWA_KEY` | apple-token, account | Sign in with Apple token exchange and revocation |
 
 **GitHub Actions secret**: `SUPABASE_SERVICE_ROLE_KEY` (daily data load and alert sending).
@@ -41,7 +42,7 @@ Everything privileged (Stripe, Resend, APNs, Apple, service role) runs in edge f
 (`https://app.capitolreceipts.com/**`, `https://www.capitolreceipts.com/**`), MFA (TOTP on, used by admins).
 
 **Public values in code** (safe to ship): Supabase URL and publishable key, Google OAuth client IDs (`app/js/social.js`),
-RevenueCat public iOS key (`app/js/native.js`, still empty), Google Analytics ID.
+RevenueCat public iOS and Android keys (`app/js/native.js`, still empty), Google Analytics ID.
 
 ## Deploying
 
@@ -81,7 +82,7 @@ user accounts, preferences, subscriptions and the admin log.
 - **Uptime**: `.github/workflows/uptime.yml` checks the app, the website, a record page and the data proxy every
   30 minutes; a failed run emails the repo owner.
 - **Not yet in place**: alerting on edge function errors (Supabase → Edge Functions → Logs) and a crash reporter for
-  the iPhone app.
+  the phone apps.
 
 ## When something breaks
 

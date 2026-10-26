@@ -74,7 +74,7 @@ async function sync(db: DB, ev: any) {
   // an ended web subscription must not overwrite a running App Store or complimentary one
   if (status === "canceled") {
     const { data: cur } = await db.from("subscriptions").select("source,status,stripe_sub").eq("user_id", userId).maybeSingle();
-    if (cur && (cur.source === "app_store" || cur.source === "comp") && cur.status !== "canceled") return;
+    if (cur && ["app_store", "play_store", "comp"].includes(cur.source) && cur.status !== "canceled") return;
     // a different (newer) Stripe subscription is on file and running: an old one ending changes nothing
     if (cur && cur.stripe_sub && cur.stripe_sub !== sub.id && cur.status !== "canceled") return;
   }

@@ -1,0 +1,14 @@
+node_modules/
+ios/App/App/public/
+ios/App/build/
+ios/DerivedData/
+*.xcuserstate
+xcuserdata/
+android/keystore.properties
+*.jks
+*.keystore
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/app/src/main/assets/public/

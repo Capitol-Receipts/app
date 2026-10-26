@@ -46,11 +46,47 @@ async function apnsToken() {
   apnsJwt = { t: `${head}.${body}.${b64u(sig)}`, at: Date.now() };
   return apnsJwt.t;
 }
+// Android push alerts (Firebase Cloud Messaging, HTTP v1). Needs FCM_SERVICE_ACCOUNT: the whole JSON key of a Firebase
+// service account with the "Firebase Cloud Messaging API Admin" role. Until it is set, Android alerts go by email only.
+const FCM = (() => { try { return JSON.parse(Deno.env.get("FCM_SERVICE_ACCOUNT") || "null"); } catch { return null; } })();
+let fcmAuth = { t: "", exp: 0 };
+async function fcmToken() {
+  if (fcmAuth.t && Date.now() < fcmAuth.exp - 60e3) return fcmAuth.t;
+  const pem = String(FCM.private_key).replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
+  const der = Uint8Array.from(atob(pem), (c) => c.charCodeAt(0));
+  const k = await crypto.subtle.importKey("pkcs8", der, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
+  const now = Math.floor(Date.now() / 1000);
+  const head = b64u(JSON.stringify({ alg: "RS256", typ: "JWT" }));
+  const claim = b64u(JSON.stringify({ iss: FCM.client_email, scope: "https://www.googleapis.com/auth/firebase.messaging", aud: "https://oauth2.googleapis.com/token", iat: now, exp: now + 3600 }));
+  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", k, new TextEncoder().encode(`${head}.${claim}`));
+  const r = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: `${head}.${claim}.${b64u(sig)}` }) });
+  const j = await r.json();
+  if (!r.ok || !j.access_token) throw new Error(`fcm auth ${r.status}`);
+  fcmAuth = { t: j.access_token, exp: Date.now() + (j.expires_in || 3600) * 1000 };
+  return fcmAuth.t;
+}
+async function fcmSend(db: any, token: string, title: string, body: string, data: Record<string, string>) {
+  const r = await fetch(`https://fcm.googleapis.com/v1/projects/${FCM.project_id}/messages:send`, { method: "POST",
+    headers: { Authorization: `Bearer ${await fcmToken()}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ message: { token, notification: { title, body }, data, android: { priority: "HIGH", notification: { channel_id: "alerts" } } } }) });
+  if (r.ok) return 1;
+  const why = await r.text().catch(() => "");
+  // forget a token only when Firebase says the app was uninstalled or the token is no longer valid
+  if (r.status === 404 || /UNREGISTERED/.test(why)) await db.from("push_devices").delete().eq("token", token);
+  else console.warn("fcm", r.status, why.slice(0, 200));
+  return 0;
+}
 async function pushTo(db: any, userId: string, title: string, body: string, data: Record<string, string>) {
-  if (!APNS.key || !APNS.kid || !APNS.team) return 0;
-  const { data: devs } = await db.from("push_devices").select("token").eq("user_id", userId);
-  if (!devs?.length) return 0;
-  const jwt = await apnsToken(); let ok = 0;
+  const apns = !!(APNS.key && APNS.kid && APNS.team);
+  if (!apns && !FCM) return 0;
+  const { data: all } = await db.from("push_devices").select("token,platform").eq("user_id", userId);
+  if (!all?.length) return 0;
+  let ok = 0;
+  if (FCM) for (const d of all.filter((x: any) => x.platform === "android")) ok += await fcmSend(db, d.token, title, body, data).catch(() => 0);
+  const devs = all.filter((x: any) => x.platform !== "android");
+  if (!apns || !devs.length) return ok;
+  const jwt = await apnsToken();
   for (const d of devs) {
     const r = await fetch(`https://${APNS.host}/3/device/${d.token}`, { method: "POST",
       headers: { authorization: `bearer ${jwt}`, "apns-topic": APNS.topic, "apns-push-type": "alert", "apns-priority": "10" },

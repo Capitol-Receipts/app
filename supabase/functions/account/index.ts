@@ -68,5 +68,5 @@ Deno.serve(async (req) => {
   if (like) for (const t of ["signups", "reports"]) await db.from(t).delete().ilike("email", like);
   const { error } = await db.auth.admin.deleteUser(user.id);
   if (error) return json({ error: "delete_failed" }, 500);
-  return json({ ok: true, apple_subscription: sub?.source === "app_store" && ["active", "trialing", "past_due"].includes(sub?.status || "") });
+  return json({ ok: true, apple_subscription: ["app_store", "play_store"].includes(sub?.source || "") && ["active", "trialing", "past_due"].includes(sub?.status || "") });
 });
