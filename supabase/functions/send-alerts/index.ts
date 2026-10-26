@@ -55,7 +55,11 @@ async function pushTo(db: any, userId: string, title: string, body: string, data
     const r = await fetch(`https://${APNS.host}/3/device/${d.token}`, { method: "POST",
       headers: { authorization: `bearer ${jwt}`, "apns-topic": APNS.topic, "apns-push-type": "alert", "apns-priority": "10" },
       body: JSON.stringify({ aps: { alert: { title, body }, sound: "default" }, ...data }) });
-    if (r.ok) ok++; else if (r.status === 410 || r.status === 400) await db.from("push_devices").delete().eq("token", d.token); // uninstalled or bad token
+    if (r.ok) { ok++; continue; }
+    // forget a token only when Apple says that token is dead, not on a setup error that would wipe every device
+    const why = await r.json().then((j: any) => j?.reason || "").catch(() => "");
+    if (r.status === 410 || (r.status === 400 && /BadDeviceToken/.test(why))) await db.from("push_devices").delete().eq("token", d.token);
+    else console.warn("apns", r.status, why);
   }
   return ok;
 }
