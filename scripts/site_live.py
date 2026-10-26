@@ -291,7 +291,7 @@ def fonts(s):
     switch it on when it arrives (text shows in the fallback font meanwhile; the CSS already uses display=swap)."""
     s = s.replace('<link rel="preconnect" href="https://fonts.googleapis.com">\n', '<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n', 1) if 'fonts.gstatic.com" crossorigin' not in s else s
     return re.sub(r'<link rel="stylesheet" href="(https://fonts\.googleapis\.com/css2\?[^"]+)">',
-                  r'<link rel="stylesheet" href="\1" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="\1"></noscript>', s)
+                  r'<link rel="stylesheet" href="\1" media="print" onload="this.media=' + "'all'" + r'"><noscript><link rel="stylesheet" href="\1"></noscript>', s)
 
 from consent import apply as consent  # Google Consent Mode + EU/UK cookie banner (scripts/consent.py)
 
