@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "37666810110",
+    "project_id": "capitol-receipts",
+    "storage_bucket": "capitol-receipts.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:37666810110:android:0a1d9ccbc63172cf109daf",
+        "android_client_info": {
+          "package_name": "com.capitolreceipts.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAffpLHKW3yQVE-0EP0IBR2NSaVGUSQc_0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
