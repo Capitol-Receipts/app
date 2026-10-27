@@ -1,0 +1,51 @@
+/* Plainer look (Oct 2026), loaded last. Matches the website: a serif for page and section titles, a typewriter face
+   for figures, a warm paper background, solid navy headers instead of stock photos, list rows instead of pastel tiles,
+   small corner radii. Topic colors (money green, stocks violet ...) stay, used for text and small marks only. */
+:root{--display:"Source Serif 4",Georgia,"Times New Roman",serif;--stat:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;--navy:#14274e}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f4f1ea;--hair:#e2dccf;--seg:#e9e4d8}}
+:root[data-theme="light"]{--bg:#f4f1ea;--hair:#e2dccf;--seg:#e9e4d8}
+
+/* headings: sentence-case serif, not heavy display weight */
+.hello,.lbanner h1,.lhero h1,.sh h2,.pghero h1,.phead h1{font-family:var(--display)!important;font-weight:600!important;letter-spacing:-.012em!important}
+.sh h2{font-size:21px}
+
+/* photo headers become solid navy panels */
+.homehero,.lbanner,.lhero{background-image:none!important;background-color:var(--navy)!important}
+.homehero{border-radius:0 0 10px 10px;padding-bottom:22px}
+.homehero .hello{margin-top:26px;text-shadow:none}
+.lbanner,.lhero{border-radius:8px;min-height:0;padding:22px 18px 18px}
+@media (min-width:900px){.homehero{border-radius:10px}.homehero .hello{margin-top:36px}.lbanner,.lhero{min-height:0}}
+
+/* cards and groups: smaller corners */
+.group{border-radius:8px}
+.elcard{border-radius:8px;background:var(--navy)!important}
+
+/* Browse: a plain list, not pastel tiles */
+.bgrid{grid-template-columns:1fr;gap:0;background:var(--surface);border-radius:8px;overflow:hidden}
+@media (min-width:700px){.bgrid{grid-template-columns:1fr 1fr}}
+.btile{background:var(--surface)!important;border-radius:0;min-height:0;padding:13px 16px;flex-direction:row;align-items:center;gap:12px;border-bottom:1px solid var(--hair)}
+.btile:after{display:none}
+.btile:active{transform:none;background:var(--seg)!important}
+.btile .bti{width:auto;height:auto;background:none;color:var(--t);margin:0;border-radius:0}
+.btile .bti svg{width:20px;height:20px}
+.btile b{margin:0;font:600 16px/1.2 var(--ui);flex:1}
+.btile span:last-child{font-size:14px}
+
+/* party counts: plain, colored number */
+.ptile{background:var(--surface)!important;color:var(--ink);border-radius:8px;box-shadow:inset 0 0 0 1px var(--hair)}
+.ptile b{font:600 28px/1 var(--stat)}
+.ptile.p-D b{color:var(--D)}.ptile.p-R b{color:var(--R)}.ptile.p-I b{color:var(--I)}
+.ptile .pbadge{display:none}
+
+/* suggestion chips become simple links */
+.tries{gap:6px 18px}
+.tries button{background:none;box-shadow:none;padding:4px 0;border-radius:0;color:var(--D);font-weight:600}
+.tries svg{display:none}
+
+/* filters: squarer */
+.scopes button{border-radius:6px}
+
+/* member headers: solid party color, no chamber photo */
+.phero{background-image:none!important}
+.phero.p-D{background-color:#22488f!important}.phero.p-R{background-color:#a23434!important}.phero.p-I{background-color:#4e5562!important}.phero.p-N{background-color:#363c47!important}
+.phero h1{font-family:var(--display)!important;font-weight:600!important;letter-spacing:-.012em!important}

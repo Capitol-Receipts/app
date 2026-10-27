@@ -52,6 +52,12 @@ ${stat(money(raised), 'raised by current members for the 2026 elections', '/rank
 ${stat(num(execN), 'trades reported by the President and Senate-confirmed officials', '/official-trades')}
 </div><p class="mono" style="margin:14px 0 0;font-size:13px;color:#5b6374">Updated ${esc(date(asOf))} from House, Senate, FEC and OGE filings.</p>`;
 
+  // homepage ledger: the newest trades on file, newest first, one line each
+  const latest = [];
+  rp.keys.slice(-2).forEach(k => rp.months[k].list.forEach(x => latest.push(x)));
+  latest.sort((x, y) => String(y[1][0]).localeCompare(String(x[1][0])) || ((+y[1][5] || +y[1][4] || 0) - (+x[1][5] || +x[1][4] || 0)));
+  blocks['home-ledger'] = `<ol class="ledger">${latest.slice(0, 8).map(([m, t]) => `<li><span class="l-date">${esc(date(t[0]))}</span><span class="l-who">${link(m, mem)}<span class="l-seat">${esc(seat(m))}</span></span><span class="l-what">${esc(verb(t[1]))} ${esc(String(t[3] || '').split(' - ')[0].replace(/\s*\([A-Z.]{1,6}\)\s*$/, '').replace(/\s+/g, ' ').slice(0, 70))}${t[2] ? ` (<a class="rlink" href="${P('stock', t[2], '')}">${esc(t[2])}</a>)` : ''}</span><span class="l-amt">${money(+t[4] || 0)}–${money(+t[5] || +t[4] || 0)}</span></li>`).join('')}</ol>`;
+
   // homepage: the biggest trades made in the last 30 days, and the latest finished month
   const since = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
   const recent = [];
