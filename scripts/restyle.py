@@ -20,7 +20,6 @@ h2.disp,h2.sec-h,.sec-h{font-size:clamp(28px,3.6vw,42px)!important}
 .disp.num{font-family:"IBM Plex Mono",ui-monospace,monospace!important;font-weight:600!important;letter-spacing:-.02em!important;font-size:clamp(22px,2.6vw,36px)!important;line-height:1.1!important}
 span.disp:not(.num),div.disp:not(.num){font-size:min(40px,1em)}
 .stripes,.ticker{display:none!important}
-.phone img{height:auto!important}
 .phone{transform:none!important;box-shadow:0 18px 40px rgba(20,24,34,.18)!important}
 [style*="background: #f4f6fb"],[style*="background:#f4f6fb"],[style*="background: #f3f5f8"],[style*="background:#f3f5f8"]{background:var(--paper)!important}
 [style*="background: #2557a8"]:not(span):not(a):not(.bar),[style*="background:#2557a8"]:not(span):not(a):not(.bar){background:var(--navy)!important}
@@ -92,9 +91,6 @@ def common(s):
         if not re.fullmatch(r'[\s$€%.,–\-+/0-9KMBk]*\d[\s$€%.,–\-+/0-9KMBkofmontha]*', text) or 'num' in attrs: return m.group(0)
         return f'<{tag} class="disp num"{attrs}>{text}</'
     s = re.sub(r'<(span|div|b) class="disp"([^>]*)>([^<]{1,24})</', num, s)
-    # headlines read as labels, without a closing period
-    s = s.replace('Free to use.<br>Pro adds alerts.', 'Free to use. Pro adds same-day alerts')
-    s = re.sub(r'(<h[12][^>]*>(?:(?!</h[12]>).){2,200}?[a-z0-9)])\.(</h[12]>)', r'\1\2', s, flags=re.S)
     return s
 
 def home(s, block):
@@ -104,7 +100,7 @@ def home(s, block):
     form = re.search(r'<form data-signup="list".*?</form>', s, re.S)
     form = form.group(0) if form else ''
     form = re.sub(r' style="[^"]*"', '', form)
-    phone = '<div class="phone" style="margin:0 auto"><img loading="lazy" decoding="async" src="/img/d0ab17d8e671a7c59ccb291b24d45ab9.webp?v=20261027" alt="Rep. Lisa McClain’s page in the app: votes missed, money raised, stock trades and a plain-English summary" width="780" height="1688"></div>'
+    phone = '<div class="phone" style="margin:0 auto"><img loading="lazy" decoding="async" src="/img/36debe7ccc0bc7565a6c15e8b9200b80.webp?v=20261015" alt="A member profile in the app: what stands out, money, stock trades and votes" width="780" height="1688"></div>'
     body = f'''<main id="main">
 <section class="rs-hero"><div class="rs-wrap rs-hero-grid">
  <div>
