@@ -17,7 +17,7 @@ let SHELL = null;
 const shell = () => SHELL || (SHELL = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf8'));
 
 const CSS = `<style id="sr-css">
-.sr{--n:#14274e;--r:#c8323a;--i:#161a22;--s:#596070;--l:#e2dccf;--b:#f3efe5;font-family:"Schibsted Grotesk",system-ui,sans-serif;color:var(--i);background:#fbf9f4;min-height:100vh}
+.sr{--n:#14274e;--r:#c8323a;--i:#0e1116;--s:#5b6069;--l:#e4e6eb;--b:#f6f7f9;font-family:"Schibsted Grotesk",system-ui,sans-serif;color:var(--i);background:#fff;min-height:100vh}
 .sr a{color:var(--n)}
 .sr-top{background:var(--n);color:#fff}
 .sr-top .in{max-width:980px;margin:0 auto;padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
@@ -32,16 +32,16 @@ const CSS = `<style id="sr-css">
 .sr-crumbs a{color:var(--s)}
 .sr-hero{display:flex;gap:16px;align-items:center;margin-bottom:6px}
 .sr-hero img{width:84px;height:84px;border-radius:50%;object-fit:cover;flex:none;background:var(--b)}
-.sr h1{font:600 clamp(28px,4.4vw,40px)/1.1 "Source Serif 4",Georgia,serif;margin:0 0 6px;letter-spacing:-.012em}
+.sr h1{font:800 clamp(30px,5vw,44px)/1.04 "Barlow Condensed",system-ui,sans-serif;margin:0 0 6px;letter-spacing:-.01em}
 .sr-sub{color:var(--s);font-weight:600;margin:0}
 .sr-lead{font-size:18px;line-height:1.5;margin:16px 0 20px;max-width:720px}
-.sr-jump{display:flex;flex-wrap:wrap;gap:8px;margin:-6px 0 22px}.sr-jump a{font-size:14px;font-weight:600;text-decoration:none;padding:7px 12px;border-radius:6px;background:var(--b);color:var(--i)}
+.sr-jump{display:flex;flex-wrap:wrap;gap:8px;margin:-6px 0 22px}.sr-jump a{font-size:14px;font-weight:600;text-decoration:none;padding:7px 12px;border-radius:999px;background:var(--b);color:var(--i)}
 .sr-more summary{cursor:pointer;font-weight:700;padding:12px 2px;text-decoration:underline;text-underline-offset:3px}.sr-more[open] summary{display:none}
 .sr-facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin:0 0 26px;padding:0}
-.sr-facts div{background:var(--b);border-radius:6px;padding:12px 14px}
+.sr-facts div{background:var(--b);border-radius:12px;padding:12px 14px}
 .sr-facts dt{font-size:13px;color:var(--s);font-weight:600}
-.sr-facts dd{margin:2px 0 0;font:600 20px "IBM Plex Mono",ui-monospace,monospace;letter-spacing:-.02em}
-.sr h2{font:600 23px/1.2 "Source Serif 4",Georgia,serif;margin:30px 0 8px;letter-spacing:-.01em}
+.sr-facts dd{margin:2px 0 0;font:700 24px "Barlow Condensed",system-ui,sans-serif}
+.sr h2{font:700 24px "Barlow Condensed",system-ui,sans-serif;margin:28px 0 8px}
 .sr p{line-height:1.55;max-width:760px}
 .sr-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--l)}
 .sr-list li{padding:9px 2px;border-bottom:1px solid var(--l);display:flex;justify-content:space-between;gap:12px}
@@ -52,11 +52,11 @@ const CSS = `<style id="sr-css">
 .sr-cols{columns:3 220px;column-gap:24px;margin:0;padding:0;list-style:none}
 .sr-cols li{break-inside:avoid;padding:3px 0}
 .sr-pager{display:flex;flex-wrap:wrap;gap:6px;margin:22px 0}
-.sr-pager a,.sr-pager b{padding:6px 11px;border-radius:6px;background:var(--b);text-decoration:none;font-weight:600;font-size:14px}
+.sr-pager a,.sr-pager b{padding:6px 11px;border-radius:999px;background:var(--b);text-decoration:none;font-weight:600;font-size:14px}
 .sr-pager b{background:var(--n);color:#fff}
 .sr-note{font-size:13px;color:var(--s);margin-top:28px}
 main.has-cta{padding-bottom:96px}
-.sr-cta{position:fixed;right:14px;bottom:14px;z-index:20;background:var(--n);color:#fff!important;text-decoration:none;font-weight:700;padding:9px 14px;border-radius:6px;box-shadow:0 6px 18px rgba(14,17,22,.22);white-space:nowrap;font-size:13px}
+.sr-cta{position:fixed;right:14px;bottom:14px;z-index:20;background:var(--n);color:#fff!important;text-decoration:none;font-weight:700;padding:9px 14px;border-radius:999px;box-shadow:0 6px 18px rgba(14,17,22,.22);white-space:nowrap;font-size:13px}
 .sr-cite{margin-top:28px}.sr-cite summary{cursor:pointer;font-weight:700;padding:8px 0;color:var(--s)}
 .sr-cta:hover{background:var(--r)}
 .sr-cite p{font-size:14px;color:var(--s);overflow-wrap:anywhere}

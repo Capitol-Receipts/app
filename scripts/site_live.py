@@ -344,9 +344,6 @@ legal('support.html', '/support', 'Help & Support', 'Answers to common questions
 legal('privacy.html', '/privacy', 'Privacy Policy', 'What Capitol Receipts collects, how it is used, who processes it and how to delete your account.', privacy_body())
 for f in os.listdir(S):
     if f.endswith('.html'): wr(f, consent(fonts(pricing(simplify(mobile(footer_about(rd(f))))))))
-# the site's look and the homepage layout (scripts/restyle.py), applied last
-from restyle import run as restyle
-restyle(rd, wr, sorted(f for f in os.listdir(S) if f.endswith('.html')), lambda n: block(n) if BLOCKS.get(n) else '')
 sm = os.path.join(S, 'sitemaps', 'site.xml')
 if os.path.exists(sm):
     x = open(sm).read()
