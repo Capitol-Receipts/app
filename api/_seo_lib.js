@@ -15,19 +15,25 @@ async function viaCache(p, opt) {
   if (opt.count) { const cr = r.headers.get('content-range') || ''; if (!cr.includes('/')) throw new Error('no count'); return { rows, total: +(cr.split('/')[1] || rows.length) }; }
   return rows;
 }
+// When the database is struggling, stop sending it more work for a short while (per server instance) and let the
+// page answer "try again later" right away, so requests don't pile up and keep it overloaded.
+let DB_PAUSE = 0;
+const pauseDb = () => { DB_PAUSE = Date.now() + 20e3; };
 async function q(p, opt = {}) {
+  if (Date.now() < DB_PAUSE) throw new Error(p.split('?')[0] + ' paused');
   const headers = { apikey: KEY, Accept: 'application/json' };
   if (opt.range) { headers.Range = opt.range; headers['Range-Unit'] = 'items'; }
   if (opt.count) headers.Prefer = opt.count === 'estimated' ? 'count=estimated' : 'count=exact';
   for (let i = 0; ; i++) {
     let r;
-    try { r = await fetch(SB + p, { headers }); } catch (e) { if (i < 2) { await new Promise(f => setTimeout(f, 400 * (i + 1))); continue; } throw e; }
+    try { r = await fetch(SB + p, { headers, signal: AbortSignal.timeout(9000) }); } catch (e) { if (i < 1 && e.name !== 'TimeoutError') { await new Promise(f => setTimeout(f, 400)); continue; } pauseDb(); throw e; }
     if (r.ok || r.status === 206) {
       const rows = await r.json();
       if (opt.count) { const cr = r.headers.get('content-range') || ''; return { rows, total: +(cr.split('/')[1] || rows.length) }; }
       return rows;
     }
-    if (r.status >= 500 && i < 2) { await new Promise(f => setTimeout(f, 400 * (i + 1))); continue; }
+    if (r.status >= 500 && i < 1) { await new Promise(f => setTimeout(f, 500)); continue; }
+    if (r.status >= 500) pauseDb();
     if (r.status === 416) return opt.count ? { rows: [], total: +((r.headers.get('content-range') || '').split('/')[1] || 0) } : [];
     throw new Error(p.split('?')[0] + ' ' + r.status);
   }

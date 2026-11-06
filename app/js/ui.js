@@ -214,7 +214,7 @@ function memberProfile(m){
     ${face(m,92,false)}
     <h1>${esc(m.first)} ${esc(m.last)}</h1>
     <div class="psub">${esc(partyLine(m))} · <button class="plink" data-party-page="${m.party}">All ${PARTYNAME[m.party].toLowerCase()} ›</button></div>
-    <div class="pchips"><span>${m.chamber==='House'?'Up for reelection':'Next election'} ${m.next}</span><span>In Congress since ${m.since}</span></div>
+    <div class="pchips"><span>${(()=>{const past=m.next&&new Date(m.next+' 23:59')<new Date();return m.chamber==='House'?(past?'Ran for reelection':'Up for reelection'):(past?'Last election':'Next election')})()} ${m.next}</span><span>In Congress since ${m.since}</span></div>
     <button class="follow ${on?'on':''}" data-follow="${m.id}">${on?'Following':'Follow'}</button>
   </div></section>
   <div class="wrap">

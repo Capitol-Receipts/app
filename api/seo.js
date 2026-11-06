@@ -340,7 +340,7 @@ module.exports = async (req, res) => {
     return send(res, pg.status || 200, 'text/html; charset=utf-8', html(pg, appMode ? 'app' : 'seo'));
   } catch (e) {
     console.error(t, id, e);
-    res.statusCode = 503; res.setHeader('Cache-Control', 'no-store'); res.setHeader('Retry-After', '60');
+    res.statusCode = 503; res.setHeader('Cache-Control', 'no-store'); res.setHeader('Retry-After', '600');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.end(html({ title: 'Capitol Receipts', desc: 'Temporarily unavailable.', path: u.pathname, noindex: true, route: null, body: '<h1>Back in a moment</h1><p>We couldn’t load this page. Please try again in a minute.</p>' }, 'seo'));
   }
