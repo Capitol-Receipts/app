@@ -26,13 +26,21 @@ function upstream(path, range, count) {
   });
 }
 
+let lastNotify = 0;
+function notifyDown() { // the monitor checks the database itself before emailing
+  if (Date.now() - lastNotify < 300e3) return; lastNotify = Date.now();
+  const r = https.request({ host: HOST, path: '/functions/v1/uptime?db=1', method: 'POST', timeout: 15000, headers: { 'Content-Type': 'application/json', 'Content-Length': 2 } }, (res) => res.resume());
+  r.on('error', () => {}); r.on('timeout', () => r.destroy()); r.end('{}');
+}
+
 async function withRetry(q, range, count) {
   let r = null;
   for (let i = 0; i < 2; i++) { // one retry only, so a struggling database isn't hit with a retry storm
-    try { r = await upstream(q.startsWith('rpc/get_light?') ? q.replace('rpc/get_light?', 'rpc/get_light_json?') : q, range, count); } catch (e) { return r; }
+    try { r = await upstream(q.startsWith('rpc/get_light?') ? q.replace('rpc/get_light?', 'rpc/get_light_json?') : q, range, count); } catch (e) { notifyDown(); return r; }
     if (r && r.status < 500) return r;
     await new Promise((f) => setTimeout(f, 1500));
   }
+  if (r && r.status >= 500) notifyDown();
   return r;
 }
 

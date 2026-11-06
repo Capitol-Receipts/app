@@ -18,7 +18,11 @@ async function viaCache(p, opt) {
 // When the database is struggling, stop sending it more work for a short while (per server instance) and let the
 // page answer "try again later" right away, so requests don't pile up and keep it overloaded.
 let DB_PAUSE = 0;
-const pauseDb = () => { DB_PAUSE = Date.now() + 20e3; };
+let lastNotify = 0;
+const pauseDb = () => {
+  DB_PAUSE = Date.now() + 20e3;
+  if (Date.now() - lastNotify > 300e3) { lastNotify = Date.now(); fetch(SB.replace('/rest/v1/', '/functions/v1/uptime?db=1'), { method: 'POST', body: '{}', signal: AbortSignal.timeout(15000) }).catch(() => {}); }
+};
 async function q(p, opt = {}) {
   if (Date.now() < DB_PAUSE) throw new Error(p.split('?')[0] + ' paused');
   const headers = { apikey: KEY, Accept: 'application/json' };

@@ -34,6 +34,23 @@ async function probe(c: Check) {
   }
 }
 
+// Is the database answering? Used when the site reports failures, and when this monitor can't read its own state.
+async function dbAnswers() {
+  try {
+    const r = await fetch(`${URL_}/rest/v1/app_meta?select=key&limit=1`, { headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}` }, signal: AbortSignal.timeout(8000) });
+    return r.ok;
+  } catch { return false; }
+}
+// Outage email that needs no database: Resend's idempotency key allows one per hour, however often it's triggered.
+async function dbDownEmail(why: string) {
+  if (!RESEND) return;
+  const hour = new Date().toISOString().slice(0, 13);
+  await fetch("https://api.resend.com/emails", { method: "POST",
+    headers: { Authorization: `Bearer ${RESEND}`, "Content-Type": "application/json", "Idempotency-Key": `db-down-${hour}` },
+    body: JSON.stringify({ from: "Capitol Receipts Monitor <alerts@capitolreceipts.com>", to: [TO], subject: "DOWN: the database isn't answering · Capitol Receipts",
+      html: `<div style="font:15px/1.55 -apple-system,Segoe UI,Arial,sans-serif;color:#1f2937;max-width:560px"><p><b>The Capitol Receipts database isn't answering.</b> The app can't load records and record pages show an error until it's back.</p><p>Detected: ${why}, ${new Date().toUTCString()}.</p><p>First thing to try: Supabase dashboard › Capitol Receipts › Project Settings › General › <b>Restart project</b>. If the project shows CPU at 100%, the database is overloaded.</p><p style="color:#6b7280;font-size:13px">You get at most one of these an hour while it lasts.</p></div>` }) }).catch(() => {});
+}
+
 async function email(subject: string, lines: string[]) {
   if (!RESEND) return;
   const html = `<div style="font:15px/1.55 -apple-system,Segoe UI,Arial,sans-serif;color:#1f2937;max-width:560px">${lines.map((l) => `<p style="margin:0 0 10px">${l}</p>`).join("")}
@@ -42,9 +59,17 @@ async function email(subject: string, lines: string[]) {
     body: JSON.stringify({ from: "Capitol Receipts Monitor <alerts@capitolreceipts.com>", to: [TO], subject, html }) }).catch(() => {});
 }
 
-Deno.serve(async () => {
+Deno.serve(async (req) => {
+  const url = new URL(req.url);
+  // The website calls ?db=1 when its database requests fail. Confirm before alerting, so a stray call can't send email.
+  if (url.searchParams.get("db") === "1") {
+    if (await dbAnswers()) return Response.json({ db: "ok" });
+    await dbDownEmail("pages on the site started failing");
+    return Response.json({ db: "down", alerted: true });
+  }
   const db = createClient(URL_, SERVICE, { auth: { persistSession: false } });
-  const { data: prev } = await db.from("service_status").select("*");
+  const { data: prev, error: readErr } = await db.from("service_status").select("*");
+  if (readErr && !(await dbAnswers())) { await dbDownEmail("the 5-minute check couldn't reach it"); return Response.json({ db: "down" }, { status: 503 }); }
   const before = new Map((prev || []).map((r: any) => [r.service, r]));
   // at most one run a minute, however often this is called
   const last = Math.max(0, ...(prev || []).map((r: any) => new Date(r.checked_at).getTime()));
