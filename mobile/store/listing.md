@@ -5,7 +5,7 @@
 - **Subtitle** (30): Congress money, trades & votes
 - **Primary category:** Reference. **Secondary:** News
 - **Price:** Free, with an auto-renewing subscription (Capitol Receipts Pro)
-- **Age rating:** 4+ (no objectionable content; the app doesn't offer open web browsing)
+- **Age rating:** answer the current age-rating questionnaire (updated system since Jan 31, 2026). Expected result 4+: no objectionable content, no user-generated content, no unrestricted web browsing. Texas (SB 2420) age-assurance duties apply to apps distributed there; see the audit doc.
 - **Support URL:** https://www.capitolreceipts.com/support
 - **Marketing URL:** https://www.capitolreceipts.com
 - **Privacy policy URL:** https://www.capitolreceipts.com/privacy
@@ -39,7 +39,16 @@ ALSO INSIDE
 CAPITOL RECEIPTS PRO
 Pro sends an alert when someone you follow files a trade, watches the stocks you pick, flags every trade tied to a member's own committee, and adds CSV downloads. Pro is $5.99 a month or $39.99 a year, billed through your Apple ID.
 
-Capitol Receipts is nonpartisan and independent. We take no money from parties, campaigns, PACs or lobbyists. Data comes from the Federal Election Commission, House and Senate disclosure reports, Voteview, the Senate lobbying database and the Office of Government Ethics.
+Capitol Receipts is nonpartisan and independent. We take no money from parties, campaigns, PACs or lobbyists. Capitol Receipts is made by Squared Away Labs LLC. It is not a government app and isn't affiliated with or endorsed by any government agency, political party or campaign.
+
+WHERE THE DATA COMES FROM
+- Campaign finance: Federal Election Commission, fec.gov
+- House stock trades and disclosures: Clerk of the House, disclosures-clerk.house.gov
+- Senate stock trades and disclosures: Secretary of the Senate, efdsearch.senate.gov
+- Lobbying: Senate Lobbying Disclosure, lda.senate.gov
+- Executive branch trades: Office of Government Ethics, oge.gov
+- Bills and members: congress.gov
+- Roll-call votes: Voteview (UCLA), built from House and Senate records
 
 Payment is charged to your Apple ID at confirmation of purchase. The subscription renews automatically unless canceled at least 24 hours before the end of the current period. Manage or cancel in Settings › your name › Subscriptions.
 Terms of Use: https://www.capitolreceipts.com/terms
@@ -77,12 +86,15 @@ Data **linked to the user**, used for **App Functionality** only, **not used for
 - **Contact info › Email address:** sign-in and alert emails
 - **Identifiers › User ID:** the account
 - **Location › Coarse location:** the ZIP code or state someone enters to find their representatives (no GPS)
+- **Contact info › Name:** only if Sign in with Apple or Google shares it
+- **User content › Customer support:** messages sent through Help & support
 - **User content › Other user content:** the people, stocks and bills they follow
 - **Purchases › Purchase history:** whether they have Pro
 
 Data **not linked to the user**, used for **Analytics**, **not used for tracking**:
 - **Usage data › Product interaction** (Google Analytics: pages viewed, buttons tapped)
 - **Diagnostics › Other diagnostic data** (page errors)
+- **Location › Coarse location** (Google Analytics derives an approximate area from the network address)
 
 Tracking: **No**. The app doesn't share data with data brokers or use it for ads, so no tracking permission prompt is needed.
 
@@ -102,10 +114,9 @@ Password: [its password]
 
 # Google Play listing
 
-Use the same title, description and screenshots as the App Store (Play wants phone screenshots at least 1080 px on the
-short side; the iPhone ones work). Short description (80): Stock trades, donors and votes for every member of Congress.
+Use the same title and description as the App Store, with two changes: in CAPITOL RECEIPTS PRO say "billed through Google Play" instead of "your Apple ID", and drop the Apple payment paragraph (Play shows its own terms). Keep the WHERE THE DATA COMES FROM list and the not-a-government-app sentence: Play's policy for apps that share government information requires both in the description. Screenshots: `store/play/` (1080 × 2160) plus `feature-graphic-1024x500.png` and `icon-512.png`. Short description (80): Stock trades, donors and votes for every member of Congress.
 
-- Package: `com.capitolreceipts.app` · Category: News & Magazines · Contains ads: No · In-app purchases: Yes
+- Package: `com.capitolreceipts.app` · Category: Books & Reference (News & Magazines would also require Play's News declaration and news-publisher details) · Contains ads: No · In-app purchases: Yes
 - Subscriptions: `pro_monthly` $5.99/month and `pro_yearly` $39.99/year, each with a 14-day free trial for new subscribers.
 - Privacy policy: https://www.capitolreceipts.com/privacy · Delete account: https://www.capitolreceipts.com/delete-account
 
@@ -118,7 +129,10 @@ short side; the iPhone ones work). Short description (80): Stock trades, donors 
 | Purchase history | Yes | No | App functionality (Pro status) | Yes |
 | App interactions (who you follow, watchlists) | Yes | No | App functionality | Yes |
 | Device IDs (push token) | Yes | No | App functionality (push alerts) | Yes |
+| Name (only from Apple or Google sign-in) | Yes | No | Account management | Yes |
+| Approximate location (ZIP code or state the person types; Analytics area from IP) | Yes | No | App functionality, Analytics | Yes for ZIP |
+| Other user-generated content (support messages) | Yes | No | Customer support | Yes |
 | Diagnostics (crash and error reports via Google Analytics) | Yes | No | Analytics | No |
 
 Data is encrypted in transit. Users can request deletion in the app (Account › Delete my account) or on the website.
-No location, contacts, photos, messages, health or financial account data is collected.
+No precise location, contacts, photos, messages, health or financial account data is collected.

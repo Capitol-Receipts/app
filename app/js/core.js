@@ -389,7 +389,7 @@ function account(){
    <div class="sec" style="margin-top:16px"><div class="plan"><span style="opacity:.75;font-size:14px">Free plan</span><b>Capitol Receipts Pro · $5.99/mo</b><span style="opacity:.85;font-size:15px">Instant alerts for anyone you follow, full trade histories, and state lawmakers.</span><button id="pro">Start 14-day free trial</button><span id="proNote" hidden style="font-size:13px;opacity:.85">Payments aren't connected in this prototype.</span></div></div>
    <div class="sec"><div class="sh"><h2>Notify me about</h2></div><div class="group">${sw.map(([id,l,c])=>`<label class="row plain" for="${id}" style="grid-template-columns:1fr auto"><span>${l}</span><input class="sw" type="checkbox" id="${id}" ${c?'checked':''}></label>`).join('')}</div></div>
    <div class="sec"><div class="group"><button class="row plain" data-how style="grid-template-columns:1fr auto"><span>How we score officials</span>${chev}</button><button class="row plain" data-sources style="grid-template-columns:1fr auto"><span>Where our data comes from</span>${chev}</button><button class="row plain" data-next style="grid-template-columns:1fr auto"><span>What's coming next</span>${chev}</button></div>
-   <div class="cap">Capitol Receipts is nonpartisan. Every official is measured with the same formulas, using public records only.</div></div></div>`;
+   <div class="cap">Capitol Receipts is nonpartisan. Every official is measured with the same formulas, using public records only. It is made by Squared Away Labs LLC and isn’t affiliated with or endorsed by any government agency, party or campaign.</div></div></div>`;
 }
 
 /* ---------- sheets ---------- */

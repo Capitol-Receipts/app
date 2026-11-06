@@ -35,7 +35,7 @@ drawerHtml=function(){
    <div class="dsec"><button class="ditem big" data-go="browse">${NAVI.pin}<span>Browse everything</span></button></div>
    <div class="dsmall"><button data-go="how">How we measure</button><button data-go="sources">Sources</button><button data-go="corrections">Corrections</button><button data-go="pro">Pro</button>${authed?'<button data-go="more">Account</button>':''}</div>
    <div class="langseg" role="group" aria-label="Language"><button data-lang="en" aria-pressed="${S.lang!=='es'}">English</button><button data-lang="es" aria-pressed="${S.lang==='es'}">Español</button></div>
-   <div class="dfoot">Nonpartisan. Built on public records.</div>`);
+   <div class="dfoot">Nonpartisan. Built on public records. Not affiliated with any government agency.</div>`);
 };
 if(!['congress','stocks','money','bills','leaders'].some(k=>S.dopen[k]))S.dopen={congress:true};
 

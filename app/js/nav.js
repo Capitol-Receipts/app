@@ -40,7 +40,7 @@ function drawerHtml(){
    ${navGroup('apps',NAVI.badge,'Appointees',[['ncat:All','Everyone confirmed since 2025'],['ncat:Cabinet','Cabinet'],['ncat:Agency leaders','Agency leaders'],['ncat:Judges','Judges'],['ncat:Ambassadors','Ambassadors'],['ncat:Prosecutors & marshals','Prosecutors & marshals']])}
    ${navGroup('hist',NAVI.clock,'History',[['hist:members','Past members of Congress',H?ord(PASTS.length):''],['hist:apps','Past appointees',H?ord(APPS.length):''],['hist:exec','Presidents & vice presidents'],['hist:archive','From the archives']])}
    ${navGroup('about',NAVI.info,'About',[['how','How we measure'],['sources','Where the data comes from'],['more','Account & settings']])}
-   <div class="dfoot">Nonpartisan. Built on public records.</div>`;
+   <div class="dfoot">Nonpartisan. Built on public records. Not affiliated with any government agency.</div>`;
 }
 function openDrawer(){const d=$('#drawer');const pn=d.querySelector('.dpanel');pn.innerHTML=drawerHtml();d.hidden=false;pn.scrollTop=0;requestAnimationFrame(()=>d.classList.add('in'));document.body.style.overflow='hidden'}
 function closeDrawer(){const d=$('#drawer');if(d.hidden)return;d.classList.remove('in');document.body.style.overflow='';setTimeout(()=>{d.hidden=true},220)}
