@@ -74,7 +74,7 @@ ${lf ? `<a href="/reports/${lastFull}" style="background:#ffffff;color:#14274e;b
   // plain blocks for the redesigned marketing pages (site/*.html, built by scripts/site_pages.py)
   const nm2 = m => `${link(m, mem)} <span class="cr-seat">${esc(seat(m))}</span>`;
   nums.exec = num(execN);
-  blocks['p-recent'] = `<table class="cr-t"><thead><tr><th>Filed trade</th><th>Member</th><th>What</th><th class="r">Amount</th></tr></thead><tbody>
+  blocks['p-recent'] = `<table class="cr-t"><thead><tr><th>Date</th><th>Member</th><th>What</th><th class="r">Amount</th></tr></thead><tbody>
 ${recent.slice(0, 8).map(([m, t]) => `<tr><td class="nw">${esc(date(t[0]))}</td><td>${nm2(m)}</td><td>${esc(verb(t[1]))} ${t[2] ? `<a href="${P('stock', t[2], '')}">${esc(String(t[3] || t[2]).slice(0, 70))}</a>` : esc(String(t[3] || '').slice(0, 70))}</td><td class="r nw">${money(+t[4] || 0)}–${money(+t[5] || +t[4] || 0)}</td></tr>`).join('\n')}
 </tbody></table>`;
   blocks['p-traders'] = `<ol class="cr-rank">${traders.slice(0, 10).map(m => `<li><span>${nm2(m)}</span><b>${num(+m.tradeN)}</b></li>`).join('')}</ol>`;
