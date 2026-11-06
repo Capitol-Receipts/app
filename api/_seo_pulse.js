@@ -70,6 +70,16 @@ ${lf ? `<a href="/reports/${lastFull}" style="background:#ffffff;color:#14274e;b
 <a href="/guides" style="color:#14274e;font-weight:700;padding:12px 6px">Guides ›</a>
 </div>`;
 
+
+  // plain blocks for the redesigned marketing pages (site/*.html, built by scripts/site_pages.py)
+  const nm2 = m => `${link(m, mem)} <span class="cr-seat">${esc(seat(m))}</span>`;
+  nums.exec = num(execN);
+  blocks['p-recent'] = `<table class="cr-t"><thead><tr><th>Filed trade</th><th>Member</th><th>What</th><th class="r">Amount</th></tr></thead><tbody>
+${recent.slice(0, 8).map(([m, t]) => `<tr><td class="nw">${esc(date(t[0]))}</td><td>${nm2(m)}</td><td>${esc(verb(t[1]))} ${t[2] ? `<a href="${P('stock', t[2], '')}">${esc(String(t[3] || t[2]).slice(0, 70))}</a>` : esc(String(t[3] || '').slice(0, 70))}</td><td class="r nw">${money(+t[4] || 0)}–${money(+t[5] || +t[4] || 0)}</td></tr>`).join('\n')}
+</tbody></table>`;
+  blocks['p-traders'] = `<ol class="cr-rank">${traders.slice(0, 10).map(m => `<li><span>${nm2(m)}</span><b>${num(+m.tradeN)}</b></li>`).join('')}</ol>`;
+  blocks['p-missed'] = `<ol class="cr-rank">${missed.slice(0, 5).map(([m, v]) => `<li><span>${nm2(m)}</span><b>${pct(v, 1)}</b></li>`).join('')}</ol>`;
+  blocks['p-raised'] = `<ol class="cr-rank">${funds.slice(0, 5).map(m => `<li><span>${nm2(m)}</span><b>${money(+m.rec)}</b></li>`).join('')}</ol>`;
   // receipts page boards
   const top = traders[0] ? +traders[0].tradeN : 1;
   blocks['board-trades'] = traders.slice(0, 7).map((m, i) => `<div class="row"><span class="disp" style="font-size: 34px; color: #c8323a">${i + 1}</span><div><b>${link(m, mem)}</b> ${pill(m)}<div class="bar" style="width: ${Math.max(4, Math.round(+m.tradeN / top * 100))}%; background: ${PC[m.party]}; margin-top: 8px"></div></div><b class="mono">${num(+m.tradeN)}</b></div>`).join('\n') +
@@ -97,6 +107,7 @@ ${lf ? `<a href="/reports/${lastFull}" style="background:#ffffff;color:#14274e;b
     ['Votes missed', ...by(g => avg(g.map(m => RK.METRICS['most-missed-votes'].value(m)).filter(v => v != null))), x => pct(x, 1)],
     ['Vote with their party', ...by(g => avg(g.filter(m => (+m.unityN || 0) >= 50 && m.unity != null).map(m => +m.unity))), x => pct(x, 1)],
   ];
+  blocks['p-party'] = `<table class="cr-t"><thead><tr><th>Per member</th><th class="r">Democrats</th><th class="r">Republicans</th></tr></thead><tbody>${lines.map(([l, d, r, f]) => `<tr><td>${l}</td><td class="r">${f(d)}</td><td class="r">${f(r)}</td></tr>`).join('')}</tbody></table>`;
   blocks['party-avg'] = lines.map(([l, d, r, f]) => row(l, d, r, f)).join('\n  ');
   return { asOf, nums, blocks };
 }, 3600e3);
