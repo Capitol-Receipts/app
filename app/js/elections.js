@@ -67,7 +67,7 @@ function electionsScreen(){
   loadRaces();
   const days=daysToElection();
   const head=`${pageHead('2026 elections')}<div class="wrap" style="padding-top:calc(var(--navh) + 10px)">
-   <div class="lbanner bg-capitol elhero"><span class="billno">Election Day · Tuesday, Nov 3, 2026</span><h1>${days>0?`${days} day${days===1?'':'s'} until the 2026 election`:days===0?'Election Day is today':'The 2026 election'}</h1><span>All 435 House seats and ${EL.races?EL.races.filter(r=>r.o==='S').length:35} Senate seats are on the ballot. See who's running, who's paying for it, and the incumbent's record.</span></div>`;
+   <div class="lbanner bg-capitol elhero"><span class="billno">Election Day · Tuesday, Nov 3, 2026</span><h1>${days>0?`${days} day${days===1?'':'s'} until the 2026 election`:days===0?'Election Day is today':'The 2026 election'}</h1><span>${days<0?`All 435 House seats and ${EL.races?EL.races.filter(r=>r.o==='S').length:35} Senate seats were on the ballot. See who ran, who paid for it, and the incumbent's record.`:`All 435 House seats and ${EL.races?EL.races.filter(r=>r.o==='S').length:35} Senate seats are on the ballot. See who's running, who's paying for it, and the incumbent's record.`}</span></div>`;
   if(EL.err)return head+`<div class="calm">Couldn’t load the races. Check your connection and try again.</div></div>`;
   if(!EL.races)return head+`<div class="calm">Loading races…</div></div>`;
   const R=EL.races,sen=R.filter(r=>r.o==='S'),hou=R.filter(r=>r.o==='H');
@@ -245,7 +245,7 @@ function elHomeBlock(){
   const days=daysToElection();
   const authed=typeof signedIn==="function"&&signedIn(),mine=authed?myRaces():[];
   return `<section class="sec elhome wide"><div class="sh"><h2>2026 elections</h2><button data-go="elections">All races</button></div>
-    <div class="elhomegrid"><button class="elcard" data-go="elections"><span class="elk">Election Day · Nov 3</span><b>${days>0?days:'Today'}</b><span class="eld">${days>0?'days to go':''}</span><span>All 435 House seats and 35 Senate seats are on the ballot. See who's running and who's paying for it.</span></button>
+    <div class="elhomegrid"><button class="elcard" data-go="elections">${days<0?`<span class="elk">Held Nov 3, 2026</span><b>Races</b><span class="eld">and the money</span><span>All 435 House seats and 35 Senate seats were on the ballot. See who ran and who paid for their campaigns.</span>`:`<span class="elk">Election Day · Nov 3</span><b>${days>0?days:'Today'}</b><span class="eld">${days>0?'days to go':''}</span><span>All 435 House seats and 35 Senate seats are on the ballot. See who's running and who's paying for it.</span>`}</button>
     ${EL.races?toWatch(3).map(featCard).join(''):''}</div>
     ${mine.length?`<div class="group" style="margin-top:10px">${mine.map(r=>raceRow(r,'Your race')).join('')}</div>`:''}</section>`;
 }
