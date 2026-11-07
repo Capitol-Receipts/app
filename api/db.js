@@ -1,3 +1,4 @@
+const { watch } = require('./_watch');
 /* Cached, read-only window onto the public tables. Browsers ask /api/db?q=<path>; Vercel's CDN keeps each answer for
    5 minutes (and serves the last good copy for up to a day while it refreshes or if the database is slow), so a traffic
    spike costs the database one request per URL per few minutes instead of one per visitor. Bytes are passed through
@@ -83,7 +84,7 @@ function encoded(r, ae) {
   }
 }
 
-module.exports = async (req, res) => {
+const handler = async (req, res) => {
   const send = (status, body, cc) => { res.statusCode = status; res.setHeader('Cache-Control', cc); res.setHeader('Content-Type', 'application/json'); res.end(body); };
   if (req.method !== 'GET' && req.method !== 'HEAD') return send(405, '{"error":"GET only"}', 'no-store');
   const sp = new URL(req.url, 'http://x').searchParams;
@@ -109,3 +110,5 @@ module.exports = async (req, res) => {
   res.setHeader('CDN-Cache-Control', OK_CC);
   res.end(out.body);
 };
+
+module.exports = watch(handler);

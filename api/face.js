@@ -1,3 +1,4 @@
+const { watch } = require('./_watch');
 /* One member photo as an image file (/face/<bioguide id>.webp). Pages load only the faces on screen, and the CDN keeps
    each one for a week, so the database is asked about each photo a few times a week at most. */
 const https = require('https');
@@ -14,7 +15,7 @@ function get(path) {
   });
 }
 
-module.exports = async (req, res) => {
+const handler = async (req, res) => {
   const id = new URL(req.url, 'http://x').searchParams.get('id') || '';
   const miss = (cc) => { res.statusCode = 404; res.setHeader('Cache-Control', cc); res.end(); };
   if (!/^[A-Z]\d{6}$/.test(id)) return miss('public, s-maxage=86400');
@@ -30,3 +31,5 @@ module.exports = async (req, res) => {
     res.end(img);
   } catch (e) { res.statusCode = 502; res.setHeader('Cache-Control', 'no-store'); res.end(); }
 };
+
+module.exports = watch(handler);

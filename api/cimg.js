@@ -1,3 +1,4 @@
+const { watch } = require('./_watch');
 /* Candidate photos served from our own domain: fetched once from Wikimedia Commons, then kept on Vercel's CDN for a
    year, so visitors never depend on Wikimedia being up or rate-limiting us. Only Wikimedia Commons images are allowed. */
 const https = require('https');
@@ -24,7 +25,7 @@ function get(url, hops = 0) {
   });
 }
 
-module.exports = async (req, res) => {
+const handler = async (req, res) => {
   const u = new URL(req.url, 'http://x').searchParams.get('u') || '';
   const fail = (status, cc) => { res.statusCode = status; res.setHeader('Cache-Control', cc); res.end(); };
   if (!OK.test(u)) return fail(400, 'public, s-maxage=86400');
@@ -42,3 +43,5 @@ module.exports = async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.end(r.body);
 };
+
+module.exports = watch(handler);

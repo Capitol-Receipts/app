@@ -4,6 +4,7 @@
   "description": "Capitol Receipts app: static app files plus the search-page and share-image functions in api/",
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",
+    "@sentry/node": "^11.11.0",
     "satori": "^0.12.2"
   },
   "engines": {

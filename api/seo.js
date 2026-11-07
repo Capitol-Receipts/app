@@ -1,3 +1,4 @@
+const { watch } = require('./_watch');
 /* Search-friendly pages for www.capitolreceipts.com (served by the app project; www proxies here).
 
 Every record in the app (members, past members, bills, PACs, lobbying groups and firms, committees, caucuses,
@@ -290,7 +291,7 @@ function goScreen(res, id) {
   return send(res, 200, 'text/html; charset=utf-8', h, 3600);
 }
 
-module.exports = async (req, res) => {
+const handler = async (req, res) => {
   const u = new URL(req.url, HOST);
   const t = u.searchParams.get('t') || '', id = u.searchParams.get('id') || '', slug = u.searchParams.get('slug') || '';
   const page = Math.max(1, parseInt(u.searchParams.get('page') || '1', 10) || 1);
@@ -345,3 +346,5 @@ module.exports = async (req, res) => {
     return res.end(html({ title: 'Capitol Receipts', desc: 'Temporarily unavailable.', path: u.pathname, noindex: true, route: null, body: '<h1>Back in a moment</h1><p>We couldn’t load this page. Please try again in a minute.</p>' }, 'seo'));
   }
 };
+
+module.exports = watch(handler);

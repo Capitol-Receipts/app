@@ -1,3 +1,4 @@
+const { watch } = require('./_watch');
 /* Share images (1200x630 PNG) for search pages: the picture that shows when a page is posted on social media
 or sent in a message. Served at /og/<type>/<id>.png on app.capitolreceipts.com. */
 const fs = require('fs'), path = require('path');
@@ -150,7 +151,7 @@ const BUILD = {
 };
 const TYPES = Object.keys(BUILD);
 
-module.exports = async (req, res) => {
+const handler = async (req, res) => {
   const u = new URL(req.url, 'https://app.capitolreceipts.com');
   const t = u.searchParams.get('t') || '', id = decodeURIComponent((u.searchParams.get('id') || '').replace(/\.png$/, ''));
   try {
@@ -168,4 +169,6 @@ module.exports = async (req, res) => {
     res.statusCode = 302; res.setHeader('Location', 'https://www.capitolreceipts.com/img/share.png?v=20261015'); res.setHeader('Cache-Control', 'no-store'); res.end();
   }
 };
+
+module.exports = watch(handler);
 module.exports.TYPES = TYPES;
