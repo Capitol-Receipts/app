@@ -17,6 +17,26 @@ const storeBilled=p=>!!(p&&(p.source==='app_store'||p.source==='play_store'));
 const IOS={offer:null,busy:false}; // in-app purchase and push state (iPhone and Android)
 if(NATIVE)document.documentElement.classList.add('native');
 
+/* ---------- forced-update gate ----------
+In the phone app, ask /api/app-version for the oldest version still allowed and, if this build is older, cover the
+screen with an update prompt. Any failure lets the app through. */
+if(NATIVE)(async()=>{try{
+  const info=await plug('App').getInfo();
+  const min=String(((await (await fetch('/api/app-version',{cache:'no-store'})).json()).min)||'0.0.0');
+  const a=String(info.version||'').split('.').map(n=>parseInt(n,10)),b=min.split('.').map(n=>parseInt(n,10));
+  if(a.concat(b).some(Number.isNaN))return;
+  let older=false;
+  for(let i=0;i<Math.max(a.length,b.length);i++){const x=a[i]||0,y=b[i]||0;if(x!==y){older=x<y;break}}
+  if(!older)return;
+  const link=ANDROID?'https://play.google.com/store/apps/details?id=com.capitolreceipts.app':'https://apps.apple.com/app/capitol-receipts';
+  const box=document.createElement('div');
+  box.setAttribute('role','alertdialog');box.setAttribute('aria-modal','true');
+  box.style.cssText='position:fixed;inset:0;z-index:100000;background:#14274e;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;font-family:system-ui,sans-serif';
+  box.innerHTML='<h1 style="font-size:24px;margin:0">Please update Capitol Receipts</h1><p style="max-width:320px;opacity:.85">This version is no longer supported. Update to keep using the app.</p><a style="margin-top:16px;min-height:48px;padding:14px 28px;border-radius:999px;background:#fff;color:#14274e;font-weight:700;text-decoration:none" href="'+link+'">Open the store</a>';
+  document.body.appendChild(box);
+}catch(e){}})();
+
+
 /* ---------- account deletion ---------- */
 function deleteSheet(){
   const apple=storeBilled(ACCT.plan)&&ACCT.plan.pro,billedBy=ACCT.plan&&ACCT.plan.source==='play_store'?'Google Play':'Apple';
