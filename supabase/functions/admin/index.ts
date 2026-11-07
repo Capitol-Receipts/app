@@ -1,6 +1,7 @@
 // Admin portal API (admin.capitolreceipts.com). Every call needs a signed-in account whose email is in public.admins.
 // Reads go through service-only SQL functions (admin_overview, admin_users); every change is written to public.admin_log.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
+import { syncRoadmap } from "./roadmap.ts";
 
 const URL_ = Deno.env.get("SUPABASE_URL")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -236,6 +237,40 @@ Deno.serve(async (req) => {
         await log("billing_emails_" + v, null);
         return json({ ok: true });
       }
+
+      case "roadmap": {
+        // tick off what can be checked automatically, then return the whole list
+        const sync = await syncRoadmap(db, true).catch(() => ({ checked: 0, changed: 0 }));
+        const items = await one(db.from("roadmap_items").select("*").order("sort").order("created_at"));
+        return json({ items, sync });
+      }
+
+      case "roadmap_save": {
+        const lanes = ["now", "next", "later", "done", "declined"], pris = ["critical", "high", "normal", "low"];
+        const row: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        if (b.title !== undefined) { const t = String(b.title).trim().slice(0, 200); if (!t) return json({ error: "Give it a title." }, 400); row.title = t; }
+        if (b.detail !== undefined) row.detail = String(b.detail).slice(0, 2000) || null;
+        if (b.area !== undefined) row.area = String(b.area).slice(0, 80) || null;
+        if (b.priority !== undefined && pris.includes(b.priority)) row.priority = b.priority;
+        if (b.lane !== undefined && lanes.includes(b.lane)) { row.lane = b.lane; row.done_at = b.lane === "done" ? new Date().toISOString() : null; }
+        if (b.id) {
+          await one(db.from("roadmap_items").update(row).eq("id", b.id));
+          await log("roadmap_update", { id: b.id, ...row });
+        } else {
+          if (!row.title) return json({ error: "Give it a title." }, 400);
+          const { data: last } = await db.from("roadmap_items").select("sort").order("sort", { ascending: false }).limit(1).maybeSingle();
+          row.lane = row.lane || "next"; row.sort = (last?.sort || 0) + 10;
+          if (row.lane === "done") row.done_at = new Date().toISOString();
+          await one(db.from("roadmap_items").insert(row));
+          await log("roadmap_add", { title: row.title });
+        }
+        return json({ ok: true });
+      }
+
+      case "roadmap_delete":
+        await one(db.from("roadmap_items").delete().eq("id", b.id));
+        await log("roadmap_delete", { id: b.id });
+        return json({ ok: true });
 
       case "admin_add": {
         const email = String(b.email || "").trim().toLowerCase();

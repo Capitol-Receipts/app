@@ -44,6 +44,13 @@ th{text-align:left;font-size:12px;letter-spacing:.04em;text-transform:uppercase;
 td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
 tr:last-child td{border-bottom:0}
 .tbl{background:var(--panel);border-radius:14px;overflow-x:auto}
+.rm-area{margin:0 0 14px}.rm-area h2{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:18px;margin:0 0 8px}.rm-area h2 small{font-size:13px;color:var(--soft);font-weight:600}
+.rm-bar{height:6px;background:var(--line);border-radius:3px;margin:0 0 10px;overflow:hidden}.rm-bar i{display:block;height:6px;background:var(--good)}
+.rm-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:4px 10px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+.rm-row.done .rm-t{text-decoration:line-through;color:var(--soft)}.rm-t{font-weight:700}.rm-d{grid-column:2/-1;color:var(--ink2);font-size:13.5px}
+.rm-ctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.rm-ctl select{padding:4px 8px;font-size:13px}
+.rm-ck{width:22px;height:22px;border-radius:6px;border:2px solid var(--soft);background:var(--panel);padding:0;display:grid;place-items:center;color:#fff;font-size:14px;line-height:1}.rm-ck.on{background:var(--good);border-color:var(--good)}
+.p-crit{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}.p-high{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}.p-auto{background:var(--sel);color:var(--ink2)}
 .pill{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}
 .p-pro{background:color-mix(in srgb,var(--good) 15%,transparent);color:var(--good)}
 .p-trial{background:color-mix(in srgb,var(--D) 15%,transparent);color:var(--D)}
@@ -86,8 +93,8 @@ const dt=s=>s?new Date(s).toLocaleDateString('en-US',{month:'short',day:'numeric
 const dtt=s=>s?new Date(s).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
 const ago=s=>{if(!s)return '—';const m=(Date.now()-new Date(s))/6e4;return m<60?Math.round(m)+'m ago':m<1440?Math.round(m/60)+'h ago':Math.round(m/1440)+'d ago'};
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),2800)}
-const ST={view:'overview',me:null,cache:{},uq:'',uonly:'all',uoff:0,rfilter:'open',sfilter:'open'};
-const VIEWS=[['overview','Overview'],['support','Support'],['people','People'],['revenue','Pro & revenue'],['reports','Mistake reports'],['corrections','Corrections'],['signups','Sign-ups'],['emails','Emails'],['system','System']];
+const ST={view:'overview',me:null,cache:{},uq:'',uonly:'all',uoff:0,rfilter:'open',sfilter:'open',rmall:false};
+const VIEWS=[['overview','Overview'],['roadmap','Roadmap'],['support','Support'],['people','People'],['revenue','Pro & revenue'],['reports','Mistake reports'],['corrections','Corrections'],['signups','Sign-ups'],['emails','Emails'],['system','System']];
 
 async function api(action,body={}){
   const {data:{session}}=await sb.auth.getSession();
@@ -172,6 +179,34 @@ function bars(pairs,fmt,color){
 const planPill=u=>u.plan==='comp'&&u.pro?'<span class="pill p-comp">Comped Pro</span>':u.status==='trialing'&&u.pro?`<span class="pill p-trial">Free week</span>`:u.status==='past_due'?'<span class="pill p-bad">Past due</span>':u.pro?`<span class="pill p-pro">Pro · ${esc(u.plan||'')}</span>`:'<span class="pill p-free">Free</span>';
 
 const R={
+async roadmap(){
+  const d=await api('roadmap');const items=d.items||[];ST.cache.rm=items;
+  const areas=[...new Set(items.map(i=>i.area||'Other'))];
+  const open=items.filter(i=>i.lane!=='done'&&i.lane!=='declined');
+  const lanes=[['now','Now'],['next','Next'],['later','Later'],['done','Done'],['declined','Won’t do']];
+  const pri=p=>p==='critical'?'<span class="pill p-crit">Blocks launch</span>':p==='high'?'<span class="pill p-high">High</span>':'';
+  const auto=i=>i.check_key?`<span class="pill p-auto" title="Ticks off on its own when this is in place. Last checked ${i.checked_at?ago(i.checked_at):'never'}.">Checks itself</span>`:'';
+  const row=i=>{const done=i.lane==='done';return `<div class="rm-row ${done?'done':''}">
+   <button class="rm-ck ${done?'on':''}" data-rdone="${i.id}" data-to="${done?'now':'done'}" aria-label="${done?'Mark not done':'Mark done'}: ${esc(i.title)}">${done?'✓':''}</button>
+   <div class="rm-t">${esc(i.title)}</div>
+   <div class="rm-ctl">${pri(i.priority)}${auto(i)}<select data-rl="${i.id}" aria-label="Lane for ${esc(i.title)}">${lanes.map(([k,l])=>`<option value="${k}"${k===i.lane?' selected':''}>${l}</option>`).join('')}</select><button class="btn sm ghost" data-rdel="${i.id}">Delete</button></div>
+   ${i.detail?`<div class="rm-d">${esc(i.detail)}${done&&i.done_at?` · done ${dt(i.done_at)}`:''}</div>`:''}</div>`};
+  const sec=a=>{const all=items.filter(i=>(i.area||'Other')===a),n=all.filter(i=>i.lane==='done').length,show=ST.rmall?all:all.filter(i=>i.lane!=='done'&&i.lane!=='declined');
+    if(!show.length&&!ST.rmall)return '';
+    return `<section class="card rm-area"><h2>${esc(a)}<small>${n} of ${all.length} done</small></h2><div class="rm-bar"><i style="width:${all.length?Math.round(n/all.length*100):0}%"></i></div>${show.map(row).join('')}</section>`};
+  const crit=open.filter(i=>i.priority==='critical').length;
+  return head('Roadmap','Everything left to launch the website, Google Play and the App Store, in order. Items marked “Checks itself” tick off on their own (hourly, and whenever this page opens) once the key, secret or file is in place.')+
+   `<div class="tiles">${tile('Open items',ord(open.length),`${ord(crit)} block launch`,crit?'warn':'')}${tile('Now',ord(items.filter(i=>i.lane==='now').length),'do these first')}${tile('Done',ord(items.filter(i=>i.lane==='done').length),`of ${ord(items.length)}`)}${tile('Last check',d.sync&&d.sync.checked?'Just now':'—',d.sync&&d.sync.changed?`${d.sync.changed} item${d.sync.changed>1?'s':''} updated`:'nothing changed')}</div>
+   <div class="row" style="display:flex;gap:8px;margin:16px 0"><button class="btn sm ${ST.rmall?'ghost':''}" data-rmall="0">Open items</button><button class="btn sm ${ST.rmall?'':'ghost'}" data-rmall="1">Everything</button></div>
+   ${areas.map(sec).join('')}
+   <section class="card"><h2 style="font-size:18px;margin:0 0 10px">Add an item</h2>
+   <form id="rmf" style="display:grid;gap:10px;max-width:640px">
+    <input type="text" id="rmt" placeholder="What needs to happen" maxlength="200" required aria-label="Title">
+    <input type="text" id="rma" list="rmal" placeholder="Step (for example 3. Google Play)" aria-label="Step"><datalist id="rmal">${areas.map(a=>`<option value="${esc(a)}">`).join('')}</datalist>
+    <textarea id="rmd" rows="2" placeholder="Who does it and any details" aria-label="Details"></textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><select id="rml" aria-label="Lane">${lanes.slice(0,3).map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select><select id="rmp" aria-label="Priority"><option value="critical">Blocks launch</option><option value="high">High</option><option value="normal" selected>Normal</option><option value="low">Low</option></select><button class="btn" type="submit">Add</button></div>
+   </form></section>`;
+},
 async overview(){
   const d=await api('overview');ST.cache.ov=d;const s=d.stats,r=d.revenue||{};
   const ro=s.reports_open;const bd=document.querySelector('[data-badge="reports"]');if(bd)bd.innerHTML=ro?`<i>${ro}</i>`:'';
@@ -318,6 +353,9 @@ document.addEventListener('click',async e=>{
   else if(t.dataset.rs)run(()=>api('report_update',{id:+t.dataset.id,status:t.dataset.rs}),t.dataset.rs==='open'?'Reopened.':'Updated.')
   else if(t.dataset.fix){const r=(ST.cache.reports||[]).find(x=>x.id==t.dataset.fix);ST.view='corrections';history.replaceState(null,'','#corrections');document.querySelectorAll('[data-v]').forEach(b=>b.setAttribute('aria-current',b.dataset.v==='corrections'?'page':'false'));$('#main').innerHTML=await R.corrections({page:r?.page,what:r?.message,report_id:r?.id})}
   else if(t.dataset.cdel)run(()=>api('correction_delete',{id:+t.dataset.cdel}),'Correction deleted.')
+  else if(t.dataset.rmall){ST.rmall=t.dataset.rmall==='1';go('roadmap')}
+  else if(t.dataset.rdone)run(()=>api('roadmap_save',{id:t.dataset.rdone,lane:t.dataset.to}),t.dataset.to==='done'?'Marked done.':'Reopened.')
+  else if(t.dataset.rdel){if(t.dataset.sure)run(()=>api('roadmap_delete',{id:t.dataset.rdel}),'Deleted.');else{t.dataset.sure='1';t.textContent='Confirm delete';t.classList.add('red')}}
   else if(t.dataset.billing)run(()=>api('set_billing_emails',{on:t.dataset.billing==='1'}),'Saved.')
   else if(t.dataset.arm)run(()=>api('admin_remove',{email:t.dataset.arm}),'Admin removed.')
   else if(t.dataset.csv==='people'){t.disabled=true;try{let rows=[],off=0,tot=1;while(off<tot&&off<5000){const d=await api('users',{q:ST.uq,only:ST.uonly,offset:off,limit:200});rows=rows.concat(d.rows);tot=d.total;off+=200}
@@ -329,8 +367,12 @@ document.addEventListener('submit',async e=>{
     try{await api('correction_add',{fixed_on:$('#cd').value,page:$('#cp').value,what:$('#cw').value,before:$('#cb').value,after:$('#ca').value,report_id:+$('#crid').value||null});toast('Correction published.');go('corrections')}catch(err){toast(err.message);b.disabled=false}}
   if(e.target.classList.contains('sreply')){e.preventDefault();const f=e.target,btns=f.querySelectorAll('button');const close=!!(e.submitter&&e.submitter.dataset.andclose);btns.forEach(b=>b.disabled=true);
     try{await api('support_reply',{id:+f.dataset.id,text:f.querySelector('textarea').value,close});toast('Reply sent.');ST.cache.ov=null;go('support')}catch(err){toast(err.message);btns.forEach(b=>b.disabled=false)}}
+  if(e.target.id==='rmf'){e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;
+    try{await api('roadmap_save',{title:$('#rmt').value,area:$('#rma').value,detail:$('#rmd').value,lane:$('#rml').value,priority:$('#rmp').value});toast('Added.');go('roadmap')}catch(err){toast(err.message);b.disabled=false}}
   if(e.target.id==='af'){e.preventDefault();try{await api('admin_add',{email:$('#ae').value});toast('Admin added.');go('system')}catch(err){toast(err.message)}}
 });
+document.addEventListener('change',async e=>{const t=e.target;if(!t.dataset||!t.dataset.rl)return;t.disabled=true;
+  try{await api('roadmap_save',{id:t.dataset.rl,lane:t.value});toast('Moved.');go('roadmap')}catch(err){toast(err.message);t.disabled=false}});
 sb.auth.onAuthStateChange((ev)=>{if(ev==='SIGNED_OUT')loginView()});
 boot();
 </script>

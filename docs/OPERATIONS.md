@@ -116,3 +116,7 @@ Owner and recovery methods should be confirmed and written down for each: domain
 Vercel team, Supabase organization, GitHub organization `Capitol-Receipts`, Stripe, Resend, Google Cloud project
 `capitol-receipts` (Google sign-in, admin@squaredawaylabs.com), Google Analytics, Apple Developer (not yet created),
 RevenueCat (not yet created). Turn on two-step sign-in on every one.
+
+## Roadmap
+
+The launch roadmap lives in `public.roadmap_items` and shows in the admin portal under **Roadmap** (admin.capitolreceipts.com/#roadmap). Add, move and tick off items there. Items marked "Checks itself" tick off on their own when the secret, key or file they need is in place: checked whenever the tab opens and once an hour by the uptime monitor. When work ships, update the matching row (lane `done`) in the same change.

@@ -5,6 +5,7 @@
 // that this monitor is still running.
 // Needs RESEND_API_KEY. ALERT_EMAIL optional (defaults to admin@squaredawaylabs.com).
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
+import { syncRoadmap } from "./roadmap.ts";
 
 const URL_ = Deno.env.get("SUPABASE_URL")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -87,6 +88,8 @@ Deno.serve(async (req) => {
     const changed = !p || p.ok !== r.ok;
     return { service: c.service, label: c.label, ok: r.ok, fails, alerted, last_ms: r.ms, last_error: r.error, checked_at: now, changed_at: changed ? now : p.changed_at };
   });
+  // once an hour, tick off roadmap items whose checks now pass (secrets set, store files filled in, first real payment)
+  if (new Date(now).getUTCMinutes() < 5) await syncRoadmap(db).catch(() => {});
   const { error } = await db.from("service_status").upsert(rows);
   if (error) return Response.json({ error: error.message }, { status: 500 });
   if (down.length) await email(`DOWN: ${downNames.join(", ")} · Capitol Receipts`, [...down, "It failed two checks in a row (5 minutes apart). You'll get another email when it recovers."]);
