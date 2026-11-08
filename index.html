@@ -24,6 +24,19 @@
   }
   window.__track = function(n, p){ send(n, p || {}); };
   window.__identify = function(uid){ window.__phUser = cfg.app + ":" + uid; };
+  window.__trackAuth = function(client){
+    try {
+      client.auth.onAuthStateChange(function(ev, s){
+        if (ev !== "SIGNED_IN" || !s || !s.user) return;
+        var k = "ph_in_" + s.user.id;
+        try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, "1"); } catch (e) {}
+        window.__identify(s.user.id);
+        var m = (s.user.app_metadata && s.user.app_metadata.provider) || "email";
+        if (Date.now() - new Date(s.user.created_at).getTime() < 120000) window.__track("signed_up", { method: m });
+        window.__track("signed_in", { method: m });
+      });
+    } catch (e) {}
+  };
   send("$pageview", {});
 })();
 </script>

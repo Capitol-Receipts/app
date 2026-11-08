@@ -12,6 +12,7 @@ function loadSupabaseLib(){
 async function acctInit(){
   try{await loadSupabaseLib()}catch(e){console.warn('Sign-in unavailable',e);ACCT.ready=true;return}
   ACCT.client=window.supabase.createClient(SB.url,SB.key,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'cr_auth',detectSessionInUrl:true}});
+  if(window.__trackAuth)window.__trackAuth(ACCT.client);
   const {data}=await ACCT.client.auth.getSession();
   await acctSet(data.session?.user||null);
   ACCT.client.auth.onAuthStateChange((ev,session)=>{const u=session?.user||null;if((u&&u.id)!==(ACCT.user&&ACCT.user.id))acctSet(u);if(ev==='PASSWORD_RECOVERY')setTimeout(newPasswordSheet,300)});
