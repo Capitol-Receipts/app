@@ -352,7 +352,7 @@ document.addEventListener('click',e=>{
   if(g('[data-more]')){S.limit+=100;render();return}
   if(g('[data-tmore]')){S.tlimit=(S.tlimit||15)+40;topicSheet('stocks');return}
   if(g('[data-rmore]')){S.rlimit=999;topicSheet('influence');return}
-  if(el=g('[data-follow]')){const id=el.dataset.follow;S.following.has(id)?S.following.delete(id):S.following.add(id);store.set('following',[...S.following]);render();return}
+  if(el=g('[data-follow]')){const id=el.dataset.follow;if(S.following.has(id))S.following.delete(id);else{S.following.add(id);if(window.__track)window.__track('key_action',{action:'follow'})}store.set('following',[...S.following]);render();return}
   if(g('[data-share]')){shareSheet();return}
   if(g('[data-how]')){howSheet();return}
   if(g('[data-sources]')){sourcesSheet();return}
