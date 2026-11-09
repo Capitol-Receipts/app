@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
-const here = require('../apps/web/api/_here');
+const here = require('../apps/web/server/_here');
 
 for (const cwd of [path.resolve('.'), path.resolve('apps/web')]) {
   test(`files resolve when running from ${path.relative(process.cwd(), cwd) || 'repo root'}`, () => {
@@ -12,7 +12,7 @@ for (const cwd of [path.resolve('.'), path.resolve('apps/web')]) {
     try {
       process.chdir(cwd);
       assert.ok(fs.existsSync(here('public', 'index.html')));
-      assert.ok(fs.existsSync(here('api', '_fonts', 'Barlow-Medium.ttf')));
+      assert.ok(fs.existsSync(here('server', '_fonts', 'Barlow-Medium.ttf')));
     } finally { process.chdir(was); }
   });
 }

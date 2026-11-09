@@ -6,7 +6,7 @@ const L = require('./_seo_lib');
 const { Resvg } = require('@resvg/resvg-js');
 const { q, one, ST, PN, money, num, pct, date, clamp, ord, congYears } = L;
 
-const F = n => fs.readFileSync(require('./_here')('api', '_fonts', n));
+const F = n => fs.readFileSync(require('./_here')('server', '_fonts', n));
 let FONTS = null;
 const fonts = () => FONTS || (FONTS = [
   { name: 'Barlow Condensed', data: F('BarlowCondensed-ExtraBold.ttf'), weight: 800, style: 'normal' },

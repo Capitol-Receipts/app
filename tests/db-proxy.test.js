@@ -7,7 +7,7 @@ const https = require('node:https');
 let calls = 0;
 https.get = () => { calls++; throw new Error('network call in a refused request'); };
 https.request = () => { calls++; throw new Error('network call in a refused request'); };
-const handler = require('../apps/web/api/db.js');
+const handler = require('../apps/web/server/db.js');
 
 function call(method, url) {
   return new Promise((resolve) => {

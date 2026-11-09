@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
 const files = [];
-for (const dir of ["apps/web/api", "apps/web/public/app/js"]) for (const f of readdirSync(dir)) if (f.endsWith(".js")) files.push(`${dir}/${f}`);
+for (const dir of ["apps/web/server", "apps/web/public/app/js"]) for (const f of readdirSync(dir)) if (f.endsWith(".js")) files.push(`${dir}/${f}`);
 files.push("apps/web/public/sw.js");
 let bad = 0;
 for (const f of files) {

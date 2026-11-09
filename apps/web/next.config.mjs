@@ -1,4 +1,5 @@
 import { nextRoutes } from '@cr/config/next-routes';
+// Handlers live in server/, not api/: Vercel would treat an api/ folder as separate functions and bypass Next.js.
 const dir = new URL('.', import.meta.url).pathname;
 
 /** @type {import('next').NextConfig} */
@@ -7,6 +8,6 @@ export default {
   poweredByHeader: false,
   reactStrictMode: true,
   // files the API reads from disk at run time
-  outputFileTracingIncludes: { '/api/seo': ['./public/index.html'], '/api/og': ['./api/_fonts/**'] },
+  outputFileTracingIncludes: { '/api/seo': ['./public/index.html'], '/api/og': ['./server/_fonts/**'] },
   serverExternalPackages: ['@resvg/resvg-js', '@sentry/node'],
 };

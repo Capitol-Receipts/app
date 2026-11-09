@@ -2,7 +2,7 @@
 // the database (app_meta.min_app_version) with an environment fallback, and any failure must mean "no minimum".
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const handler = require('../apps/web/api/app-version.js');
+const handler = require('../apps/web/server/app-version.js');
 
 function call() {
   return new Promise((resolve) => {
@@ -43,7 +43,7 @@ test('ignores values that are not version numbers', async () => {
 });
 
 test('the Sentry test endpoint does nothing outside preview deploys', async () => {
-  const st = require('../apps/web/api/sentry-test.js');
+  const st = require('../apps/web/server/sentry-test.js');
   for (const env of [undefined, 'production', 'development']) {
     if (env) process.env.VERCEL_ENV = env; else delete process.env.VERCEL_ENV;
     const r = await new Promise((resolve) => st({ url: '/api/sentry-test', method: 'GET' }, { headersSent: false, status(c) { this.code = c; return this; }, json(b) { resolve({ code: this.code, b }); } }));
