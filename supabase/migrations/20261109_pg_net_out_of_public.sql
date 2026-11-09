@@ -1,3 +1,4 @@
+-- Applied to production Nov 9, 2026 (uptime cron confirmed working afterwards).
 -- Move pg_net out of the public schema (security advisor: extension_in_public).
 -- pg_net cannot be relocated with ALTER EXTENSION ... SET SCHEMA, so it is dropped and recreated in "extensions".
 -- Its functions always live in the "net" schema, so cron jobs that call net.http_post(...) keep working unchanged.
