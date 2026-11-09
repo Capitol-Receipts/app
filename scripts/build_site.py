@@ -5,7 +5,7 @@ Usage: python3 scripts/build_site.py <folder with *.dc.html> <folder with asset 
 import os, re, shutil, sys
 
 SRC, ASSETS = sys.argv[1], sys.argv[2]
-OUT = os.path.join(os.path.dirname(__file__), '..', 'site')
+OUT = os.path.join(os.path.dirname(__file__), '..', 'apps', 'site', 'public')
 APP = 'https://app.capitolreceipts.com'
 SITE = 'https://www.capitolreceipts.com'
 PAGES = {  # design file -> (url path, output file, description)
@@ -158,7 +158,7 @@ if False: open(os.path.join(OUT, 'sitemap.xml'), 'w').write(  # replaced by site
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     ''.join(f'  <url><loc>{SITE}{p if p != "/" else "/"}</loc></url>\n' for p, _, _ in PAGES.values()) + '</urlset>\n')
 shutil.copy(os.path.join(os.path.dirname(__file__), 'site_forms.js'), os.path.join(OUT, 'js', 'forms.js'))
-shutil.copy(os.path.join(os.path.dirname(__file__), 'site_vercel.json'), os.path.join(OUT, 'vercel.json'))
+shutil.copy(os.path.join(os.path.dirname(__file__), 'site_vercel.json'), os.path.join(OUT, '..', 'routes.json'))
 open(os.path.join(OUT, '404.html'), 'w').write(open(os.path.join(OUT, 'index.html')).read())
 print('pages', len(PAGES), 'images', len(used))
 # titles, descriptions, share tags, structured data and links into the app's record pages

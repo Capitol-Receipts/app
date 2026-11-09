@@ -1,2 +1,6 @@
 node_modules/
 __pycache__/
+.next/
+.turbo/
+next-env.d.ts
+*.tsbuildinfo

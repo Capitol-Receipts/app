@@ -1,0 +1,25 @@
+// App colors, copied from apps/web/public/app/css/style.css (:root). Keep the two in step.
+export const colors = {
+  "bg": "#f1f2f4",
+  "surface": "#ffffff",
+  "ink": "#0e1116",
+  "ink2": "#373b43",
+  "soft": "#5b6069",
+  "hair": "#e4e6ea",
+  "seg": "#e6e8ec",
+  "fill": "#0e1116",
+  "fill2": "#8a8f98",
+  "fill3": "#c3c7ce",
+  "fill4": "#e7e9ed",
+  "c-money": "#0c8f62",
+  "c-stocks": "#6d3fd6",
+  "c-votes": "#0a7896",
+  "c-influence": "#c26a0e",
+  "c-ethics": "#b0244f",
+  "c-confirm": "#475161",
+  "flag": "#c26a0e",
+  "flag-soft": "#fdf0e1",
+  "badge": "#e5484d",
+  "yes": "#1f8a55",
+  "no": "#c4362c"
+};

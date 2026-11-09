@@ -1,0 +1,7 @@
+packages:
+  - apps/web
+  - apps/site
+  - packages/*
+# apps/mobile (Capacitor) keeps its own npm lockfile until Phase 3 replaces it with Expo.
+ignoredBuiltDependencies:
+  - sharp

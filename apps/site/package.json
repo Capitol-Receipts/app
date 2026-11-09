@@ -1,0 +1,7 @@
+{
+  "name": "@cr/site",
+  "private": true,
+  "description": "www.capitolreceipts.com on Next.js. Pages are still the static files in public/.",
+  "scripts": { "dev": "next dev -p 3001", "build": "next build", "start": "next start -p 3001" },
+  "dependencies": { "@cr/config": "workspace:*", "next": "15.5.6", "react": "19.1.1", "react-dom": "19.1.1" }
+}

@@ -1,0 +1,44 @@
+// Every public URL from the old vercel.json files must survive the move to Next.js. The Next config is generated from
+// apps/*/routes.json, so this checks the translation: each old rewrite, redirect and header is present, and every
+// static page keeps its clean URL (/about) with the .html form redirecting to it.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { nextRoutes } from '../packages/config/next-routes.mjs';
+
+for (const app of ['web', 'site']) {
+  const dir = path.resolve('apps', app);
+  const old = JSON.parse(fs.readFileSync(path.join(dir, 'routes.json'), 'utf8'));
+  const cfg = nextRoutes(dir);
+
+  test(`${app}: every old rewrite is kept, in order`, async () => {
+    const { afterFiles, beforeFiles } = await cfg.rewrites();
+    assert.deepEqual(beforeFiles, [{ source: '/', destination: '/index.html' }]);
+    const kept = afterFiles.filter((r) => !r.destination.endsWith('.html'));
+    assert.deepEqual(kept.map((r) => [r.source, r.destination]), old.rewrites.map((r) => [r.source, r.destination]));
+  });
+
+  test(`${app}: every old redirect and header is kept`, async () => {
+    const red = await cfg.redirects();
+    for (const r of old.redirects || []) assert.ok(red.some((x) => x.source === r.source && x.destination === r.destination), r.source);
+    assert.equal((await cfg.headers()).length, old.headers.length);
+  });
+
+  test(`${app}: every static page keeps its clean URL`, async () => {
+    const pages = fs.readdirSync(path.join(dir, 'public')).filter((f) => /\.html$/.test(f) && !/^(index|404)\.html$/.test(f));
+    const { afterFiles } = await cfg.rewrites();
+    const red = await cfg.redirects();
+    for (const f of pages) {
+      const p = f.slice(0, -5);
+      assert.ok(afterFiles.some((r) => r.source === `/${p}` && r.destination === `/${f}`), `/${p}`);
+      assert.ok(red.some((r) => r.source === `/${f}` && r.destination === `/${p}` && r.permanent), `/${f}`);
+    }
+  });
+}
+
+test('web: admin host middleware serves the admin portal at /', () => {
+  const src = fs.readFileSync('apps/web/middleware.ts', 'utf8');
+  assert.match(src, /startsWith\('admin\.'\)/);
+  assert.match(src, /'\/admin\.html'/);
+});

@@ -1,0 +1,17 @@
+{
+  "name": "@cr/web",
+  "private": true,
+  "description": "app.capitolreceipts.com and admin.capitolreceipts.com on Next.js. The app itself is still the static files in public/; the API handlers in api/ are unchanged.",
+  "scripts": { "dev": "next dev", "build": "next build", "start": "next start", "typecheck": "tsc -p . --noEmit" },
+  "dependencies": {
+    "@cr/config": "workspace:*",
+    "@cr/shared": "workspace:*",
+    "@resvg/resvg-js": "^2.6.2",
+    "@sentry/node": "^11.11.0",
+    "next": "15.5.6",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "satori": "^0.12.2"
+  },
+  "devDependencies": { "@types/node": "^22", "@types/react": "^19", "typescript": "5.9.3" }
+}

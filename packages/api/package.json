@@ -1,0 +1,20 @@
+{
+  "name": "@cr/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p . --noEmit"
+  },
+  "dependencies": {
+    "@cr/shared": "workspace:*",
+    "@supabase/supabase-js": "^2.75.0"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "@cr/config": "workspace:*"
+  }
+}

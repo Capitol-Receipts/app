@@ -6,7 +6,7 @@ const vm = require('node:vm');
 const path = require('node:path');
 
 const ctx = vm.createContext({ console });
-vm.runInContext(fs.readFileSync(path.join(__dirname, '../app/js/fuzzy.js'), 'utf8') + '\n;globalThis.__fz={fzScore,fz,fzFold};', ctx);
+vm.runInContext(fs.readFileSync(path.join(__dirname, '../apps/web/public/app/js/fuzzy.js'), 'utf8') + '\n;globalThis.__fz={fzScore,fz,fzFold};', ctx);
 const { fzScore, fz, fzFold } = ctx.__fz;
 
 test('folds case, accents and punctuation', () => {

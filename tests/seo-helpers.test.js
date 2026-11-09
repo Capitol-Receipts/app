@@ -2,7 +2,7 @@
 // injecting HTML; slug() and P() build the permanent addresses search engines index.
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { esc, slug, P } = require('../api/_seo_lib.js');
+const { esc, slug, P } = require('../apps/web/api/_seo_lib.js');
 
 test('esc neutralises HTML', () => {
   assert.equal(esc('<script>alert("x")</script>'), '&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;');

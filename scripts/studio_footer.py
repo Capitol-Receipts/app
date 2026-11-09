@@ -36,7 +36,7 @@ def add_studio(html: str) -> str:
 
 
 if __name__ == "__main__":
-    site = os.path.join(os.path.dirname(__file__), "..", "site")
+    site = os.path.join(os.path.dirname(__file__), "..", "apps", "site", "public")
     n = 0
     for f in sorted(glob.glob(os.path.join(site, "*.html"))):
         s = open(f, encoding="utf-8").read()

@@ -13,7 +13,7 @@ Usage: python3 scripts/site_pages.py [pulse.json path or URL]
 import html, json, os, re, sys, urllib.request
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
-S = os.path.join(ROOT, 'site')
+S = os.path.join(ROOT, 'apps', 'site', 'public')
 SITE = 'https://www.capitolreceipts.com'
 APP = 'https://app.capitolreceipts.com'
 src = sys.argv[1] if len(sys.argv) > 1 else SITE + '/pulse.json'

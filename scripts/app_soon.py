@@ -1,7 +1,7 @@
 """Mark the iPhone and Android apps as coming soon across the marketing site (idempotent).
 Run after build_site.py:  python3 scripts/app_soon.py"""
 import glob, os, re
-SITE = os.path.join(os.path.dirname(__file__), '..', 'site')
+SITE = os.path.join(os.path.dirname(__file__), '..', 'apps', 'site', 'public')
 APPLE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="18" r="1.2"/></svg>'
 ANDROID = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="8" width="14" height="12" rx="3"/><path d="M8 8a4 4 0 0 1 8 0M8.5 4.5 7.5 3M15.5 4.5 16.5 3"/></svg>'
 pill = lambda icon, label: (f'<span style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);color:#ffffff;'

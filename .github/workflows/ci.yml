@@ -2,7 +2,7 @@ name: Checks
 
 # Every push to any branch and every pull request: scripts parse, config files are valid and the unit tests pass.
 # Two database jobs run when their secrets exist and are skipped (with a note) until then:
-#   types: the committed supabase/types.ts must match the live database (needs SUPABASE_ACCESS_TOKEN)
+#   types: the committed packages/shared/src/database.ts must match the live database (needs SUPABASE_ACCESS_TOKEN)
 #   rls:   supabase/tests/rls.sql proves row-level security holds (needs SUPABASE_DB_URL; read-only, rolled back)
 on:
   push:
@@ -15,15 +15,26 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm ci
-      - run: npm run check
-      - run: npm test
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check
+      - run: pnpm test
+      - run: pnpm run typecheck
+      - run: pnpm run build
+      # every sampled public URL must answer the same as production (status, redirect target, content type)
+      - name: Public URLs unchanged
+        run: |
+          (cd apps/web && pnpm start -p 3002 &) ; (cd apps/site && pnpm start -p 3001 &)
+          npx -y wait-on@8 -t 60000 http://localhost:3002/app/js/fuzzy.js http://localhost:3001/favicon.svg
+          node scripts/smoke_urls.mjs http://localhost:3001 https://www.capitolreceipts.com < tests/urls/site.txt
+          node scripts/smoke_urls.mjs http://localhost:3002 https://app.capitolreceipts.com app.capitolreceipts.com < tests/urls/web.txt
 
   types:
     runs-on: ubuntu-latest
@@ -34,10 +45,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Database types match the live database
         run: |
-          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then echo "::notice::Skipped: add the SUPABASE_ACCESS_TOKEN secret to check supabase/types.ts"; exit 0; fi
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then echo "::notice::Skipped: add the SUPABASE_ACCESS_TOKEN secret to check packages/shared/src/database.ts"; exit 0; fi
           npx -y supabase@2 gen types typescript --project-id hxgckcriehvrolwnabpd --schema public > /tmp/types.ts
-          if ! diff -u supabase/types.ts /tmp/types.ts; then
-            echo "::error::supabase/types.ts is out of date. Regenerate it (supabase gen types typescript --project-id hxgckcriehvrolwnabpd --schema public) and commit."
+          if ! diff -u packages/shared/src/database.ts /tmp/types.ts; then
+            echo "::error::packages/shared/src/database.ts is out of date. Regenerate it (supabase gen types typescript --project-id hxgckcriehvrolwnabpd --schema public) and commit."
             exit 1
           fi
 

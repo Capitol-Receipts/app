@@ -1,0 +1,2 @@
+{ "name": "@cr/config", "version": "0.0.0", "private": true, "type": "module",
+  "exports": { "./next-routes": "./next-routes.mjs", "./tsconfig.base.json": "./tsconfig.base.json" } }

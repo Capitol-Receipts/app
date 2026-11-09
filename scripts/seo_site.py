@@ -9,7 +9,7 @@ member of Congress, a nominee or a bill. The 404 page is kept out of search resu
 import datetime, html, json, os, re, shutil, urllib.request
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
-SITE_DIR = os.path.join(ROOT, 'site')
+SITE_DIR = os.path.join(ROOT, 'apps', 'site', 'public')
 SITE, APP = 'https://www.capitolreceipts.com', 'https://app.capitolreceipts.com'
 SB = 'https://hxgckcriehvrolwnabpd.supabase.co/rest/v1/'
 KEY = 'sb_publishable_jiwF5q1sFMuaGXLKg6FKAQ_3rCjcZ1J'  # public, read-only

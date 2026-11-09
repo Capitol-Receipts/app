@@ -12,7 +12,7 @@ Usage: python3 scripts/site_live.py [pulse.json path or URL]   (default: https:/
 import html, json, os, re, sys, urllib.request
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
-S = os.path.join(ROOT, 'site')
+S = os.path.join(ROOT, 'apps', 'site', 'public')
 SITE = 'https://www.capitolreceipts.com'
 src = sys.argv[1] if len(sys.argv) > 1 else SITE + '/pulse.json'
 try:

@@ -1,17 +1,19 @@
 {
   "name": "capitol-receipts-app",
   "private": true,
-  "description": "Capitol Receipts app: static app files plus the search-page and share-image functions in api/",
-  "dependencies": {
-    "@resvg/resvg-js": "^2.6.2",
-    "@sentry/node": "^11.11.0",
-    "satori": "^0.12.2"
-  },
+  "description": "Capitol Receipts monorepo: apps/web (app + admin), apps/site (www), apps/mobile, shared packages, data pipeline",
   "engines": {
     "node": "24.x"
   },
   "scripts": {
     "check": "node scripts/check.mjs",
-    "test": "node --test 'tests/*.test.*'"
+    "test": "node --test 'tests/*.test.*'",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "dev": "turbo run dev"
+  },
+  "packageManager": "pnpm@10.18.0",
+  "devDependencies": {
+    "turbo": "2.5.8"
   }
 }
