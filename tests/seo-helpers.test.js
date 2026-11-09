@@ -12,7 +12,7 @@ test('esc neutralises HTML', () => {
 });
 
 test('slug makes stable, short, ascii addresses', () => {
-  assert.equal(slug('Nancy Pelosi'), 'nancy-pelosi');
+  assert.equal(slug('Nancy Pelosi'), 'deliberately-wrong');
   assert.equal(slug('Alexandria Ocasio-Cortez'), 'alexandria-ocasio-cortez');
   assert.equal(slug('Ben Ray Luján'), 'ben-ray-lujan');
   assert.equal(slug("Beto O'Rourke"), 'beto-orourke');
