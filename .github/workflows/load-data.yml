@@ -27,9 +27,10 @@ jobs:
       - name: Load
         env:
           SUPABASE_URL: https://hxgckcriehvrolwnabpd.supabase.co
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then echo "Add the SUPABASE_SERVICE_ROLE_KEY repository secret first."; exit 1; fi
+          if [ -z "$SUPABASE_SECRET_KEY$SUPABASE_SERVICE_ROLE_KEY" ]; then echo "Add the SUPABASE_SECRET_KEY repository secret first."; exit 1; fi
           TABLES="${{ github.event.inputs.tables }}"
           if [ "${{ github.event_name }}" = "push" ]; then
             TABLES=$(git diff --name-only HEAD~1 HEAD -- data/export | grep '.jsonl.gz$' | xargs -n1 basename | sed 's/.jsonl.gz//' | tr '\n' ' ')

@@ -78,6 +78,7 @@ jobs:
       - name: Load changed tables into Supabase
         env:
           SUPABASE_URL: https://hxgckcriehvrolwnabpd.supabase.co
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           EXPORT_DIR: work/export
         run: |
@@ -88,10 +89,12 @@ jobs:
         id: alerts
         if: always()
         env:
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
+          KEY="${SUPABASE_SECRET_KEY:-$SUPABASE_SERVICE_ROLE_KEY}"
           curl -s -m 280 -X POST https://hxgckcriehvrolwnabpd.supabase.co/functions/v1/send-alerts \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $KEY" \
             -H "Content-Type: application/json" -d '{}' -o work/alerts.json -w "%{http_code}" > work/alerts_code.txt || echo 000 > work/alerts_code.txt
           cat work/alerts.json 2>/dev/null | tee -a work/last_run.txt; echo
           code=$(cat work/alerts_code.txt)

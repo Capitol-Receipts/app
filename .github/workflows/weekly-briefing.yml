@@ -15,11 +15,13 @@ jobs:
     steps:
       - name: Send the briefing
         env:
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DRY: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry == 'true' && 'true' || 'false' }}
         run: |
+          KEY="${SUPABASE_SECRET_KEY:-$SUPABASE_SERVICE_ROLE_KEY}"
           code=$(curl -s -m 280 -o out.json -w "%{http_code}" -X POST https://hxgckcriehvrolwnabpd.supabase.co/functions/v1/send-alerts \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $KEY" \
             -H "Content-Type: application/json" -d "{\"mode\":\"briefing\",\"dry\":$DRY}")
           echo "HTTP $code"; cat out.json; echo
           test "$code" = 200

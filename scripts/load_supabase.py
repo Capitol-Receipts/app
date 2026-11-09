@@ -1,12 +1,14 @@
 """Load data/export/*.jsonl.gz into Supabase (upsert by primary key).
 
-Needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in the environment.
+Needs SUPABASE_URL and a server key in the environment: SUPABASE_SECRET_KEY (new sb_secret_ key) or, until it is
+retired, SUPABASE_SERVICE_ROLE_KEY. New keys go in the apikey header only; the old JWT key also goes in Authorization.
 Usage: python scripts/load_supabase.py [table ...]   (no args = every table)
 """
 import gzip, json, os, sys, time, urllib.request, urllib.error
 
 URL = os.environ['SUPABASE_URL'].rstrip('/')
-KEY = os.environ['SUPABASE_SERVICE_ROLE_KEY']
+KEY = os.environ.get('SUPABASE_SECRET_KEY') or os.environ['SUPABASE_SERVICE_ROLE_KEY']
+AUTH = {'apikey': KEY, **({'Authorization': f'Bearer {KEY}'} if KEY.startswith('eyJ') else {})}
 DIR = os.environ.get('EXPORT_DIR') or os.path.join(os.path.dirname(__file__), '..', 'data', 'export')
 PK = {'bills': 'key', 'app_meta': 'key', 'zip_districts': 'zip'}
 ORDER = ['app_meta', 'members', 'nominations', 'roll_calls', 'photos', 'zip_districts', 'committees', 'lobby_firms',
@@ -16,7 +18,7 @@ MAX_BYTES = 3_000_000
 def post(table, rows):
     body = ('[' + ','.join(rows) + ']').encode()
     req = urllib.request.Request(f'{URL}/rest/v1/{table}?on_conflict={PK.get(table, "id")}', data=body, method='POST', headers={
-        'apikey': KEY, 'Authorization': f'Bearer {KEY}', 'Content-Type': 'application/json',
+        **AUTH, 'Content-Type': 'application/json',
         'Prefer': 'resolution=merge-duplicates,return=minimal'})
     for attempt in range(5):
         try:
@@ -46,7 +48,7 @@ def load(table):
 def record_update(tables):
     body = json.dumps([{'key': 'updated', 'value': {'at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), 'tables': tables}}]).encode()
     req = urllib.request.Request(f'{URL}/rest/v1/app_meta?on_conflict=key', data=body, method='POST', headers={
-        'apikey': KEY, 'Authorization': f'Bearer {KEY}', 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal'})
+        **AUTH, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal'})
     urllib.request.urlopen(req, timeout=60).read()
 
 def refresh_cache():
@@ -54,7 +56,7 @@ def refresh_cache():
     # warn instead of failing: the data itself is loaded, alerts can still go out, and tomorrow's run rebuilds it.
     for attempt in range(3):
         req = urllib.request.Request(f'{URL}/rest/v1/rpc/refresh_light_cache', data=b'{}', method='POST', headers={
-            'apikey': KEY, 'Authorization': f'Bearer {KEY}', 'Content-Type': 'application/json'})
+            **AUTH, 'Content-Type': 'application/json'})
         try:
             urllib.request.urlopen(req, timeout=300).read()
             print('light index cache rebuilt'); return
