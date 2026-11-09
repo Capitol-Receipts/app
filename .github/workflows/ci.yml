@@ -1,6 +1,6 @@
 name: Checks
 
-# Every push and pull request: scripts parse and the config files are valid.
+# Every push and pull request: scripts parse, config files are valid, and the unit tests in tests/ pass.
 on:
   push:
     branches: [main]
@@ -21,3 +21,4 @@ jobs:
           node-version: 24
       - run: npm ci
       - run: npm run check
+      - run: npm test
