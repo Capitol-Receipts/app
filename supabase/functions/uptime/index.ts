@@ -8,7 +8,9 @@ import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import { syncRoadmap } from "./roadmap.ts";
 
 const URL_ = Deno.env.get("SUPABASE_URL")!;
-const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// Server key: the new secret key (SUPABASE_SECRET_KEYS, named "default") when the project has one, else the old
+// service_role key. Supabase retires the old keys before the end of 2026.
+const SERVICE = (() => { try { const k = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") || "{}").default; if (k) return String(k); } catch { /* old key below */ } return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!; })();
 const RESEND = Deno.env.get("RESEND_API_KEY") || "";
 const TO = Deno.env.get("ALERT_EMAIL") || "admin@squaredawaylabs.com";
 
@@ -38,7 +40,7 @@ async function probe(c: Check) {
 // Is the database answering? Used when the site reports failures, and when this monitor can't read its own state.
 async function dbAnswers() {
   try {
-    const r = await fetch(`${URL_}/rest/v1/app_meta?select=key&limit=1`, { headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}` }, signal: AbortSignal.timeout(8000) });
+    const r = await fetch(`${URL_}/rest/v1/app_meta?select=key&limit=1`, { headers: { apikey: SERVICE, ...(SERVICE.startsWith("eyJ") ? { Authorization: `Bearer ${SERVICE}` } : {}) }, signal: AbortSignal.timeout(8000) });
     return r.ok;
   } catch { return false; }
 }
