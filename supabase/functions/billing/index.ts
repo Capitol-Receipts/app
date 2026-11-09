@@ -3,7 +3,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
 const URL_ = Deno.env.get("SUPABASE_URL")!;
-const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// Server key: the new secret key (SUPABASE_SECRET_KEYS, named "default") when the project has one, else the old
+// service_role key. Supabase retires the old keys before the end of 2026.
+const SERVICE = (() => { try { const k = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") || "{}").default; if (k) return String(k); } catch { /* old key below */ } return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!; })();
 const STRIPE = Deno.env.get("STRIPE_SECRET_KEY") || "";
 // Pro prices: $5.99 a month, $39.99 a year. Each is found in Stripe by its lookup key and, the first time, created on the
 // same Pro product as the original prices. Existing subscribers keep the price they signed up at. Env vars override.

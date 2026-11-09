@@ -6,7 +6,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
 const URL_ = Deno.env.get("SUPABASE_URL")!;
-const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// Server key: the new secret key (SUPABASE_SECRET_KEYS, named "default") when the project has one, else the old
+// service_role key. Supabase retires the old keys before the end of 2026.
+const SERVICE = (() => { try { const k = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") || "{}").default; if (k) return String(k); } catch { /* old key below */ } return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!; })();
 const RESEND = Deno.env.get("RESEND_API_KEY") || "";
 const SECRET = Deno.env.get("RESEND_WEBHOOK_SECRET") || "";
 const INBOX = Deno.env.get("SUPPORT_INBOX") || "admin@squaredawaylabs.com";
