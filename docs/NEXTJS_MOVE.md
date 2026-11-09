@@ -19,7 +19,7 @@ No URL changes, so no 301s are needed beyond the ones that already existed (`/in
 - `tests/routes.test.mjs`: every old rewrite, redirect and header is present, and every page keeps its clean URL.
 - `tests/urls/*.txt` + `scripts/smoke_urls.mjs`, run in CI: 241 sampled URLs (a few of every page type from the live sitemaps, Spanish pages, images, API, admin, edge cases) answer the same as production. Checked locally Nov 9, 2026: all match.
 
-## Cutover (Austin, about 5 minutes)
+## Cutover (done Nov 9, 2026)
 1. Vercel › capitol-receipts › Settings › General: Framework = Next.js, Root Directory = `apps/web`. Turn on "Include files outside the root directory".
 2. Vercel › capitol-receipts-marketing › same, Root Directory = `apps/site`.
 3. Tell Claude to merge. Check both production deploys, then the CI run.
