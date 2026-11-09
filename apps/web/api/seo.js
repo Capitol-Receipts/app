@@ -15,7 +15,7 @@ const ES_TYPES = new Set(['member', 'state', 'district', 'race', 'stock', 'offic
 const { HOST, SITE, esc, abs, q, notFound } = T;
 
 let SHELL = null;
-const shell = () => SHELL || (SHELL = fs.readFileSync(path.join(process.cwd(), 'public', 'index.html'), 'utf8'));
+const shell = () => SHELL || (SHELL = fs.readFileSync(require('./_here')('public', 'index.html'), 'utf8'));
 
 const CSS = `<style id="sr-css">
 .sr{--n:#14274e;--r:#c8323a;--i:#0e1116;--s:#5b6069;--l:#e4e6eb;--b:#f6f7f9;font-family:"Schibsted Grotesk",system-ui,sans-serif;color:var(--i);background:#fff;min-height:100vh}
