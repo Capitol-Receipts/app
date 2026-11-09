@@ -8,7 +8,7 @@
     "@cr/shared": "workspace:*",
     "@resvg/resvg-js": "^2.6.2",
     "@sentry/node": "^11.11.0",
-    "next": "15.5.6",
+    "next": "15.5.29",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "satori": "^0.12.2"
