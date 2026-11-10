@@ -132,8 +132,8 @@ ${sec('Other votes', cols([prev ? a(P('vote', `${c}-${ch}-${prev[0]}`, prev[7] |
 ${note('From Voteview roll call records.')}`;
   return { noindex: c < 93 && String(descr || qn || '').length < 25, title: title(`${clamp(what, 46)}: ${chamber} Vote, ${date(dt)}`), desc: clamp(lead + ` See how every ${who} voted.`, 158), path: P('vote', key, what), route: 'vote:' + key, ogType: 'article',
     crumbs: [['Votes', L.abs('/votes')], [`${chamber} vote ${roll} (${c}th Congress)`.replace(/(\d+)th Congress/, (x, k) => ord(+k) + ' Congress'), null]],
-    ld: [{ '@context': 'https://schema.org', '@type': 'Event', name: `${chamber} vote: ${clamp(what, 100)}`, startDate: dt, eventStatus: 'https://schema.org/EventScheduled',
-      location: { '@type': 'Place', name: `U.S. ${chamber}`, address: 'Washington, DC' }, description: lead }],
+    // no Event markup: a roll call is not an event people attend, and Google's event results are only for those
+    ld: [],
     body };
 }
 
@@ -288,8 +288,7 @@ ${sec('Outside groups spending', groups.length ? rows(groups.slice(0, 20).map(g 
 ${sec('More', cols([a(P('state', d.st, ST[d.st]), `${ST[d.st] || d.st} in Congress`), a('/elections', 'All 2026 races')]))}
 ${note('From FEC candidate summaries and independent expenditure reports.')}`;
   return { title: title(t), desc: clamp(lead, 158), path: P('race', id, '2026 ' + name), route: 'race:' + id, crumbs: [['2026 elections', L.abs('/elections')], [name, null]],
-    ld: [{ '@context': 'https://schema.org', '@type': 'Event', name: `2026 ${name}`, startDate: '2026-11-03', eventStatus: 'https://schema.org/EventScheduled',
-      location: { '@type': 'Place', name: ST[d.st] || d.st }, description: lead }], body };
+    ld: [], body }; // no Event markup: an election race is not an event people attend
 }
 
 /* ---------------- outside spending group ---------------- */
