@@ -64,7 +64,7 @@ ${note('From House Clerk and Senate disclosure reports. Each member’s profile 
   return {
     title: title(`${shortName(name)} (${tk}) Stock Trades by Members of Congress`), desc: clamp(lead, 158), path: P('stock', tk, name), route: 'stock:' + tk,
     noindex: s.trades.length < MIN_INDEX, ogType: 'article', crumbs: [['Stocks', L.abs('/stocks')], [`${name} (${tk})`, null]],
-    ld: [{ '@context': 'https://schema.org', '@type': 'Dataset', name: h1, description: lead, url: L.abs(P('stock', tk, name)), dateModified: new Date().toISOString().slice(0, 10),
+    ld: [{ '@context': 'https://schema.org', '@type': 'Dataset', name: h1, description: lead, url: L.abs(P('stock', tk, name)), dateModified: L.isoOf(asOf) || undefined, // the date the trade data last changed
       creator: { '@type': 'Organization', name: 'Capitol Receipts', url: L.SITE + '/' }, isAccessibleForFree: true, about: { '@type': 'Corporation', name, tickerSymbol: tk } },
       { '@context': 'https://schema.org', '@type': 'ItemList', name: `Members of Congress who traded ${tk}`, numberOfItems: top.length,
         itemListElement: top.slice(0, 25).map(([mid, n], i) => ({ '@type': 'ListItem', position: i + 1, name: `${mem[mid].name}: ${n} trades`, url: L.abs(P('member', mid, mem[mid].name)) })) }],

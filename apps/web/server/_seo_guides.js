@@ -107,11 +107,13 @@ ${sec('Most-traded stocks in Congress', rows(n.list.slice(0, 25).map((s, i) => [
 
 async function page(id) {
   const g = GUIDES[String(id || '').toLowerCase()]; if (!g) return null;
-  const o = await g.build(), path = `/guides/${id}`;
+  // the guides' numbers come from the trade and FEC data: their date is the date that data last changed
+  const [o, meta] = await Promise.all([g.build(), L.META(['asOf'])]), path = `/guides/${id}`;
+  const asOf = (meta.asOf || {}).ptr, updated = L.isoOf(asOf);
   return { title: title(o.h1), desc: clamp(o.lead, 158), path, route: null, ogType: 'article', crumbs: [['Guides', L.abs('/guides')], [o.h1, null]],
-    ld: [{ '@context': 'https://schema.org', '@type': 'Article', headline: o.h1, description: clamp(o.lead, 300), url: L.abs(path), dateModified: new Date().toISOString().slice(0, 10),
+    ld: [{ '@context': 'https://schema.org', '@type': 'Article', headline: o.h1, description: clamp(o.lead, 300), url: L.abs(path), dateModified: updated || undefined,
       author: { '@type': 'Organization', name: 'Capitol Receipts', url: L.SITE + '/' }, publisher: { '@type': 'Organization', name: 'Capitol Receipts', logo: { '@type': 'ImageObject', url: L.SITE + '/img/logo-512.png' } } }, faq(o.qa)],
-    body: `<p class="sr-sub">Guide · Updated ${esc(date(new Date().toISOString()))}</p><h1>${esc(o.h1)}</h1><p class="sr-lead">${esc(o.lead)}</p>${o.body}
+    body: `<p class="sr-sub">Guide${updated ? ` · Updated ${esc(date(asOf))}` : ''}</p><h1>${esc(o.h1)}</h1><p class="sr-lead">${esc(o.lead)}</p>${o.body}
 ${faqHtml(o.qa)}
 ${sec('More guides', cols(Object.entries(GUIDES).filter(([s]) => s !== id).map(([s, x]) => a(`/guides/${s}`, x.short)).concat([a('/reports', 'Monthly reports on Congress stock trades')])))}
 ${note('Numbers on this page come from House and Senate trade reports and FEC filings and update daily.')}` };

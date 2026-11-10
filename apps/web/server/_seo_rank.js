@@ -59,7 +59,8 @@ async function ranking(slug, view = '') {
   if (!M || !V) return null;
   const [all, meta] = await Promise.all([DATA(), META(['asOf'])]);
   const asOf = (meta.asOf || {});
-  const asOfDate = date(M.src.startsWith('FEC') ? asOf.fec : M.src.startsWith('Voteview') ? asOf.votes : asOf.ptr) || date(new Date().toISOString());
+  const asOfRaw = M.src.startsWith('FEC') ? asOf.fec : M.src.startsWith('Voteview') ? asOf.votes : asOf.ptr;
+  const asOfDate = date(asOfRaw) || date(new Date().toISOString());
   const pool = all.filter(m => !(m.delegate && (slug === 'most-missed-votes' || slug === 'breaks-with-party'))).filter(V[1]);
   const ranked = pool.map(m => [m, M.value(m)]).filter(([, v]) => v != null && M.min(v)).sort((x, y) => y[1] - x[1]);
   const top = ranked.slice(0, 100);
@@ -84,7 +85,7 @@ ${note('Capitol Receipts is nonpartisan. Every member is measured the same way, 
     crumbs: [['Rankings', L.abs('/rankings')], [view ? `${M.short}: ${VIEW_LABEL[view]}` : M.short, null]],
     ld: [{ '@context': 'https://schema.org', '@type': 'ItemList', name: h1, description: M.how, numberOfItems: top.length, itemListOrder: 'https://schema.org/ItemListOrderDescending',
       itemListElement: top.slice(0, 50).map(([m, v], i) => ({ '@type': 'ListItem', position: i + 1, name: `${m.name} (${seat(m)}): ${M.fmt(v)}`, url: L.abs(P('member', m.id, m.name)) })) },
-      { '@context': 'https://schema.org', '@type': 'Dataset', name: h1, description: `${M.how} Source: ${M.src}.`, url: L.abs(rpath(slug, view)), dateModified: new Date().toISOString().slice(0, 10),
+      { '@context': 'https://schema.org', '@type': 'Dataset', name: h1, description: `${M.how} Source: ${M.src}.`, url: L.abs(rpath(slug, view)), dateModified: L.isoOf(asOfRaw) || undefined, // the date the source data last changed
         creator: { '@type': 'Organization', name: 'Capitol Receipts', url: L.SITE + '/' }, isAccessibleForFree: true, license: 'https://creativecommons.org/licenses/by/4.0/' }],
     body,
   };

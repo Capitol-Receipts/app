@@ -71,7 +71,7 @@ ${sec('Other months', cols([r.prev ? a(`/reports/${r.prev.k}`, `← ${label(r.pr
 ${note('From House Clerk and Senate periodic transaction reports. Each member’s profile links to the original filings.')}`;
   return { title: title(`Congress Stock Trades in ${lbl}: Who Traded What`), desc: clamp(lead, 158), path: `/reports/${r.k}`, route: null, ogType: 'article',
     crumbs: [['Monthly reports', L.abs('/reports')], [lbl, null]],
-    ld: [{ '@context': 'https://schema.org', '@type': 'Article', headline: h1, description: clamp(lead, 300), url: L.abs(`/reports/${r.k}`), dateModified: new Date().toISOString().slice(0, 10),
+    ld: [{ '@context': 'https://schema.org', '@type': 'Article', headline: h1, description: clamp(lead, 300), url: L.abs(`/reports/${r.k}`), dateModified: L.isoOf(r.asOf) || undefined, // the date the trade data last changed
       author: { '@type': 'Organization', name: 'Capitol Receipts', url: L.SITE + '/' }, publisher: { '@type': 'Organization', name: 'Capitol Receipts', logo: { '@type': 'ImageObject', url: L.SITE + '/img/logo-512.png' } } },
       { '@context': 'https://schema.org', '@type': 'Dataset', name: h1, description: lead, url: L.abs(`/reports/${r.k}`), isAccessibleForFree: true, temporalCoverage: `${r.k}`, creator: { '@type': 'Organization', name: 'Capitol Receipts' } }],
     body };
