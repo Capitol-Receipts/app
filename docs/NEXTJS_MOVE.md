@@ -28,3 +28,14 @@ Rollback: set Root Directory back to empty (web) and `site` (marketing) and reve
 
 ## Next steps (Phase 4 proper)
 Pages move from static files to Next.js one at a time behind the same URLs: first the record pages now built by `api/seo.js` (server-rendered with `@supabase/ssr`), then the marketing pages, then the app screens. Each move keeps its URL and is covered by the URL check.
+
+## Step 2: pages move from HTML strings to React (started Nov 10)
+
+The record and directory pages used to be built as HTML text in `apps/web/server/_seo_*.js`. They move to React one type at a time, each only after its output matches the live page.
+
+- Shared pieces: `components/seo/SeoPage.tsx` (header, head tags, footer, cite box), `lib/seo-model.js` (turns a page description into what the component prints), `lib/seo-ssp.js` (redirects, 404s, cache headers), `lib/shell-parts.js` (analytics, error and cookie scripts, read from `public/index.html` so there is one copy), `lib/seo-chrome.js` (styles and links, also used by the old string pages).
+- These pages leave out the client JavaScript (`unstable_runtimeJS: false`), so they stay as light as before.
+- Moved so far: `/guides` and `/guides/<slug>`. Still on the old handler: every other type, the sitemaps, robots, llms files, the embed card and the app-mode pages.
+- To move a type: add `pages/<type>/[id].tsx` like `pages/guides/[id].tsx`, take the type out of the lists in both `routes.json` files, add a redirect for the old `/:id/:slug` form, and compare against the live page (same head tags, same text).
+- The data builders (`_seo_*.js`) still return the page body as an HTML string; converting each body to JSX is the next layer, type by type.
+- Redirects now answer 301 from the page code and 308 from `routes.json`; search engines treat them the same.

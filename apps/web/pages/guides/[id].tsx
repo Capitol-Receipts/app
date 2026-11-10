@@ -1,0 +1,10 @@
+import type { GetServerSideProps } from 'next';
+import SeoPage from '../../components/seo/SeoPage';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { seoProps } = require('../../lib/seo-ssp');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const GD = require('../../server/_seo_guides');
+
+export const config = { unstable_runtimeJS: false };
+export const getServerSideProps: GetServerSideProps = (ctx) => seoProps(ctx, 'guides', { one: (id: string) => GD.page(id), id: String(ctx.params?.id || '') });
+export default SeoPage;

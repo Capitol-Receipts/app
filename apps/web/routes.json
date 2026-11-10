@@ -170,11 +170,11 @@
       "destination": "/api/seo?t=:t&lang=es"
     },
     {
-      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district|stock|official-trades|reports|guides)/:id/:slug",
+      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district|stock|official-trades|reports)/:id/:slug",
       "destination": "/api/seo?t=:t&id=:id&slug=:slug"
     },
     {
-      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district|stock|official-trades|reports|guides)/:id",
+      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district|stock|official-trades|reports)/:id",
       "destination": "/api/seo?t=:t&id=:id"
     },
     {
@@ -182,7 +182,7 @@
       "destination": "/api/seo?t=appointees"
     },
     {
-      "source": "/:t(members|states|past-members|appointees|judges|bills|votes|pacs|lobbying|lobbying-firms|companies|committees|caucuses|elections|outside-groups|ethics|this-week|stocks|official-trades|reports|guides)",
+      "source": "/:t(members|states|past-members|appointees|judges|bills|votes|pacs|lobbying|lobbying-firms|companies|committees|caucuses|elections|outside-groups|ethics|this-week|stocks|official-trades|reports)",
       "destination": "/api/seo?t=:t"
     },
     {
@@ -207,6 +207,11 @@
     }
   ],
   "redirects": [
+    {
+      "source": "/guides/:id/:slug",
+      "destination": "/guides/:id",
+      "permanent": true
+    },
     {
       "source": "/site/:path*",
       "destination": "https://www.capitolreceipts.com/:path*",

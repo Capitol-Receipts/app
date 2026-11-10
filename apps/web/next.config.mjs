@@ -8,6 +8,6 @@ export default {
   poweredByHeader: false,
   reactStrictMode: true,
   // files the API reads from disk at run time
-  outputFileTracingIncludes: { '/api/seo': ['./public/index.html'], '/api/og': ['./server/_fonts/**'] },
+  outputFileTracingIncludes: { '/api/seo': ['./public/index.html'], '/guides': ['./public/index.html'], '/guides/[id]': ['./public/index.html'], '/api/og': ['./server/_fonts/**'] },
   serverExternalPackages: ['@resvg/resvg-js', '@sentry/node'],
 };

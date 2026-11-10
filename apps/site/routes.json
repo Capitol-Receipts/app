@@ -64,6 +64,11 @@
   ],
   "redirects": [
     {
+      "source": "/guides/:id/:slug",
+      "destination": "/guides/:id",
+      "permanent": true
+    },
+    {
       "source": "/app",
       "destination": "https://app.capitolreceipts.com",
       "permanent": false
@@ -109,11 +114,19 @@
       "destination": "https://app.capitolreceipts.com/api/seo?t=:t&lang=es&via=www"
     },
     {
-      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district|stock|official-trades|reports|guides)/:id/:slug",
+      "source": "/guides",
+      "destination": "https://app.capitolreceipts.com/guides?via=www"
+    },
+    {
+      "source": "/guides/:id",
+      "destination": "https://app.capitolreceipts.com/guides/:id?via=www"
+    },
+    {
+      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district|stock|official-trades|reports)/:id/:slug",
       "destination": "https://app.capitolreceipts.com/api/seo?t=:t&id=:id&slug=:slug&via=www"
     },
     {
-      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district|stock|official-trades|reports|guides)/:id",
+      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district|stock|official-trades|reports)/:id",
       "destination": "https://app.capitolreceipts.com/api/seo?t=:t&id=:id&via=www"
     },
     {
@@ -121,7 +134,7 @@
       "destination": "https://app.capitolreceipts.com/api/seo?t=appointees&via=www"
     },
     {
-      "source": "/:t(members|states|past-members|judges|bills|votes|pacs|lobbying|lobbying-firms|companies|committees|caucuses|elections|outside-groups|ethics|this-week|stocks|official-trades|reports|guides)",
+      "source": "/:t(members|states|past-members|judges|bills|votes|pacs|lobbying|lobbying-firms|companies|committees|caucuses|elections|outside-groups|ethics|this-week|stocks|official-trades|reports)",
       "destination": "https://app.capitolreceipts.com/api/seo?t=:t&via=www"
     },
     {
