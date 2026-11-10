@@ -39,3 +39,12 @@ The record and directory pages used to be built as HTML text in `apps/web/server
 - A new type needs only an entry in the router table in `server/_seo_types.js` and its name in the `routes.json` lists.
 - The data builders (`_seo_*.js`) still return the page body as an HTML string; converting each body to JSX is the next layer, type by type.
 - Redirects now answer 301 from the page code and 308 from `routes.json`; search engines treat them the same.
+
+## Step 3: marketing pages are React pages (Nov 10)
+
+The 14 www pages and the 404 page are now `apps/site/pages/*.tsx` (they were `public/*.html`). Same look, text and addresses: each was compared with the live page by screenshot at desktop and phone width, with the page text matching word for word. `/about.html` and the other old `.html` addresses redirect permanently to the clean address.
+
+- Edit a page by editing its `.tsx` file. The styles still sit in each page's `<style>` block; `[style*="..."]` rules in them match the exact text React writes for style attributes (`padding:56px 44px`, no space after the colon), so keep that form if you add one.
+- The pages leave out the client JavaScript, as before; `public/js/*.js` (live numbers, forms, quiz) still runs from plain script tags.
+- After editing pages run `python3 scripts/site_sitemap.py`. Dates in `site.xml` come from git history.
+- The old generators that wrote HTML into `apps/site/public` (`build_site.py`, `seo_site.py`, `app_soon.py`, `site_live.py` and friends) no longer apply; running them would create stray `.html` files.

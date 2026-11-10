@@ -21,8 +21,8 @@ export function nextRoutes(dir) {
     },
     async rewrites() {
       return {
-        // the home page is a static file, served before any page route
-        beforeFiles: [{ source: '/', destination: '/index.html' }],
+        // a static home page (apps/web) is served before any page route; apps with a pages/index.tsx need no rule
+        beforeFiles: fs.existsSync(path.join(dir, 'public', 'index.html')) ? [{ source: '/', destination: '/index.html' }] : [],
         // cleanUrls: /about serves about.html; checked after real files, before the old rewrites
         afterFiles: [...pages.map((p) => ({ source: `/${p}`, destination: `/${p}.html` })), ...(v.rewrites || []).map(keep)],
         fallback: [],

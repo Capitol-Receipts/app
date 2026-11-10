@@ -1,5 +1,5 @@
 {
-  "cleanUrls": true,
+  "cleanUrls": false,
   "trailingSlash": false,
   "headers": [
     {
@@ -63,6 +63,76 @@
     }
   ],
   "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/about.html",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/appointees.html",
+      "destination": "/appointees",
+      "permanent": true
+    },
+    {
+      "source": "/delete-account.html",
+      "destination": "/delete-account",
+      "permanent": true
+    },
+    {
+      "source": "/features.html",
+      "destination": "/features",
+      "permanent": true
+    },
+    {
+      "source": "/how-it-works.html",
+      "destination": "/how-it-works",
+      "permanent": true
+    },
+    {
+      "source": "/newsrooms.html",
+      "destination": "/newsrooms",
+      "permanent": true
+    },
+    {
+      "source": "/parties.html",
+      "destination": "/parties",
+      "permanent": true
+    },
+    {
+      "source": "/pricing.html",
+      "destination": "/pricing",
+      "permanent": true
+    },
+    {
+      "source": "/privacy.html",
+      "destination": "/privacy",
+      "permanent": true
+    },
+    {
+      "source": "/quiz.html",
+      "destination": "/quiz",
+      "permanent": true
+    },
+    {
+      "source": "/receipts.html",
+      "destination": "/receipts",
+      "permanent": true
+    },
+    {
+      "source": "/support.html",
+      "destination": "/support",
+      "permanent": true
+    },
+    {
+      "source": "/terms.html",
+      "destination": "/terms",
+      "permanent": true
+    },
     {
       "source": "/guides/:id/:slug",
       "destination": "/guides/:id",

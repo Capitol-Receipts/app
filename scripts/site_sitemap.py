@@ -1,4 +1,4 @@
-"""Writes apps/site/public/sitemaps/site.xml: every indexable marketing page, with the date its content last changed.
+"""Writes apps/site/public/sitemaps/site.xml: every indexable marketing page (apps/site/pages/*.tsx), with the date its content last changed.
 
 The date comes from git history (the last commit that changed the file's content, ignoring pure renames), or today
 for a page with uncommitted edits. Pages with a noindex robots tag are left out. Run after editing marketing pages:
@@ -8,6 +8,7 @@ import datetime, os, re, subprocess
 
 ROOT = os.path.join(os.path.dirname(__file__), '..')
 PUB = os.path.join(ROOT, 'apps', 'site', 'public')
+PAGES = os.path.join(ROOT, 'apps', 'site', 'pages')
 SITE = 'https://www.capitolreceipts.com'
 ORDER = ['index', 'features', 'receipts', 'parties', 'appointees', 'quiz', 'how-it-works', 'newsrooms', 'pricing',
          'about', 'support', 'privacy', 'terms', 'delete-account']
@@ -28,12 +29,12 @@ def changed(path):
 
 
 def main():
-    pages = [f[:-5] for f in os.listdir(PUB) if f.endswith('.html') and f != '404.html']
+    pages = [f[:-4] for f in os.listdir(PAGES) if f.endswith('.tsx') and f not in ('404.tsx', '_document.tsx')]
     pages.sort(key=lambda p: (ORDER.index(p) if p in ORDER else len(ORDER), p))
     rows = []
     for p in pages:
-        f = os.path.join(PUB, p + '.html')
-        if re.search(r'<meta\s+name="robots"\s+content="[^"]*noindex', open(f, encoding='utf-8').read(), re.I):
+        f = os.path.join(PAGES, p + '.tsx')
+        if re.search(r'<meta\s+key="[^"]*"\s+name="robots"\s+content="[^"]*noindex', open(f, encoding='utf-8').read(), re.I):
             continue
         d = changed(f)
         rows.append(f'  <url><loc>{SITE}/{"" if p == "index" else p}</loc>{f"<lastmod>{d}</lastmod>" if d else ""}</url>')

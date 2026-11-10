@@ -14,7 +14,8 @@ for (const app of ['web', 'site']) {
 
   test(`${app}: every old rewrite is kept, in order`, async () => {
     const { afterFiles, beforeFiles } = await cfg.rewrites();
-    assert.deepEqual(beforeFiles, [{ source: '/', destination: '/index.html' }]);
+    // a static home page is served first; apps whose home page is pages/index.tsx need no rule
+    assert.deepEqual(beforeFiles, fs.existsSync(path.join(dir, 'public', 'index.html')) ? [{ source: '/', destination: '/index.html' }] : []);
     const kept = afterFiles.filter((r) => !r.destination.endsWith('.html'));
     assert.deepEqual(kept.map((r) => [r.source, r.destination]), old.rewrites.map((r) => [r.source, r.destination]));
   });
@@ -34,6 +35,14 @@ for (const app of ['web', 'site']) {
       assert.ok(afterFiles.some((r) => r.source === `/${p}` && r.destination === `/${f}`), `/${p}`);
       assert.ok(red.some((r) => r.source === `/${f}` && r.destination === `/${p}` && r.permanent), `/${f}`);
     }
+    // pages written as React pages keep their old .html addresses as permanent redirects
+    const dp = path.join(dir, 'pages');
+    if (fs.existsSync(dp)) for (const f of fs.readdirSync(dp).filter((x) => /^[a-z][a-z-]*\.tsx$/.test(x) && x !== '404.tsx')) {
+      const p = f.slice(0, -4);
+      if (['seo-page', 'index'].includes(p)) continue;
+      if (app === 'site') assert.ok(red.some((r) => r.source === `/${p}.html` && r.destination === `/${p}` && r.permanent), `/${p}.html`);
+    }
+    if (app === 'site') assert.ok(red.some((r) => r.source === '/index.html' && r.destination === '/' && r.permanent));
   });
 }
 
