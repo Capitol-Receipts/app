@@ -49,7 +49,7 @@ for (const app of ['web', 'site']) {
 test('web: admin host middleware serves the admin portal at /', () => {
   const src = fs.readFileSync('apps/web/middleware.ts', 'utf8');
   assert.match(src, /startsWith\('admin\.'\)/);
-  assert.match(src, /'\/admin\.html'/);
+  assert.match(src, /'\/admin-portal'/);
 });
 
 test('site: uppercase first segments redirect to lowercase, record ids keep their case', () => {
