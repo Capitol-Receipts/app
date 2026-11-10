@@ -42,3 +42,10 @@ test('web: admin host middleware serves the admin portal at /', () => {
   assert.match(src, /startsWith\('admin\.'\)/);
   assert.match(src, /'\/admin\.html'/);
 });
+
+test('site: uppercase first segments redirect to lowercase, record ids keep their case', () => {
+  const src = fs.readFileSync('apps/site/middleware.ts', 'utf8');
+  assert.match(src, /matcher: '\/:first\(\[\^\/\]\*\[A-Z\]\[\^\/\]\*\)\/:rest\*'/);
+  assert.match(src, /first\.toLowerCase\(\), \.\.\.rest/);
+  assert.match(src, /NextResponse\.redirect\(url, 308\)/);
+});
