@@ -33,9 +33,9 @@ Pages move from static files to Next.js one at a time behind the same URLs: firs
 
 The record and directory pages used to be built as HTML text in `apps/web/server/_seo_*.js`. They move to React one type at a time, each only after its output matches the live page.
 
-- Shared pieces: `components/seo/SeoPage.tsx` (header, head tags, footer, cite box), `lib/seo-model.js` (turns a page description into what the component prints), `lib/seo-ssp.js` (redirects, 404s, cache headers), `lib/shell-parts.js` (analytics, error and cookie scripts, read from `public/index.html` so there is one copy), `lib/seo-chrome.js` (styles and links, also used by the old string pages).
+- Shared pieces: `components/seo/SeoPage.tsx` (header, head tags, footer, cite box), `lib/seo-model.js` (turns a page description into what the component prints), `lib/seo-ssp.js` (redirects, 404s, cache headers), `lib/shell-parts.js` (analytics, error and cookie scripts, read from `app-shell/*.js` so there is one copy), `lib/seo-chrome.js` (styles and links, also used by the old string pages).
 - These pages leave out the client JavaScript (`unstable_runtimeJS: false`), so they stay as light as before.
-- Moved: every record and directory page, English and Spanish, rankings and guides. They all render through `pages/seo-page.tsx` (reached by the rewrites in `routes.json`) and `pages/guides/`. Still on the old handler (`/api/seo`): sitemaps, robots, llms files, the embed card, share-score and `/go/` pages, and the app's own boot (`?app=1` on the app domain).
+- Moved: every record and directory page, English and Spanish, rankings and guides. They all render through `pages/seo-page.tsx` (reached by the rewrites in `routes.json`) and `pages/guides/`. Still on the old handler (`/api/seo`, now only text and data files): sitemaps, robots, llms files, the embed card and the pulse numbers.
 - A new type needs only an entry in the router table in `server/_seo_types.js` and its name in the `routes.json` lists.
 - The data builders (`_seo_*.js`) still return the page body as an HTML string; converting each body to JSX is the next layer, type by type.
 - Redirects now answer 301 from the page code and 308 from `routes.json`; search engines treat them the same.
@@ -48,3 +48,18 @@ The 14 www pages and the 404 page are now `apps/site/pages/*.tsx` (they were `pu
 - The pages leave out the client JavaScript, as before; `public/js/*.js` (live numbers, forms, quiz) still runs from plain script tags.
 - After editing pages run `python3 scripts/site_sitemap.py`. Dates in `site.xml` come from git history.
 - The old generators that wrote HTML into `apps/site/public` (`build_site.py`, `seo_site.py`, `app_soon.py`, `site_live.py` and friends) no longer apply; running them would create stray `.html` files.
+
+## Step 4: the app's own page is React too (Nov 10)
+
+`index.html` is gone. The app's page is `components/app/AppPage.tsx`, used by:
+
+- `/` (`pages/index.tsx`): the front door with the boot message.
+- `/go/<screen>` (`pages/go/[id].tsx`): app screens with no public page, with a title and share preview naming the screen.
+- Record pages opened in the app (`?app=1` on the app domain): the same record page, plus the app, which replaces it once it starts (`lib/seo-ssp.js` passes `app`, `components/seo/Entry.tsx` picks the page).
+- `/quizscore/<n>` (`pages/quizscore/[n].tsx`): shared quiz score preview; www reaches it through a rewrite.
+
+The scripts that used to sit inside `index.html` are now plain files in `apps/web/app-shell/` (`main.js` starts the app and holds `APP_VER`; `posthog.js`, `gtag.js`, `errors.js`, `consent.js` and the rest). They run exactly as before; `lib/app-parts.js` reads them and the page prints them. The release version is read from `main.js`, so `scripts/bump_version.sh` changes it in one place and the style sheet links follow.
+
+What did not move: the 34 app screens in `public/app/js/*.js`, the style sheets and `sw.js` are still plain scripts. They build their screens by hand in the browser (5,600 lines), and rewriting them as React components would change how the app behaves and looks, so each screen would need its own before-and-after check. If wanted, port them one at a time, starting with search and then profiles.
+
+Deploy order: web first, then www (the quiz-score rewrite points at the new web page).

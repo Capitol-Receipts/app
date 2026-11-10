@@ -7,7 +7,7 @@ Secret values are never stored in this repo. This file lists their names and whe
 
 | Part | What it is | Where it runs | Deployed by |
 |---|---|---|---|
-| Web app | Static single-page app in `apps/web/public/`: `index.html` + `app/js/*.js` + `app/css`, served by Next.js | Vercel project for app.capitolreceipts.com | Push to `main` |
+| Web app | Single-page app: the page is React (`apps/web/components/app/AppPage.tsx`, scripts in `apps/web/app-shell/`); screens are `apps/web/public/app/js/*.js` + `app/css` | Vercel project for app.capitolreceipts.com | Push to `main` |
 | Server-rendered pages | `apps/web/server/seo.js` and helpers render every record page for search engines; `og.js` share images; `db.js` cached read-only data proxy; `face.js`, `cimg.js` images (served as `/api/*` through `apps/web/pages/api`) | Next.js API routes (same project) | Push to `main` |
 | Marketing site | Static HTML in `apps/site/public/`, served by Next.js from `apps/site` (routes in `apps/site/routes.json`); sitemap dates from `scripts/site_sitemap.py` | Vercel project for www.capitolreceipts.com | Push to `main` |
 | Admin portal | `admin.html` at admin.capitolreceipts.com, calls the `admin` function. Requires an admin email plus an authenticator-app code | Vercel | Push to `main` |
@@ -49,7 +49,7 @@ RevenueCat public iOS and Android keys (`app/js/native.js`, still empty), Google
 ## Deploying
 
 - **Web app, server pages, marketing site, admin portal**: run `bash scripts/bump_version.sh`, commit, push to `main`.
-  Vercel deploys both projects within about a minute. The version number in `index.html` changes every file URL, so
+  Vercel deploys both projects within about a minute. The version number in `app-shell/main.js` changes every file URL, so
   browsers pick up the new code.
 - **Edge functions**: deploy the changed function from `supabase/functions/<name>` (Supabase MCP `deploy_edge_function`
   or `supabase functions deploy <name>`). Keep `verify_jwt` as it is today: off for `billing`, `stripe-webhook`,
