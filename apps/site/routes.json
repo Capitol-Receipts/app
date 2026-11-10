@@ -103,15 +103,15 @@
     },
     {
       "source": "/es/:t(member|state|district|race|stock|official-trades)/:id/:slug",
-      "destination": "https://app.capitolreceipts.com/api/seo?t=:t&id=:id&slug=:slug&lang=es&via=www"
+      "destination": "https://app.capitolreceipts.com/seo-page?t=:t&id=:id&slug=:slug&lang=es&via=www"
     },
     {
       "source": "/es/:t(member|state|district|race|stock|official-trades)/:id",
-      "destination": "https://app.capitolreceipts.com/api/seo?t=:t&id=:id&lang=es&via=www"
+      "destination": "https://app.capitolreceipts.com/seo-page?t=:t&id=:id&lang=es&via=www"
     },
     {
       "source": "/es/:t(members|states|elections)",
-      "destination": "https://app.capitolreceipts.com/api/seo?t=:t&lang=es&via=www"
+      "destination": "https://app.capitolreceipts.com/seo-page?t=:t&lang=es&via=www"
     },
     {
       "source": "/guides",
@@ -123,31 +123,31 @@
     },
     {
       "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district|stock|official-trades|reports)/:id/:slug",
-      "destination": "https://app.capitolreceipts.com/api/seo?t=:t&id=:id&slug=:slug&via=www"
+      "destination": "https://app.capitolreceipts.com/seo-page?t=:t&id=:id&slug=:slug&via=www"
     },
     {
       "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district|stock|official-trades|reports)/:id",
-      "destination": "https://app.capitolreceipts.com/api/seo?t=:t&id=:id&via=www"
+      "destination": "https://app.capitolreceipts.com/seo-page?t=:t&id=:id&via=www"
     },
     {
       "source": "/appointees/all",
-      "destination": "https://app.capitolreceipts.com/api/seo?t=appointees&via=www"
+      "destination": "https://app.capitolreceipts.com/seo-page?t=appointees&via=www"
     },
     {
       "source": "/:t(members|states|past-members|judges|bills|votes|pacs|lobbying|lobbying-firms|companies|committees|caucuses|elections|outside-groups|ethics|this-week|stocks|official-trades|reports)",
-      "destination": "https://app.capitolreceipts.com/api/seo?t=:t&via=www"
+      "destination": "https://app.capitolreceipts.com/seo-page?t=:t&via=www"
     },
     {
       "source": "/rankings",
-      "destination": "https://app.capitolreceipts.com/api/seo?t=rankings&via=www"
+      "destination": "https://app.capitolreceipts.com/seo-page?t=rankings&via=www"
     },
     {
       "source": "/rankings/:id",
-      "destination": "https://app.capitolreceipts.com/api/seo?t=rankings&id=:id&via=www"
+      "destination": "https://app.capitolreceipts.com/seo-page?t=rankings&id=:id&via=www"
     },
     {
       "source": "/rankings/:id/:slug",
-      "destination": "https://app.capitolreceipts.com/api/seo?t=rankings&id=:id&slug=:slug&via=www"
+      "destination": "https://app.capitolreceipts.com/seo-page?t=rankings&id=:id&slug=:slug&via=www"
     },
     {
       "source": "/llms.txt",
