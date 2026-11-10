@@ -35,7 +35,7 @@ The record and directory pages used to be built as HTML text in `apps/web/server
 
 - Shared pieces: `components/seo/SeoPage.tsx` (header, head tags, footer, cite box), `lib/seo-model.js` (turns a page description into what the component prints), `lib/seo-ssp.js` (redirects, 404s, cache headers), `lib/shell-parts.js` (analytics, error and cookie scripts, read from `public/index.html` so there is one copy), `lib/seo-chrome.js` (styles and links, also used by the old string pages).
 - These pages leave out the client JavaScript (`unstable_runtimeJS: false`), so they stay as light as before.
-- Moved so far: `/guides` and `/guides/<slug>`. Still on the old handler: every other type, the sitemaps, robots, llms files, the embed card and the app-mode pages.
-- To move a type: add `pages/<type>/[id].tsx` like `pages/guides/[id].tsx`, take the type out of the lists in both `routes.json` files, add a redirect for the old `/:id/:slug` form, and compare against the live page (same head tags, same text).
+- Moved: every record and directory page, English and Spanish, rankings and guides. They all render through `pages/seo-page.tsx` (reached by the rewrites in `routes.json`) and `pages/guides/`. Still on the old handler (`/api/seo`): sitemaps, robots, llms files, the embed card, share-score and `/go/` pages, and the app's own boot (`?app=1` on the app domain).
+- A new type needs only an entry in the router table in `server/_seo_types.js` and its name in the `routes.json` lists.
 - The data builders (`_seo_*.js`) still return the page body as an HTML string; converting each body to JSX is the next layer, type by type.
 - Redirects now answer 301 from the page code and 308 from `routes.json`; search engines treat them the same.

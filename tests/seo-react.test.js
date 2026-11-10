@@ -27,3 +27,15 @@ test('record pages get the app button and the cite box', () => {
   assert.ok(m.cta.href.includes('?app=1'));
   assert.ok(m.cite.text.includes('accessed 2026-11-10') && m.cite.embed.includes('/embed/member/P000197'));
 });
+
+test('routes.json: record pages go to the React page, app mode keeps the old handler', () => {
+  const fs = require('node:fs');
+  for (const f of ['apps/web/routes.json', 'apps/site/routes.json']) {
+    const r = JSON.parse(fs.readFileSync(f, 'utf8')).rewrites;
+    const rec = r.filter((x) => /seo-page\?t=:t&id=:id$/.test(x.destination) || /seo-page\?t=:t&id=:id&via=www$/.test(x.destination));
+    assert.ok(rec.length >= 1, f + ' sends record pages to /seo-page');
+    assert.ok(!r.some((x) => /api\/seo\?t=:t/.test(x.destination) && !x.has && f.includes('site')), f + ' no longer proxies records to the old handler');
+  }
+  const web = JSON.parse(fs.readFileSync('apps/web/routes.json', 'utf8')).rewrites;
+  assert.ok(web.some((x) => /api\/seo\?t=:t&id=:id$/.test(x.destination) && x.has?.[0]?.key === 'app'));
+});

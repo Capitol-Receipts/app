@@ -37,9 +37,9 @@ export default function SeoPage({ m, parts }: { m: SeoModel; parts: SeoParts }):
         <script key="fontswap" dangerouslySetInnerHTML={js(FONT_SWAP)} />
         <style dangerouslySetInnerHTML={js(parts.bootCss)} />
         {!m.noindex && <link rel="canonical" href={m.url} />}
-        {!m.noindex && m.alt && <link rel="alternate" hrefLang="en" href={m.alt.en} />}
-        {!m.noindex && m.alt && <link rel="alternate" hrefLang="es" href={m.alt.es} />}
-        {!m.noindex && m.alt && <link rel="alternate" hrefLang="x-default" href={m.alt.en} />}
+        {!m.noindex && m.alt && <link rel="alternate" {...{ hreflang: "en" }} href={m.alt.en} />}
+        {!m.noindex && m.alt && <link rel="alternate" {...{ hreflang: "es" }} href={m.alt.es} />}
+        {!m.noindex && m.alt && <link rel="alternate" {...{ hreflang: "x-default" }} href={m.alt.en} />}
         <meta name="robots" content={m.noindex ? 'noindex,follow' : 'index,follow,max-image-preview:large'} />
         <meta property="og:site_name" content="Capitol Receipts" />
         <meta property="og:locale" content={m.ogLocale} />
@@ -77,7 +77,7 @@ export default function SeoPage({ m, parts }: { m: SeoModel; parts: SeoParts }):
               <a href={m.site + '/how-it-works'}>{m.footHow}</a><a href={m.site + '/'}>{m.footAbout}</a>
             </footer>
           </main>
-          {m.cta && <a className="sr-cta" href={m.cta.href} rel="nofollow">{m.cta.text} ›</a>}
+          {m.cta && <a className="sr-cta" href={m.cta.href} rel="nofollow">{`${m.cta.text} ›`}</a>}
         </div>
       </div>
       <script dangerouslySetInnerHTML={js(parts.sw)} />
