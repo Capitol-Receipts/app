@@ -158,6 +158,9 @@ function send(res, status, type, body, maxAge) {
   // so search-engine crawling rarely reaches the database.
   const cc = status === 200 ? `public, max-age=600, s-maxage=${maxAge || 604800}, stale-while-revalidate=2592000` : 'public, max-age=60, s-maxage=600';
   res.setHeader('Cache-Control', cc); res.setHeader('CDN-Cache-Control', cc);
+  // www serves these pages through a rewrite and caches them; without Vary a brotli copy cached for one visitor was
+  // sent to crawlers and tools that never asked for brotli, which then saw unreadable bytes instead of the page
+  res.setHeader('Vary', 'Accept-Encoding');
   res.end(body);
 }
 const redirect = (res, loc, permanent = true) => { res.statusCode = permanent ? 301 : 302; res.setHeader('Location', loc); res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400'); res.end(); };
