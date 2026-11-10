@@ -2,6 +2,7 @@
 visitors to www, one canonical address per record, 404 pages stay out of search) and sets the same cache headers. */
 const T = require('../server/_seo_types');
 const { shellParts } = require('./shell-parts');
+const { appProps } = require('./app-parts');
 const { seoModel } = require('./seo-model');
 const { CSS_TEXT } = require('./seo-chrome');
 const { SITE, notFound } = T;
@@ -9,6 +10,14 @@ const { SITE, notFound } = T;
 const clean = (x) => JSON.parse(JSON.stringify(x));
 
 // kind: the type name used in addresses ('guides'); hub: build the directory page; one: build a record page by id
+// the props every record page gets; in app mode the record also carries what the app shell needs
+function build(pg, extra) {
+  const p = shellParts();
+  const out = { m: clean(seoModel(pg, extra)), parts: { before: p.before, gaSrc: p.gaSrc, after: p.after, bootCss: p.bootCss, sw: p.sw, consent: p.consent, css: CSS_TEXT }, app: null };
+  if (extra && extra.appMode && pg.route) out.app = { parts: clean(appProps()), route: String(pg.route), es: pg.lang === 'es' };
+  return out;
+}
+
 async function seoProps({ req, res, query }, kind, { hub, one, id }) {
   const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim().toLowerCase();
   const onApp = host === 'app.capitolreceipts.com';
@@ -25,8 +34,7 @@ async function seoProps({ req, res, query }, kind, { hub, one, id }) {
   const cc = status === 200 ? 'public, max-age=600, s-maxage=604800, stale-while-revalidate=2592000' : 'public, max-age=60, s-maxage=600';
   res.setHeader('Cache-Control', cc); res.setHeader('CDN-Cache-Control', cc);
   res.setHeader('Vary', 'Accept-Encoding');
-  const p = shellParts();
-  return { props: { m: clean(seoModel(pg, { appMode })), parts: { before: p.before, gaSrc: p.gaSrc, after: p.after, bootCss: p.bootCss, sw: p.sw, consent: p.consent, css: CSS_TEXT } } };
+  return { props: build(pg, { appMode }) };
 }
 module.exports = { seoProps };
 
@@ -45,8 +53,7 @@ function respond(res, pg, extra) {
   res.statusCode = status;
   const cc = status === 200 ? 'public, max-age=600, s-maxage=604800, stale-while-revalidate=2592000' : 'public, max-age=60, s-maxage=600';
   res.setHeader('Cache-Control', cc); res.setHeader('CDN-Cache-Control', cc); res.setHeader('Vary', 'Accept-Encoding');
-  const p = shellParts();
-  return { props: { m: clean(seoModel(pg, extra)), parts: { before: p.before, gaSrc: p.gaSrc, after: p.after, bootCss: p.bootCss, sw: p.sw, consent: p.consent, css: CSS_TEXT } } };
+  return { props: build(pg, extra) };
 }
 
 async function seoGeneric({ req, res, query }) {
@@ -56,11 +63,12 @@ async function seoGeneric({ req, res, query }) {
   if (!t) return { notFound: true };
   const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim().toLowerCase();
   const onApp = host === 'app.capitolreceipts.com';
+  const appMode = onApp && one(query.app) === '1';
   const pre = lang === 'es' ? '/es' : '';
   const asked = `${pre}/${t}/${encodeURIComponent(dec(id))}${slug ? '/' + slug : ''}`;
   const publicPath = id ? asked : `${pre}/${t === 'appointees' ? 'appointees/all' : t}${page > 1 ? `?page=${page}` : ''}`;
   // the app's domain is for using the app; every public page lives on www.capitolreceipts.com
-  if (onApp && query.via !== 'www') return { redirect: { destination: SITE + publicPath, statusCode: 301 } };
+  if (onApp && !appMode && query.via !== 'www') return { redirect: { destination: SITE + publicPath, statusCode: 301 } };
   try {
     let pg;
     if (t === 'rankings') {
@@ -77,8 +85,8 @@ async function seoGeneric({ req, res, query }) {
     if (!pg) pg = notFound(id ? `/${t}/${id}` : `/${t}`);
     // one canonical address per record
     if (id && pg.status !== 404 && OG_TYPES.has(t)) pg.image = `${APP}/og/${t}/${encodeURIComponent(dec(id))}.png?v=${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`;
-    if (id && pg.status !== 404 && PAGES[t] && pg.path !== asked) return { redirect: { destination: pg.path, statusCode: 301 } };
-    return respond(res, pg, {});
+    if (id && pg.status !== 404 && PAGES[t] && pg.path !== asked) return { redirect: { destination: pg.path + (appMode ? `?app=1${lang === 'es' ? '&lang=es' : ''}` : ''), statusCode: 301 } };
+    return respond(res, pg, { appMode });
   } catch (e) {
     console.error(t, id, e);
     res.setHeader('Retry-After', '600');
@@ -88,3 +96,4 @@ async function seoGeneric({ req, res, query }) {
   }
 }
 module.exports.seoGeneric = seoGeneric;
+module.exports.respond = respond;

@@ -29,7 +29,7 @@ function seoModel(pg, { appMode = false, today = new Date().toISOString().slice(
     crumbs: crumbs.map((c, i) => [c[0], i < crumbs.length - 1 && c[1] ? c[1].replace(HOST, '') || '/' : null]),
     cta: pg.route && !appMode ? { href: `${APP}${pg.path}?app=1${es ? '&lang=es' : ''}`, text: es ? 'Abrir en la app' : 'Open in the app' } : null,
     cite, foot: FOOT, footHow: es ? 'De dónde vienen los datos' : 'Where the data comes from', footAbout: es ? 'Acerca de Capitol Receipts' : 'About Capitol Receipts',
-    site: SITE,
+    site: SITE, bootmsg: !!(pg.route && appMode),
   };
 }
 module.exports = { seoModel };

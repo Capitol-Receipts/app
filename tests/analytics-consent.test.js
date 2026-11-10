@@ -1,4 +1,4 @@
-// Analytics opt-in check. The PostHog snippet in index.html must not send anything, or store an id, for visitors in
+// Analytics opt-in check. The PostHog snippet (apps/web/app-shell/posthog.js) must not send anything, or store an id, for visitors in
 // Europe and the UK until they accept, for anyone who said no, or for browsers sending Global Privacy Control.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -6,9 +6,8 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 
-const html = fs.readFileSync(path.join(__dirname, '../apps/web/public/index.html'), 'utf8');
-const snippet = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).find((s) => s.includes('window.__PH='));
-assert.ok(snippet, 'PostHog snippet not found in index.html');
+const snippet = fs.readFileSync(path.join(__dirname, '../apps/web/app-shell/posthog.js'), 'utf8');
+assert.ok(snippet.includes('window.__PH='), 'PostHog snippet not found in app-shell/posthog.js');
 
 function run({ tz, consent, gpc }) {
   const store = new Map(consent ? [['cr_consent', consent]] : []);

@@ -1,0 +1,2 @@
+/* boot-prefetch: start the first screen's data before styles and fonts load */
+window.__PRE={};['members?select=lite&order=ord&limit=1000&offset=0','nominations?select=data&order=ord&limit=1000&offset=0','roll_calls?select=id,data&order=ord&limit=1000&offset=0','app_meta?select=key,value&key=in.(asOf,months,passage,lobby,parties,lobbied_bills)'].forEach(function(p){try{window.__PRE[p]=fetch('/api/db?q='+encodeURIComponent(p),{headers:{Accept:'application/json'}}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}catch(e){}});

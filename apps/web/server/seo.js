@@ -1,94 +1,11 @@
 const { watch } = require('./_watch');
-/* Search-friendly pages for www.capitolreceipts.com (served by the app project; www proxies here).
-
-Every record in the app (members, past members, bills, PACs, lobbying groups and firms, committees, caucuses,
-judges, companies, races, outside groups, ethics statements, votes, states, districts, appointees, nominees)
-gets its own URL with a unique title, description, canonical link, share tags, structured data, breadcrumbs,
-readable content and links to related records. Record pages also boot the app, which then opens the same record.
-Directory pages (/members, /bills, ...) link to every record so search engines can reach all of them.
-Also serves /sitemap.xml, /sitemaps/*.xml and /robots.txt. Reads the public, read-only Supabase API. */
-const fs = require('fs'), path = require('path');
+/* The text and data files for search engines and AI assistants (served by the app project; www proxies here):
+/sitemap.xml, /sitemaps/*.xml, /robots.txt, /llms.txt, /llms-full.txt, the member card that other sites embed and the
+pulse numbers. The record and directory pages themselves are React pages (pages/seo-page.tsx, lib/seo-ssp.js).
+Reads the public, read-only Supabase API. */
 const T = require('./_seo_types');
-const ESP = require('./_seo_es');
 const RK = require('./_seo_rank');
-const ES_TYPES = new Set(['member', 'state', 'district', 'race', 'stock', 'official-trades']), ES_HUBS = new Set(['members', 'states', 'elections']);
-const { HOST, SITE, esc, abs, q, notFound } = T;
-
-let SHELL = null;
-const shell = () => SHELL || (SHELL = fs.readFileSync(require('./_here')('public', 'index.html'), 'utf8'));
-
-const { CSS, NAV, NAV_ES, FOOT, addJump } = require('../lib/seo-chrome');
-const APP = 'https://app.capitolreceipts.com';
-const OG_TYPES = new Set(['member', 'past-member', 'bill', 'vote', 'pac', 'lobbying', 'company', 'race', 'state', 'district', 'nominee', 'stock', 'official-trades', 'reports']);
-
-function citeBox(pg) {
-  const es = pg.lang === 'es', url = abs(pg.path), name = pg.title.replace(/ \| Capitol Receipts$/, '');
-  const today = new Date().toISOString().slice(0, 10);
-  const cite = `Capitol Receipts, “${name},” ${url} (${es ? 'consultado el' : 'accessed'} ${today}).`;
-  const m = pg.route && /^[A-Z]\d{6}$/.test(pg.route) ? pg.route : null;
-  const embed = m ? `<iframe src="${APP}/embed/member/${m}" title="${esc(name)}" width="420" height="320" style="border:0;max-width:100%" loading="lazy"></iframe>` : '';
-  return `<details class="sr-cite"><summary>${es ? 'Cita o inserta esta página' : 'Cite or embed this page'}</summary><p>${esc(cite)}</p>${embed ? `<p>${es ? 'Para insertar esta ficha en tu sitio, copia este código:' : 'Embed this member’s card on your site:'}</p><pre class="sr-code">${esc(embed)}</pre>` : ''}</details>`;
-}
-
-function frame(pg, mode) {
-  if (mode !== 'app' && pg.body && !pg.jumped) { pg.body = addJump(pg.body, pg.lang === 'es'); pg.jumped = true; }
-  const es = pg.lang === 'es';
-  const crumbs = [[es ? 'Inicio' : 'Home', HOST + '/'], ...(pg.crumbs || [])];
-  const cl = `<ol class="sr-crumbs">${crumbs.map((c, i) => `<li>${i < crumbs.length - 1 && c[1] ? `<a href="${c[1].replace(HOST, '') || '/'}">${esc(c[0])}</a>` : esc(c[0])}</li>`).join('')}</ol>`;
-  // search pages stay light: the full app opens on its own domain when someone asks for it
-  const cta = pg.route && mode !== 'app' ? `<a class="sr-cta" href="${APP}${pg.path}?app=1${es ? '&lang=es' : ''}" rel="nofollow">${es ? 'Abrir en la app' : 'Open in the app'} ›</a>` : '';
-  return `<div class="sr" lang="${es ? 'es' : 'en'}"><header class="sr-top"><div class="in"><a class="sr-logo" href="${es ? '/es/members' : '/'}"><span>Capitol</span>Receipts</a><nav aria-label="${es ? 'Explorar' : 'Browse'}">${(es ? NAV_ES : NAV).map(([h, l]) => `<a href="${h}">${l}</a>`).join(' ')}</nav></div></header>
-<main class="sr-main${cta ? ' has-cta' : ''}">${cl}${pg.body}${pg.route && !pg.noindex ? citeBox(pg) : ''}${pg.route && mode === 'app' ? '<p id="bootmsg" hidden></p>' : ''}
-<footer class="sr-foot">${FOOT.map(([h, l]) => `<a href="${h}">${l}</a>`).join('')}<a href="${SITE}/how-it-works">${es ? 'De dónde vienen los datos' : 'Where the data comes from'}</a><a href="${SITE}/">${es ? 'Acerca de Capitol Receipts' : 'About Capitol Receipts'}</a></footer></main>${cta}</div>`;
-}
-
-function head(pg) {
-  const url = abs(pg.path);
-  const img = pg.image || `${SITE}/img/share.png?v=20261015`;
-  const crumbs = [[pg.lang === 'es' ? 'Inicio' : 'Home', HOST + '/'], ...(pg.crumbs || []).map(c => [c[0], c[1] || url])];
-  const ld = [...(pg.ld || []), { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c[0], item: c[1] })) }];
-  const alt = pg.alt ? [`<link rel="alternate" hreflang="en" href="${esc(abs(pg.alt.en))}">`, `<link rel="alternate" hreflang="es" href="${esc(abs(pg.alt.es))}">`, `<link rel="alternate" hreflang="x-default" href="${esc(abs(pg.alt.en))}">`] : [];
-  return [
-    pg.noindex ? '' : `<link rel="canonical" href="${esc(url)}">`,
-    ...(pg.noindex ? [] : alt),
-    pg.noindex ? '<meta name="robots" content="noindex,follow">' : '<meta name="robots" content="index,follow,max-image-preview:large">',
-    '<meta property="og:site_name" content="Capitol Receipts">',
-    `<meta property="og:locale" content="${pg.lang === 'es' ? 'es_US' : 'en_US'}">`,
-    `<meta property="og:type" content="${pg.ogType || 'website'}">`,
-    `<meta property="og:title" content="${esc(pg.title)}">`,
-    `<meta property="og:description" content="${esc(pg.desc)}">`,
-    `<meta property="og:url" content="${esc(url)}">`,
-    `<meta property="og:image" content="${esc(img)}">`,
-    '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">',
-    `<meta property="og:image:alt" content="${esc(pg.title)}">`,
-    '<meta name="twitter:card" content="summary_large_image">',
-    `<meta name="twitter:title" content="${esc(pg.title)}">`,
-    `<meta name="twitter:description" content="${esc(pg.desc)}">`,
-    `<meta name="twitter:image" content="${esc(img)}">`,
-    ...ld.map(x => `<script type="application/ld+json">${JSON.stringify(x).replace(/</g, '\\u003c')}</script>`),
-    CSS,
-  ].join('\n');
-}
-
-function html(pg, mode) {
-  let h = shell();
-  if (pg.lang === 'es') h = h.replace('<html lang="en">', '<html lang="es">');
-  h = h.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(pg.title)}</title>`);
-  h = h.replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${esc(pg.desc)}">`);
-  h = h.replace(/<link rel="canonical"[^>]*>\n?/, '').replace(/<meta property="og:[^>]*>\n?/g, '').replace(/<meta name="twitter:[^>]*>\n?/g, '').replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>\n?/g, '').replace(/<meta name="robots"[^>]*>\n?/, '');
-  h = h.replace('</head>', head(pg) + '\n</head>');
-  h = h.replace(/<div id="app">[\s\S]*?<\/div><\/div><\/div>/, `<div id="app">${frame(pg, mode)}</div>`);
-  if (pg.route && mode === 'app') {
-    h = h.replace('<script>\n/* Supabase', `<script>window.__ROUTE=${JSON.stringify(pg.route)};window.__HOLD=true;${pg.lang === 'es' ? "try{localStorage.setItem('pt_lang',JSON.stringify('es'))}catch(e){}" : ''}</script>\n<script>\n/* Supabase`);
-  } else {
-    // search pages are plain, fast pages: no app download, nothing that moves after it loads
-    h = h.replace(/<nav class="tabbar"[\s\S]*?<\/nav>\n?/, '').replace(/<div id="sheet"[\s\S]*?<\/div><\/div>\n?/, '');
-    h = h.replace(/<script>\n\/\* Supabase[\s\S]*?<\/script>/, '');
-    h = h.replace(/<script>\/\* boot-prefetch[\s\S]*?<\/script>\n?/, '');
-    h = h.replace(/<link rel="stylesheet" href="\/app\/css\/[^"]*"[^>]*>\n?/g, '').replace(/<link rel="preconnect" href="https:\/\/hxgckcriehvrolwnabpd[^>]*>\n?/, '');
-  }
-  return h;
-}
+const { HOST, SITE, esc } = T;
 
 function send(res, status, type, body, maxAge) {
   res.statusCode = status;
@@ -102,7 +19,6 @@ function send(res, status, type, body, maxAge) {
   res.setHeader('Vary', 'Accept-Encoding');
   res.end(body);
 }
-const redirect = (res, loc, permanent = true) => { res.statusCode = permanent ? 301 : 302; res.setHeader('Location', loc); res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400'); res.end(); };
 
 // llms.txt: a plain-text guide for AI assistants, with current facts from the rankings
 async function llms() {
@@ -205,58 +121,13 @@ async function embedCard(res, id) {
 }
 
 
-/* app screens with no public page of their own (/go/<screen>): the app itself, with a title and preview that name the screen */
-const GO_SCREENS = {
-  industries: ['Money by industry', 'Which industries fund each member of Congress, from FEC records.'],
-  ind: ['Money by industry', 'How much one industry gives to members of Congress, from FEC records.'],
-  radar: ['Conflict radar', 'Stock trades, donors and lobbying that touch the same companies, from public records.'],
-  compare: ['Compare members of Congress', 'Put two members of Congress side by side: money, votes, stock trades and lobbying.'],
-  mystocks: ['Your stocks in Congress', 'See which members of Congress trade the stocks you own.'],
-  perf: ['Stock picks vs the market', 'How each member of Congress’s stock purchases did against the S&P 500.'],
-  rank: ['Rankings', 'Members of Congress ranked by stock trades, missed votes, fundraising and more, from public records.'],
-  hist: ['Congress history', 'Past members of Congress, past appointees and presidents, from public records.'],
-  corrections: ['Corrections', 'Every correction Capitol Receipts has made, and how to report one.'],
-  following: ['Following', 'Members of Congress you follow on Capitol Receipts.'],
-};
-function goScreen(res, id) {
-  const k = String(id || '').split(':')[0];
-  const g = GO_SCREENS[id] || GO_SCREENS[k] || ['Capitol Receipts', 'Who funds Congress, what they trade and how they vote, from public records.'];
-  const title = g[0] === 'Capitol Receipts' ? g[0] : `${g[0]} · Capitol Receipts`, url = `https://app.capitolreceipts.com/go/${encodeURIComponent(id)}`;
-  let h = shell();
-  h = h.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`)
-    .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${esc(g[1])}">`)
-    .replace(/(<meta property="og:title" content=")[^"]*/, `$1${esc(title)}`).replace(/(<meta name="twitter:title" content=")[^"]*/, `$1${esc(title)}`)
-    .replace(/(<meta property="og:description" content=")[^"]*/, `$1${esc(g[1])}`).replace(/(<meta name="twitter:description" content=")[^"]*/, `$1${esc(g[1])}`)
-    .replace(/(<meta property="og:url" content=")[^"]*/, `$1${esc(url)}`)
-    .replace(/<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${esc(url)}">`)
-    .replace('</head>', '<meta name="robots" content="noindex">\n</head>');
-  return send(res, 200, 'text/html; charset=utf-8', h, 3600);
-}
-
 const handler = async (req, res) => {
   const u = new URL(req.url, HOST);
-  const t = u.searchParams.get('t') || '', id = u.searchParams.get('id') || '', slug = u.searchParams.get('slug') || '';
-  const page = Math.max(1, parseInt(u.searchParams.get('page') || '1', 10) || 1);
-  const lang = u.searchParams.get('lang') === 'es' ? 'es' : 'en';
-  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim().toLowerCase();
-  const onApp = host === 'app.capitolreceipts.com';
-  const appMode = onApp && u.searchParams.get('app') === '1';
-  const pre = lang === 'es' ? '/es' : '';
-  const asked = `${pre}/${t}/${encodeURIComponent(decodeURIComponent(id))}${slug ? '/' + slug : ''}`;
-  const publicPath = t === 'sitemap' ? '/sitemap.xml' : t === 'sitemaps' ? `/sitemaps/${id}` : id ? asked : `${pre}/${t === 'appointees' ? 'appointees/all' : t}${page > 1 ? `?page=${page}` : ''}`;
+  const t = u.searchParams.get('t') || '', id = u.searchParams.get('id') || '';
   try {
     if (t === 'embed') return embedCard(res, id);
-    if (t === 'go') return goScreen(res, id);
     if (t === 'pulse') { res.setHeader('Access-Control-Allow-Origin', '*'); return send(res, 200, 'application/json; charset=utf-8', JSON.stringify(await require('./_seo_pulse').pulse()), 3600); }
-    if (t === 'quizscore') { // a shared quiz score: its own preview card, then on to the quiz
-      const n = Math.max(0, Math.min(9, parseInt(id, 10) || 0));
-      return send(res, 200, 'text/html; charset=utf-8', html({ title: `I got ${n} of 9 on the Congress quiz | Capitol Receipts`, desc: 'Nine questions about stock trades, campaign money and votes in Congress, each answered from public records. How many can you get?',
-        path: `/quiz/score/${n}`, noindex: true, route: null, image: `${APP}/og/quiz/${n}.png`,
-        body: `<h1>I got ${n} of 9 on the Congress quiz</h1><p class="sr-lead">Nine questions about stock trades, campaign money and votes, each answered from public records.</p><p><a href="/quiz">Take the quiz</a></p><script>location.replace('/quiz?from=score')</script>` }, 'seo'), 604800);
-    }
     if (t === 'robots') return send(res, 200, 'text/plain; charset=utf-8', `User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${SITE}/sitemap.xml\n`, 86400);
-    // the app's domain is for using the app; every public page lives on www.capitolreceipts.com
-    if (onApp && !appMode && u.searchParams.get('via') !== 'www') return redirect(res, SITE + publicPath);
     if (t === 'sitemap') return send(res, 200, 'application/xml; charset=utf-8', await T.sitemapIndex(), 86400);
     if (t === 'sitemaps') {
       const xml = await T.sitemapFile(id.replace(/\.xml$/, ''));
@@ -264,28 +135,12 @@ const handler = async (req, res) => {
     }
     if (t === 'llms') return send(res, 200, 'text/plain; charset=utf-8', await llms(), 86400);
     if (t === 'llms-full') return send(res, 200, 'text/plain; charset=utf-8', await llmsFull(), 86400);
-    if (t === 'rankings') {
-      const pg = id ? await RK.ranking(decodeURIComponent(id), slug) : await RK.index();
-      return send(res, pg ? 200 : 404, 'text/html; charset=utf-8', html(pg || notFound(publicPath), 'seo'));
-    }
-    let pg;
-    const HUBS = lang === 'es' ? ESP.HUBS : T.HUBS, PAGES = lang === 'es' ? ESP.PAGES : T.PAGES;
-    if (!id && HUBS[t]) pg = await HUBS[t](page);
-    else if (id && PAGES[t]) pg = await PAGES[t](decodeURIComponent(id));
-    // English and Spanish versions point at each other
-    if (pg && pg.status !== 404 && !pg.noindex && ((id && ES_TYPES.has(t)) || (!id && ES_HUBS.has(t) && page === 1))) {
-      const en = pg.path.replace(/^\/es(?=\/)/, ''); pg.alt = { en, es: '/es' + en };
-    }
-    if (!pg) pg = notFound(id ? `/${t}/${id}` : `/${t}`);
-    // one canonical address per record
-    if (id && pg.status !== 404 && OG_TYPES.has(t)) pg.image = `${APP}/og/${t}/${encodeURIComponent(decodeURIComponent(id))}.png?v=${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`;
-    if (id && pg.status !== 404 && PAGES[t] && pg.path !== asked) return redirect(res, pg.path + (appMode ? `?app=1${lang === 'es' ? '&lang=es' : ''}` : ''));
-    return send(res, pg.status || 200, 'text/html; charset=utf-8', html(pg, appMode ? 'app' : 'seo'));
+    return send(res, 404, 'text/plain', 'Not found');
   } catch (e) {
     console.error(t, id, e);
     res.statusCode = 503; res.setHeader('Cache-Control', 'no-store'); res.setHeader('Retry-After', '600');
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.end(html({ title: 'Capitol Receipts', desc: 'Temporarily unavailable.', path: u.pathname, noindex: true, route: null, body: '<h1>Back in a moment</h1><p>We couldn’t load this page. Please try again in a minute.</p>' }, 'seo'));
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    return res.end('Back in a moment. Please try again in a minute.');
   }
 };
 

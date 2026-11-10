@@ -8,6 +8,6 @@ export default {
   poweredByHeader: false,
   reactStrictMode: true,
   // files the API reads from disk at run time
-  outputFileTracingIncludes: { '/api/seo': ['./public/index.html'], '/guides': ['./public/index.html'], '/seo-page': ['./public/index.html'], '/guides/[id]': ['./public/index.html'], '/api/og': ['./server/_fonts/**'] },
+  outputFileTracingIncludes: { '/': ['./app-shell/**'], '/go/[id]': ['./app-shell/**'], '/guides': ['./app-shell/**'], '/guides/[id]': ['./app-shell/**'], '/seo-page': ['./app-shell/**'], '/quizscore/[n]': ['./app-shell/**'], '/api/og': ['./server/_fonts/**'] },
   serverExternalPackages: ['@resvg/resvg-js', '@sentry/node'],
 };

@@ -116,7 +116,6 @@
   ],
   "functions": {
     "api/seo.js": {
-      "includeFiles": "index.html",
       "maxDuration": 30
     },
     "api/og.js": {
@@ -132,10 +131,6 @@
     {
       "source": "/face/:id.webp",
       "destination": "/api/face?id=:id"
-    },
-    {
-      "source": "/go/:id",
-      "destination": "/api/seo?t=go&id=:id"
     },
     {
       "source": "/robots.txt",
@@ -159,29 +154,7 @@
     },
     {
       "source": "/es/:t(member|state|district|race|stock|official-trades)/:id/:slug",
-      "destination": "/api/seo?t=:t&id=:id&slug=:slug&lang=es",
-      "has": [
-        {
-          "type": "query",
-          "key": "app",
-          "value": "1"
-        }
-      ]
-    },
-    {
-      "source": "/es/:t(member|state|district|race|stock|official-trades)/:id/:slug",
       "destination": "/seo-page?t=:t&id=:id&slug=:slug&lang=es"
-    },
-    {
-      "source": "/es/:t(member|state|district|race|stock|official-trades)/:id",
-      "destination": "/api/seo?t=:t&id=:id&lang=es",
-      "has": [
-        {
-          "type": "query",
-          "key": "app",
-          "value": "1"
-        }
-      ]
     },
     {
       "source": "/es/:t(member|state|district|race|stock|official-trades)/:id",
@@ -189,29 +162,7 @@
     },
     {
       "source": "/es/:t(members|states|elections)",
-      "destination": "/api/seo?t=:t&lang=es",
-      "has": [
-        {
-          "type": "query",
-          "key": "app",
-          "value": "1"
-        }
-      ]
-    },
-    {
-      "source": "/es/:t(members|states|elections)",
       "destination": "/seo-page?t=:t&lang=es"
-    },
-    {
-      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district|stock|official-trades|reports)/:id/:slug",
-      "destination": "/api/seo?t=:t&id=:id&slug=:slug",
-      "has": [
-        {
-          "type": "query",
-          "key": "app",
-          "value": "1"
-        }
-      ]
     },
     {
       "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district|stock|official-trades|reports)/:id/:slug",
@@ -219,29 +170,7 @@
     },
     {
       "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district|stock|official-trades|reports)/:id",
-      "destination": "/api/seo?t=:t&id=:id",
-      "has": [
-        {
-          "type": "query",
-          "key": "app",
-          "value": "1"
-        }
-      ]
-    },
-    {
-      "source": "/:t(member|past-member|appointee|nominee|judge|bill|vote|pac|lobbying|lobbying-firm|company|committee|caucus|race|outside-group|ethics|state|district|stock|official-trades|reports)/:id",
       "destination": "/seo-page?t=:t&id=:id"
-    },
-    {
-      "source": "/appointees/all",
-      "destination": "/api/seo?t=appointees",
-      "has": [
-        {
-          "type": "query",
-          "key": "app",
-          "value": "1"
-        }
-      ]
     },
     {
       "source": "/appointees/all",
@@ -249,29 +178,7 @@
     },
     {
       "source": "/:t(members|states|past-members|appointees|judges|bills|votes|pacs|lobbying|lobbying-firms|companies|committees|caucuses|elections|outside-groups|ethics|this-week|stocks|official-trades|reports)",
-      "destination": "/api/seo?t=:t",
-      "has": [
-        {
-          "type": "query",
-          "key": "app",
-          "value": "1"
-        }
-      ]
-    },
-    {
-      "source": "/:t(members|states|past-members|appointees|judges|bills|votes|pacs|lobbying|lobbying-firms|companies|committees|caucuses|elections|outside-groups|ethics|this-week|stocks|official-trades|reports)",
       "destination": "/seo-page?t=:t"
-    },
-    {
-      "source": "/rankings",
-      "destination": "/api/seo?t=rankings",
-      "has": [
-        {
-          "type": "query",
-          "key": "app",
-          "value": "1"
-        }
-      ]
     },
     {
       "source": "/rankings",
@@ -279,29 +186,7 @@
     },
     {
       "source": "/rankings/:id",
-      "destination": "/api/seo?t=rankings&id=:id",
-      "has": [
-        {
-          "type": "query",
-          "key": "app",
-          "value": "1"
-        }
-      ]
-    },
-    {
-      "source": "/rankings/:id",
       "destination": "/seo-page?t=rankings&id=:id"
-    },
-    {
-      "source": "/rankings/:id/:slug",
-      "destination": "/api/seo?t=rankings&id=:id&slug=:slug",
-      "has": [
-        {
-          "type": "query",
-          "key": "app",
-          "value": "1"
-        }
-      ]
     },
     {
       "source": "/rankings/:id/:slug",

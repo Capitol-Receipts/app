@@ -1,5 +1,5 @@
 import type { GetServerSideProps } from 'next';
-import SeoPage from '../components/seo/SeoPage';
+import Entry from '../components/seo/Entry';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { seoGeneric } = require('../lib/seo-ssp');
 
@@ -7,4 +7,4 @@ const { seoGeneric } = require('../lib/seo-ssp');
    address: the rewrites in routes.json send /member/<id>/<name> and the rest here with ?t=member&id=... */
 export const config = { unstable_runtimeJS: false };
 export const getServerSideProps: GetServerSideProps = (ctx) => seoGeneric(ctx);
-export default SeoPage;
+export default Entry;

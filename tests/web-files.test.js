@@ -11,7 +11,7 @@ for (const cwd of [path.resolve('.'), path.resolve('apps/web')]) {
     const was = process.cwd();
     try {
       process.chdir(cwd);
-      assert.ok(fs.existsSync(here('public', 'index.html')));
+      assert.ok(fs.existsSync(here('app-shell', 'main.js')));
       assert.ok(fs.existsSync(here('server', '_fonts', 'Barlow-Medium.ttf')));
     } finally { process.chdir(was); }
   });
