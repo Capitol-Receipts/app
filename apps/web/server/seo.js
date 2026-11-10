@@ -19,7 +19,7 @@ const shell = () => SHELL || (SHELL = fs.readFileSync(require('./_here')('public
 
 const CSS = `<style id="sr-css">
 .sr{--n:#14274e;--r:#c8323a;--i:#0e1116;--s:#5b6069;--l:#e4e6eb;--b:#f6f7f9;font-family:"Schibsted Grotesk",system-ui,sans-serif;color:var(--i);background:#fff;min-height:100vh}
-.sr a{color:var(--n)}
+.sr a{color:var(--n);overflow-wrap:break-word}
 .sr-top{background:var(--n);color:#fff}
 .sr-top .in{max-width:980px;margin:0 auto;padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
 .sr-logo{font:800 22px "Barlow Condensed",system-ui,sans-serif;color:#fff!important;text-decoration:none;letter-spacing:-.01em;margin-right:auto}
