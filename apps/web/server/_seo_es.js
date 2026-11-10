@@ -17,7 +17,7 @@ function fecha(s) {
   m = String(s || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (m) return `${+m[2]} de ${MES[+m[1] - 1]} de ${m[3]}`;
   return String(s || '');
 }
-const titulo = t => (t.length + 19 <= 70 ? t + ' | Capitol Receipts' : clamp(t, 70));
+const titulo = t => (t.length + 19 <= 60 ? t + ' | Capitol Receipts' : clamp(t, 60));
 const distEs = (st, d) => +d ? `Distrito ${+d} de ${ST_ES[st] || st}` : `${ST_ES[st] || st} (distrito único)`;
 const ES = p => '/es' + p;
 const seatEs = m => m.chamber === 'Senate' ? `${m.party}-${m.state}` : `${m.party}-${m.state}${+m.district ? '-' + m.district : '-AL'}`;
@@ -180,7 +180,7 @@ const HUBS = {
     const rs = await q('races?select=id,state,data->o,data->d,data->sp,data->rt&order=state,id');
     const by = {}; rs.forEach(r => (by[r.state] = by[r.state] || []).push(r));
     return hub({ path: '/es/elections', h1: 'Elecciones al Congreso de 2026', sub: `${rs.length} contiendas de la Cámara y el Senado el 3 de noviembre de 2026`, title: 'Elecciones al Congreso de 2026: todas las contiendas',
-      desc: 'Todas las contiendas de 2026 para la Cámara y el Senado: los candidatos, cuánto recaudaron y qué grupos externos están gastando.',
+      desc: 'Todas las contiendas de 2026 para la Cámara y el Senado: los candidatos, cuánto recaudó cada uno según la FEC y qué grupos externos están gastando.',
       body: Object.keys(by).sort((x, y) => ST_ES[x].localeCompare(ST_ES[y], 'es')).map(s => `<section><h2>${esc(ST_ES[s])}</h2>${cols(by[s].map(r => a(ES(P('race', r.id, rSlug({ st: s, o: r.o, d: r.d, sp: r.sp }))), r.o === 'S' ? `Senado${r.sp ? ' (especial)' : ''}` : distEs(s, r.d)) + (r.rt ? ` <small>${money(r.rt)} recaudados</small>` : '')))}</section>`).join('') });
   },
 };

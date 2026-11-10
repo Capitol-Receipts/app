@@ -118,7 +118,8 @@ const isoOf = s => { const m = String(s || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d
 const congYears = c => { const y = 1789 + 2 * (c - 1); return `${y}–${y + 1}`; };
 function clamp(s, n) { s = String(s || '').replace(/\s+/g, ' ').trim(); if (s.length > n) s = s.replace(/…+$/, ''); if (s.length <= n) return s; const c = s.slice(0, n - 1); return c.slice(0, Math.max(c.lastIndexOf(' '), n - 20)).replace(/[,;:.\s-]+$/, '') + '…'; }
 const tcase = s => /[a-z]/.test(String(s || '').split(' ').slice(1).filter(w => !/^(of|the|and|for|to|in|on|at|a|an|by)$/.test(w)).map(w => w[0]).join('')) ? String(s).replace(/\b([a-z])([a-z]*)/g, (m, f, r, i) => (i > 0 && /^(of|the|and|for|to|in|on|at|a|an|by)$/.test(m)) ? m : f.toUpperCase() + r) : s;
-const title = t => (t.length + 19 <= 70 ? t + ' | Capitol Receipts' : clamp(t, 70));
+// About 60 characters before search results cut it off: the brand is added only when it fits.
+const title = t => (t.length + 19 <= 60 ? t + ' | Capitol Receipts' : clamp(t, 60));
 const firstSentences = (s, n = 320) => { s = String(s || '').replace(/\s+/g, ' ').trim(); if (s.length <= n) return s; const cut = s.slice(0, n); const i = cut.lastIndexOf('. '); return i > 80 ? cut.slice(0, i + 1) : clamp(s, n); };
 
 
