@@ -318,6 +318,22 @@
   ],
   "redirects": [
     {
+      "source": "/admin.html",
+      "destination": "/admin",
+      "permanent": true
+    },
+    {
+      "source": "/admin-portal",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?!admin\\.).*"
+        }
+      ],
+      "destination": "https://admin.capitolreceipts.com/",
+      "permanent": false
+    },
+    {
       "source": "/guides/:id/:slug",
       "destination": "/guides/:id",
       "permanent": true

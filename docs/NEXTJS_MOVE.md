@@ -3,7 +3,7 @@
 ## What changed
 | Before | After |
 |---|---|
-| `index.html`, `admin.html`, `sw.js`, `app/`, `.well-known/` | `apps/web/public/` (unchanged files) |
+| `index.html`, `sw.js`, `app/`, `.well-known/` | `apps/web/public/` (unchanged files) |
 | `api/*.js` (Vercel functions) | `apps/web/server/*.js` (unchanged; not `api/`, which Vercel would deploy as separate functions), served by Next.js API routes in `apps/web/pages/api/` |
 | `vercel.json` | `apps/web/routes.json` (same content; Next.js reads it via `packages/config/next-routes.mjs`) |
 | `middleware.js` | `apps/web/middleware.ts` |
