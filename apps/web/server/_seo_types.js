@@ -74,12 +74,12 @@ ${facts([['Stock trades in the last 30 days', num(trades.length)], ['Members tra
     const c = {}; ms.forEach(m => c[m.state] = (c[m.state] || 0) + 1);
     const body = cols(Object.keys(ST).filter(s => c[s]).sort((x, y) => ST[x].localeCompare(ST[y])).map(s => `${a(P('state', s, ST[s]), ST[s])} <small>${c[s]} members</small>`));
     return hub({ path: '/states', page: 1, pages: 1, h1: 'Congress by state', sub: 'Find your senators and representative', title: 'Congress by State: Find Your Senators & Representative',
-      desc: 'Pick your state to see its senators and House members, how much they raised for 2026, their stock trades and the 2026 races.', body });
+      desc: 'Pick your state to see its senators and House members, how much they raised for 2026, their stock trades since 2025 and every 2026 race on the ballot.', body });
   },
   async 'past-members'(page) {
     const r = await paged('people', 'id,name,party,first_year,last_year', 'name.asc', page);
     return hub({ path: '/past-members', page, pages: r.pages, h1: 'Past members of Congress', sub: `${num(r.total)} former senators and representatives since 1789`,
-      title: 'Past Members of Congress since 1789', desc: 'Every former U.S. senator and representative since 1789: terms, party, bills sponsored and voting records.',
+      title: 'Past Members of Congress since 1789', desc: 'Every former U.S. senator and representative since 1789: when and where they served, their party, the bills they sponsored and how they voted on each one.',
       body: cols(r.rows.map(p => `${a(P('past-member', p.id, p.name), p.name)} <small>${esc((p.party || '')[0] || '')} · ${p.first_year || ''}–${p.last_year || ''}</small>`)) });
   },
   async appointees(page) {
@@ -92,13 +92,13 @@ ${facts([['Stock trades in the last 30 days', num(trades.length)], ['Members tra
   async judges(page) {
     const r = await paged('judges', 'id,name,court,active', 'active.desc,name.asc', page);
     return hub({ path: '/judges', page, pages: r.pages, h1: 'Federal judges', sub: `${num(r.total)} federal judges, current and past`,
-      title: 'Federal Judges: Who Appointed Them & Their Records', desc: 'Every federal judge: court, the president who appointed them, Senate confirmation votes, education and career.',
+      title: 'Federal Judges: Who Appointed Them & Their Records', desc: 'Every federal judge: their court, the president who appointed them, the Senate confirmation vote, and their education and career before the bench.',
       body: cols(r.rows.map(j => `${a(P('judge', j.id, j.name), j.name)} <small>${esc(clamp(j.court.replace('U.S. ', ''), 50))}${j.active ? '' : ' · former'}</small>`)) });
   },
   async bills(page) {
     const r = await paged('bills', 'key,title,congress,became_law', 'congress.desc,bill_type.asc,number.desc', page);
     return hub({ path: '/bills', page, pages: r.pages, h1: 'Bills in Congress', sub: `${num(r.total)} bills since 1947, newest Congress first`,
-      title: 'Bills in Congress: Status, Sponsors, Votes & Lobbying', desc: 'Every bill in Congress since 1947: what it does, who sponsored it, how Congress voted and who lobbied on it.',
+      title: 'Bills in Congress: Status, Sponsors, Votes & Lobbying', desc: 'Every bill in Congress since 1947: what it does, who sponsored it, where it stands, how the House and Senate voted on it and which groups lobbied on it.',
       body: rows(r.rows.map(b => [a(P('bill', b.key, b.title), `${H.billLabel(b.key)}: ${clamp(b.title, 110)}`), `${L.ord(b.congress)} Congress${b.became_law ? ' · Law' : ''}`])) });
   },
   async votes(page) {
@@ -110,7 +110,7 @@ ${facts([['Stock trades in the last 30 days', num(trades.length)], ['Members tra
   async pacs(page) {
     const r = await paged('pacs', 'id,name,light->>fn,category,total', 'total.desc.nullslast', page);
     return hub({ path: '/pacs', page, pages: r.pages, h1: 'PACs giving to Congress', sub: `${num(r.total)} political action committees, biggest givers first`,
-      title: 'PACs: Who Funds Members of Congress', desc: 'Political action committees ranked by how much they give to members of Congress, and which members they fund.',
+      title: 'PACs: Who Funds Members of Congress', desc: 'Political action committees ranked by how much they give to members of Congress, which members they fund and how much, from FEC filings for 2025–26.',
       body: rows(r.rows.map(p => [a(P('pac', p.id, p.fn || p.name), p.fn || p.name) + (p.category ? ` <small>${esc(p.category)}</small>` : ''), money(p.total)])) });
   },
   async lobbying(page) {
@@ -122,7 +122,7 @@ ${facts([['Stock trades in the last 30 days', num(trades.length)], ['Members tra
   async 'lobbying-firms'(page) {
     const r = await paged('lobby_firms', 'id,name,income', 'income.desc.nullslast', page);
     return hub({ path: '/lobbying-firms', page, pages: r.pages, h1: 'Lobbying firms', sub: `${num(r.total)} firms, highest-earning first`,
-      title: 'Top Lobbying Firms in Washington: Clients & Income', desc: 'Washington lobbying firms ranked by lobbying income, with every client they represent.',
+      title: 'Top Lobbying Firms in Washington: Clients & Income', desc: 'Washington lobbying firms ranked by the income they report from lobbying, with every client they represent, from Senate lobbying disclosure reports.',
       body: rows(r.rows.map(f => [a(P('lobbying-firm', f.id, f.name), f.name), money(f.income)])) });
   },
   async companies(page) {
@@ -135,31 +135,31 @@ ${facts([['Stock trades in the last 30 days', num(trades.length)], ['Members tra
     const { rows: cs } = await COMMITTEES();
     const grp = ch => cols(cs.filter(c => (c.data.ch || '') === ch).map(c => a(P('committee', c.id, c.name), c.name)));
     return hub({ path: '/committees', page: 1, pages: 1, h1: 'Congressional committees', sub: `${num(cs.length)} House, Senate and joint committees`,
-      title: 'Congressional Committees: Members & Jurisdiction', desc: 'Every House, Senate and joint committee in Congress: who sits on it, who leads it and what it oversees.',
+      title: 'Congressional Committees: Members & Jurisdiction', desc: 'Every House, Senate and joint committee in Congress: who sits on it, who chairs it, who the ranking member is and what the committee oversees.',
       body: `<h2>House</h2>${grp('house')}<h2>Senate</h2>${grp('senate')}${cs.some(c => c.data.ch === 'joint') ? `<h2>Joint</h2>${grp('joint')}` : ''}` });
   },
   async caucuses() {
     const cs = await CAUCUSES();
     return hub({ path: '/caucuses', page: 1, pages: 1, h1: 'Caucuses in Congress', sub: 'Groups of members who organize around shared views', title: 'Caucuses in Congress: Members & Voting Unity',
-      desc: 'Major caucuses in Congress, their members and how often they vote together.', body: cols(cs.map(c => `${a(P('caucus', c.id, c.name), c.name)} <small>${num((c.data.members || []).length)} members</small>`)) });
+      desc: 'Major caucuses in Congress, from the Freedom Caucus to the Blue Dogs: who belongs to each one, and how often their members vote together on split votes.', body: cols(cs.map(c => `${a(P('caucus', c.id, c.name), c.name)} <small>${num((c.data.members || []).length)} members</small>`)) });
   },
   async elections() {
     const rs = await q('races?select=id,state,data->o,data->d,data->sp,data->st,data->rt&order=state,id');
     const by = {}; rs.forEach(r => (by[r.state] = by[r.state] || []).push(r));
     const body = Object.keys(by).sort((x, y) => (ST[x] || x).localeCompare(ST[y] || y)).map(s => `<section><h2>${esc(ST[s] || s)}</h2>${cols(by[s].map(r => { const nm = R.raceName({ st: s, o: r.o, d: r.d, sp: r.sp }); return a(P('race', r.id, '2026 ' + nm), nm) + (r.rt ? ` <small>${money(r.rt)} raised</small>` : ''); }))}</section>`).join('');
     return hub({ path: '/elections', page: 1, pages: 1, h1: '2026 congressional elections', sub: `${num(rs.length)} House and Senate races on Nov 3, 2026`,
-      title: '2026 Congressional Elections: Every Race & the Money', desc: 'Every 2026 House and Senate race: the candidates, how much they raised and which outside groups are spending.', body });
+      title: '2026 Congressional Elections: Every Race & the Money', desc: 'Every 2026 House and Senate race: the candidates, how much each one has raised from FEC filings, and which super PACs and outside groups are spending.', body });
   },
   async 'outside-groups'(page) {
     const r = await paged('outside_groups', 'id,name,total', 'total.desc.nullslast', page);
     return hub({ path: '/outside-groups', page, pages: r.pages, h1: 'Outside spending in 2026', sub: 'Super PACs and other groups spending on congressional races',
-      title: 'Outside Spending in the 2026 Elections: Super PACs', desc: 'Super PACs and outside groups ranked by spending on 2026 House and Senate races, and who they support or oppose.',
+      title: 'Outside Spending in the 2026 Elections: Super PACs', desc: 'Super PACs and outside groups ranked by what they spent on 2026 House and Senate races, which candidates they support or oppose, and where the money went.',
       body: rows(r.rows.map(g => [a(P('outside-group', g.id, g.name), g.name), money(g.total)])) });
   },
   async ethics(page) {
     const r = await paged('ethics_matters', 'id,title,data->>d', 'ord.asc', page);
     return hub({ path: '/ethics', page, pages: r.pages, h1: 'House ethics statements', sub: `${num(r.total)} statements from the House Committee on Ethics`,
-      title: 'House Ethics Committee Statements & Investigations', desc: 'Every public statement from the House Committee on Ethics on investigations of members of Congress, newest first.',
+      title: 'House Ethics Committee Statements & Investigations', desc: 'Every public statement from the House Committee on Ethics on investigations of members of Congress, newest first, with a link to each original statement.',
       body: rows(r.rows.map(e => [a(P('ethics', e.id, e.title), clamp(e.title, 120)), esc(date(e.d))])) });
   },
 };

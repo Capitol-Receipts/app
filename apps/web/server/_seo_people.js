@@ -47,7 +47,7 @@ async function member(id) {
     missed != null ? `Missed ${pct(missed, 1)} of votes and voted with ${PN[d.caucus] || 'their party'}s ${pct(d.unity, 0)} of the time when the parties split.` : '',
   ].filter(Boolean).join(' ');
   const t = `${d.name} (${seat(m)}): Donors, Stock Trades & Votes`;
-  const desc = clamp(`${abbr(m)} ${d.name} (${seat(m)}) ${f.rec ? `raised ${money(f.rec)} for 2026` : 'has no 2026 FEC reports yet'}${sh ? `, made ${num(sh)} stock trades since 2025` : ''}${missed != null ? ` and missed ${pct(missed, 1)} of votes` : ''}. See top donors, PACs, trades, votes and bills.`, 158);
+  const desc = clamp(`${abbr(m)} ${d.name} (${seat(m)}) ${f.rec ? `raised ${money(f.rec)} for 2026` : 'has no 2026 FEC reports yet'}${sh ? `, made ${num(sh)} stock trades since 2025` : ''}${missed != null ? ` and missed ${pct(missed, 1)} of votes` : ''}. Top donors, PACs, stock trades, votes and bills, from public filings.`, 158);
 
   const bl = (car && car.detail && car.detail.bl) || (car && car.light && car.light.bl) || {};
   const sponsored = (bl.new || []).slice(0, 12);
