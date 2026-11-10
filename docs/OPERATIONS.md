@@ -7,9 +7,9 @@ Secret values are never stored in this repo. This file lists their names and whe
 
 | Part | What it is | Where it runs | Deployed by |
 |---|---|---|---|
-| Web app | Static single-page app: `index.html` + `app/js/*.js` + `app/css` (no build step) | Vercel project for app.capitolreceipts.com | Push to `main` |
-| Server-rendered pages | `api/seo.js` and helpers render every record page for search engines; `api/og.js` share images; `api/db.js` cached read-only data proxy; `api/face.js`, `api/cimg.js` images | Vercel functions (same project) | Push to `main` |
-| Marketing site | Static HTML in `site/`, rebuilt by `scripts/build_site.py` → `seo_site.py`, `app_soon.py`, `site_live.py` | Vercel project for www.capitolreceipts.com (`site/vercel.json`) | Push to `main` |
+| Web app | Static single-page app in `apps/web/public/`: `index.html` + `app/js/*.js` + `app/css`, served by Next.js | Vercel project for app.capitolreceipts.com | Push to `main` |
+| Server-rendered pages | `apps/web/server/seo.js` and helpers render every record page for search engines; `og.js` share images; `db.js` cached read-only data proxy; `face.js`, `cimg.js` images (served as `/api/*` through `apps/web/pages/api`) | Next.js API routes (same project) | Push to `main` |
+| Marketing site | Static HTML in `apps/site/public/`, served by Next.js from `apps/site` (routes in `apps/site/routes.json`); sitemap dates from `scripts/site_sitemap.py` | Vercel project for www.capitolreceipts.com | Push to `main` |
 | Admin portal | `admin.html` at admin.capitolreceipts.com, calls the `admin` function. Requires an admin email plus an authenticator-app code | Vercel | Push to `main` |
 | Database and sign-in | Supabase project `hxgckcriehvrolwnabpd` (Postgres, Auth, Edge Functions). Every table has row-level security; public records are read-only to everyone; user tables are readable and writable only by their owner | Supabase | Migrations and functions via Supabase (see below) |
 | Edge functions | `supabase/functions/*`: `billing`, `stripe-webhook`, `appstore-webhook`, `account`, `apple-token`, `send-alerts`, `admin`, `support`, `inbound-email`, `uptime`, `send-samples` | Supabase | Supabase MCP or `supabase functions deploy <name>` |
