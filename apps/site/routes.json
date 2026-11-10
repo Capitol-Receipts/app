@@ -161,7 +161,7 @@
     },
     {
       "source": "/quiz/score/:n",
-      "destination": "https://app.capitolreceipts.com/api/seo?t=quizscore&id=:n&via=www"
+      "destination": "https://app.capitolreceipts.com/quizscore/:n?via=www"
     },
     {
       "source": "/sitemap.xml",
