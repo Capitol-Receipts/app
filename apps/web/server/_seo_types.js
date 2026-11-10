@@ -186,12 +186,21 @@ const SOURCES = { // sitemap name -> table, columns, how to build the URL
 };
 const counts = () => cached('sm-counts', async () => Object.fromEntries(await Promise.all(Object.entries(SOURCES).map(async ([k, [t]]) => [k, (await q(`${t}?select=${['bills', 'vote_index'].includes(t) ? 'key' : 'id'}${SOURCES[k][2].includes('indexable') ? '&indexable=is.true' : ''}`, { range: '0-0', count: true })).total]))), 6 * 3600e3);
 const xmlEsc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+// The real date each child sitemap last changed: the newest updated_at in its table, or the data update date
+// (app_meta asOf) for lists built from the roster and trade feed. Never the date the sitemap was generated.
+const lastmods = () => cached('sm-lastmod', async () => {
+  const [tables, meta] = await Promise.all([
+    Promise.all(Object.entries(SOURCES).map(async ([k, [t]]) => [k, await q(`${t}?select=updated_at&order=updated_at.desc.nullslast&limit=1`).then(r => (r[0] || {}).updated_at).catch(() => null)])),
+    L.META(['asOf'])]);
+  const a = meta.asOf || {}, roster = L.isoOf(a.roster), ptr = L.isoOf(a.ptr);
+  return { ...Object.fromEntries(tables), hubs: [roster, ptr].sort().pop(), places: roster, es: roster, stocks: ptr };
+}, 6 * 3600e3);
 async function sitemapIndex() {
-  const c = await counts(), files = ['hubs', 'places', 'es', 'stocks'];
-  const today = new Date().toISOString().slice(0, 10);
-  const site = `<sitemap><loc>${HOST}/sitemaps/site.xml</loc><lastmod>${today}</lastmod></sitemap>\n`; // marketing pages (a static file on www)
+  const [c, lm] = await Promise.all([counts(), lastmods()]), files = ['hubs', 'places', 'es', 'stocks'];
+  const entry = f => { const d = lm[f.replace(/-\d+$/, '')]; return `<sitemap><loc>${HOST}/sitemaps/${f}.xml</loc>${d ? `<lastmod>${String(d).slice(0, 10)}</lastmod>` : ''}</sitemap>`; };
   Object.keys(SOURCES).forEach(k => { const n = Math.ceil((c[k] || 0) / SM); for (let i = 1; i <= n; i++) files.push(n > 1 ? `${k}-${i}` : k); });
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${site}${files.map(f => `<sitemap><loc>${HOST}/sitemaps/${f}.xml</loc><lastmod>${today}</lastmod></sitemap>`).join('\n')}\n</sitemapindex>\n`;
+  // site.xml lists the marketing pages; it is a static file on www with its own per-page dates
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n<sitemap><loc>${HOST}/sitemaps/site.xml</loc></sitemap>\n${files.map(entry).join('\n')}\n</sitemapindex>\n`;
 }
 const urlset = list => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${list.map(([u, lm]) => `<url><loc>${xmlEsc(HOST + u)}</loc>${lm ? `<lastmod>${String(lm).slice(0, 10)}</lastmod>` : ''}</url>`).join('\n')}\n</urlset>\n`;
 async function sitemapFile(name) {
